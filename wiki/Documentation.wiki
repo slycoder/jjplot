@@ -5,6 +5,16 @@ jjplot is intended to be a replacement for ggplot2 written entirely in base grap
 *ggplot2 is still _way_ more functional than jjplot, so take comparisons with a grain of salt*
 
 = Todo =
+I will add functionality as I need it.  Here is the short list:
+
+  * Numeric color scales
+  * Expose methods to set title and axis titles/labels
+  * geom_fill or geom_tile
+  * Faceting into multiple graphs
+  * Legends
+  * scale_size
+  * manual color scales
+  * scale_shape
 
 = Examples =
 {{{
