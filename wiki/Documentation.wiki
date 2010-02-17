@@ -4,4 +4,23 @@ jjplot is intended to be a replacement for ggplot2 written entirely in base grap
 
 = Details =
 
-= Examples =
+= Performance Comparison =
+
+{{{
+> system.time(qplot.fast(x, f, data = df,
+                         alpha = 0.10, color = f,
+                         qplot.jitter(yfactor = 1, xfactor=1),
+                         qplot.point()))
+utilisateur     système      écoulé 
+      0.249       0.006       0.267 
+
+> system.time(qplot.fast(x + 2, y, data = df,
+                         alpha = 0.10, color = f,
+                         qplot.point(),
+                         qplot.facet(qplot.fit(), facet = f),
+                         qplot.abline(),
+                         qplot.fun.y(mean),
+                         qplot.hline(lty = "dashed")))
+utilisateur     système      écoulé 
+      0.355       0.011       0.388 
+}}}
