@@ -1,0 +1,7 @@
+= Introduction =
+
+jjplot is intended to be a replacement for ggplot2 written entirely in base graphics.  The hope is that it will be fast and functional.  Note that semantics may be slightly different that ggplot2 in places.
+
+= Details =
+
+= Examples =
