@@ -48,6 +48,11 @@ df$y <- 1:4 * df$x + rnorm(10000)
              qplot.jitter(yfactor = 1, xfactor=1),
              qplot.point()))
 }}}
+
+This function will first set x values to the numeric column `x` in the data frame. 
+The y values will be set to the factor `f`.   Color will also be associated with `f`. 
+The points are jittered along both the x and y axis, and then these jittered points are plotted as a scatter plot.   This visualization is a richer version of a boxplot.
+
 http://jjplot.googlecode.com/files/jjplot_test_001.png
 
 {{{
@@ -59,9 +64,10 @@ http://jjplot.googlecode.com/files/jjplot_test_001.png
              qplot.fun.y(mean),
              qplot.hline(lty = "dashed")))
 }}}
+
+This function will set the x values to `x + 2` and the y values to the `y` column in the data frame.  Once again, points will be colored according to `f`.   The first `qplot.point()` will then plot these as a scatter plot (because of the implicit identity statistic).  The next statement applies a least-squares fit to each subset of the data defined by `f`, and the following line draws lines corresponding to these fits.   Finally, the last two lines compute the mean y value of all the points in the data frame and draws a dashed horizontal line at the mean value.
+
 http://jjplot.googlecode.com/files/jjplot_test_002.png
-
-
 
 == Statistics == 
   * `qplot.identity` - Returns the original data unchanged.  *This statistic is implicitly called as the first statistic*.
