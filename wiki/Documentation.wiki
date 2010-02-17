@@ -19,7 +19,29 @@ I will add functionality as I need it.  Here is the short list:
   * manual color scales
   * scale_shape
 
+= Concepts =
+The workhorse function of jjplot is `qplot.fast`, which takes the following formals:
+
+{{{
+  qplot.fast(x = NULL, y = NULL, data = NULL, alpha = NULL, color = NULL, ...)
+}}}
+
+  * `x` - An expression to map to the x-axis.
+  * `y` - An expression to map to the y-axis.
+  * `data` - A data frame in whose context expressions will be evaluated.
+  * `alpha` - An expression to map to the alpha channel.
+  * `color` - An expression to map to the colors of each element in the data frame.  This expression must evaluate to a factor; colors will be chosen automatically for each factor and mapped to appropriate plot elements.
+  * `...` - Statistic and geometry functions to apply to the data.
+
+After the mapping performed by named arguments, each statistic and geometry function is successively applied.  Statistic functions can be understood as transformations of the data: they take a data frame, compute statistics over that data, and produce a new data frame.  Geometry functions take the data frames output by statistic functions and display them graphically.
+
 = Examples =
+{{{
+df <- data.frame(x = rnorm(10000) + (1:4) * 1,
+                 f = factor(c('A', 'B', 'C', 'D')))
+df$y <- 1:4 * df$x + rnorm(10000)
+}}}
+
 {{{
 > qplot.fast(x, f, data = df,
              alpha = 0.10, color = f,
@@ -39,21 +61,7 @@ http://jjplot.googlecode.com/files/jjplot_test_001.png
 }}}
 http://jjplot.googlecode.com/files/jjplot_test_002.png
 
-= Concepts =
-The workhorse function of jjplot is `qplot.fast`, which takes the following formals:
 
-{{{
-  qplot.fast(x = NULL, y = NULL, data = NULL, alpha = NULL, color = NULL, ...)
-}}}
-
-  * `x` - An expression to map to the x-axis.
-  * `y` - An expression to map to the y-axis.
-  * `data` - A data frame in whose context expressions will be evaluated.
-  * `alpha` - An expression to map to the alpha channel.
-  * `color` - An expression to map to the colors of each element in the data frame.  This expression must evaluate to a factor; colors will be chosen automatically for each factor and mapped to appropriate plot elements.
-  * `...` - Statistic and geometry functions to apply to the data.
-
-After the mapping performed by named arguments, each statistic and geometry function is successively applied.  Statistic functions can be understood as transformations of the data: they take a data frame, compute statistics over that data, and produce a new data frame.  Geometry functions take the data frames output by statistic functions and display them graphically.
 
 == Statistics == 
   * `qplot.identity` - Returns the original data unchanged.  *This statistic is implicitly called as the first statistic*.
@@ -61,8 +69,14 @@ After the mapping performed by named arguments, each statistic and geometry func
   * `qplot.fun.y(f)` - Computes a function `f` over the y margin of the data.  Outputs column `y` with the computed statistic. 
   * `qplot.fit()` - Produces a least-squares fit via `lm` over `y ~ x`.   Outputs columns  `a` and `b` for the slope and intercept of the fit.
   * `qplot.jitter(xfactor = 0, yfactor = 0)` - Returns the original data jittered by the amounts given as parameters.
+  * `qplot.facet(f, facet)` - Calls the statistic function `f` on each subset of the data defined by facet `facet`.  Outputs the columns of `f` along with a column indicating the associated facet of each data point.
 
-== Geometries == 
+== Geometries ==
+Note that many of these typical graphical parameters such as `lwd` and `lty`. 
+  * `qplot.hline()` - Draw horizontal lines at positions given by the column `y`.  
+  * `qplot.vline()` - Draw vertical lines at positions given by the column `x`.  
+  * `qplot.abline()` - Draw lines with slope and intercept given by the columns `a` and `b`.  
+  * `qplot.point()` - Draw points at positions given by `x` and `y` (i.e., a scatterplot).
 
 
 = Performance Comparison =
