@@ -35,6 +35,23 @@ The workhorse function of jjplot is `qplot.fast`, which takes the following form
 
 After the mapping performed by named arguments, each statistic and geometry function is successively applied.  Statistic functions can be understood as transformations of the data: they take a data frame, compute statistics over that data, and produce a new data frame.  Geometry functions take the data frames output by statistic functions and display them graphically.
 
+
+== Statistics == 
+  * `qplot.identity` - Returns the original data unchanged.  *This statistic is implicitly called as the first statistic*.
+  * `qplot.fun.x(f)` - Computes a function `f` over the x margin of the data.  Outputs column `x` with the computed statistic. 
+  * `qplot.fun.y(f)` - Computes a function `f` over the y margin of the data.  Outputs column `y` with the computed statistic. 
+  * `qplot.fit()` - Produces a least-squares fit via `lm` over `y ~ x`.   Outputs columns  `a` and `b` for the slope and intercept of the fit.
+  * `qplot.jitter(xfactor = 0, yfactor = 0)` - Returns the original data jittered by the amounts given as parameters.
+  * `qplot.facet(f, facet)` - Calls the statistic function `f` on each subset of the data defined by facet `facet`.  Outputs the columns of `f` along with a column indicating the associated facet of each data point.
+
+== Geometries ==
+Note that many of these typical graphical parameters such as `lwd` and `lty`. 
+  * `qplot.hline()` - Draw horizontal lines at positions given by the column `y`.  
+  * `qplot.vline()` - Draw vertical lines at positions given by the column `x`.  
+  * `qplot.abline()` - Draw lines with slope and intercept given by the columns `a` and `b`.  
+  * `qplot.point()` - Draw points at positions given by `x` and `y` (i.e., a scatterplot).
+
+
 = Examples =
 {{{
 df <- data.frame(x = rnorm(10000) + (1:4) * 1,
@@ -68,22 +85,6 @@ http://jjplot.googlecode.com/files/jjplot_test_001.png
 This function will set the x values to `x + 2` and the y values to the `y` column in the data frame.  Once again, points will be colored according to `f`.   The first `qplot.point()` will then plot these as a scatter plot (because of the implicit identity statistic).  The next statement applies a least-squares fit to each subset of the data defined by `f`, and the following line draws lines corresponding to these fits.   Finally, the last two lines compute the mean y value of all the points in the data frame and draws a dashed horizontal line at the mean value.
 
 http://jjplot.googlecode.com/files/jjplot_test_002.png
-
-== Statistics == 
-  * `qplot.identity` - Returns the original data unchanged.  *This statistic is implicitly called as the first statistic*.
-  * `qplot.fun.x(f)` - Computes a function `f` over the x margin of the data.  Outputs column `x` with the computed statistic. 
-  * `qplot.fun.y(f)` - Computes a function `f` over the y margin of the data.  Outputs column `y` with the computed statistic. 
-  * `qplot.fit()` - Produces a least-squares fit via `lm` over `y ~ x`.   Outputs columns  `a` and `b` for the slope and intercept of the fit.
-  * `qplot.jitter(xfactor = 0, yfactor = 0)` - Returns the original data jittered by the amounts given as parameters.
-  * `qplot.facet(f, facet)` - Calls the statistic function `f` on each subset of the data defined by facet `facet`.  Outputs the columns of `f` along with a column indicating the associated facet of each data point.
-
-== Geometries ==
-Note that many of these typical graphical parameters such as `lwd` and `lty`. 
-  * `qplot.hline()` - Draw horizontal lines at positions given by the column `y`.  
-  * `qplot.vline()` - Draw vertical lines at positions given by the column `x`.  
-  * `qplot.abline()` - Draw lines with slope and intercept given by the columns `a` and `b`.  
-  * `qplot.point()` - Draw points at positions given by `x` and `y` (i.e., a scatterplot).
-
 
 = Performance Comparison =
 == jjplot ==
