@@ -53,9 +53,17 @@ The workhorse function of jjplot is `qplot.fast`, which takes the following form
   * `color` - An expression to map to the colors of each element in the data frame.  This expression must evaluate to a factor; colors will be chosen automatically for each factor and mapped to appropriate plot elements.
   * `...` - Statistic and geometry functions to apply to the data.
 
-After the mapping performed by named arguments, each statistic and geometry function is successively applied.  Statistic functions can be understood as transformations of the data.
+After the mapping performed by named arguments, each statistic and geometry function is successively applied.  Statistic functions can be understood as transformations of the data: they take a data frame, compute statistics over that data, and produce a new data frame.  Geometry functions take the data frames output by statistic functions and display them graphically.
 
 == Statistics == 
+  * `qplot.identity` - Returns the original data unchanged.  *This statistic is implicitly called as the first statistic*.
+  * `qplot.fun.x(f)` - Computes a function `f` over the x margin of the data.  Outputs column `x` with the computed statistic. 
+  * `qplot.fun.y(f)` - Computes a function `f` over the y margin of the data.  Outputs column `y` with the computed statistic. 
+  * `qplot.fit()` - Produces a least-squares fit via `lm` over `y ~ x`.   Outputs columns  `a` and `b` for the slope and intercept of the fit.
+  * `qplot.jitter(xfactor = 0, yfactor = 0)` - Returns the original data jittered by the amounts given as parameters.
+
+== Geometries == 
+
 
 = Performance Comparison =
 == jjplot ==
