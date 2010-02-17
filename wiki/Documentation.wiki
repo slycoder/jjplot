@@ -2,10 +2,13 @@
 
 jjplot is intended to be a replacement for ggplot2 written entirely in base graphics.  The hope is that it will be fast and functional.  Note that semantics may be slightly different that ggplot2 in places.
 
+*ggplot2 is still _way_ more functional than jjplot, so take comparisons with a grain of salt*
+
 = Details =
 
 = Performance Comparison =
 
+== jjplot ==
 {{{
 > system.time(qplot.fast(x, f, data = df,
                          alpha = 0.10, color = f,
@@ -23,4 +26,20 @@ utilisateur     système      écoulé
                          qplot.hline(lty = "dashed")))
 utilisateur     système      écoulé 
       0.355       0.011       0.388 
+}}}
+
+== ggplot2 ==
+{{{
+> system.time(print(qplot(x, f, data = df,
+                          alpha = I(0.1), colour =f,
+                          geom = "jitter")))
+utilisateur     système      écoulé 
+      1.629       0.023       1.669 
+
+> system.time(print(qplot(x + 2, y, data = df,
+                          alpha = I(0.1), colour = f) +
+                    geom_smooth(method = "lm") +
+                    geom_hline(aes(yintercept = mean(y)))))
+utilisateur     système      écoulé 
+      2.659       0.045       2.718 
 }}}
