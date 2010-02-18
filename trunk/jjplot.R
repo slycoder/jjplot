@@ -103,7 +103,8 @@ qplot.fast <-
                     "qplot.abline",
                     "qplot.point",
                     "qplot.line",
-                    "qplot.text")
+                    "qplot.text",
+                    "qplot.bar")
     
     qplot.hline <- function(lwd = 1.5, col = NULL, lty = "solid") {
       abline(h = layer.data$y,
@@ -164,6 +165,13 @@ qplot.fast <-
            col = match.colors(col, layer.data$color))
     }
 
+    qplot.bar <- function(col = NULL, fill = NULL, width = 1) {
+      rect(layer.data$x - width / 2, 0,
+           layer.data$x + width / 2, layer.data$y,
+           col = match.colors(fill, layer.data$fill, use.fill = TRUE),
+           border = match.colors(col, layer.data$color))
+    }
+    
     match.colors <- function(override.col, facet,
                              use.fill = FALSE,
                              use.alpha = TRUE) {

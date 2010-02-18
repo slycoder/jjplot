@@ -1,10 +1,22 @@
 source("jjplot.R")
 require("ggplot2")
 
+quartz()
+
+##### Examples ######
+
 df <- data.frame(x = 1:50,
                  y = rnorm(50))
 
-quartz()
+png("jjplot_test_006.png", width=640, height=480)
+
+qplot.fast(x, y, data = df,
+           xlab = "song number",
+           ylab = "bpm",
+           fill = y,
+           qplot.bar(col = "black"))
+
+dev.off()
 
 png("jjplot_test_005.png", width=640, height=480)
 
@@ -14,14 +26,9 @@ qplot.fast(x, y, data = df,
            qplot.line(),
            qplot.point(),
            qplot.fun.y(mean),
-           qplot.hline(lty = "dashed", col = "red"),
-           qplot.text(label = "Some label",
-                      x = 50, y = -2,
-                      hjust = 1, vjust = 0))
+           qplot.hline(lty = "dashed", col = "red"))
 
 dev.off()
-
-##### Examples ######
 
 png("jjplot_test_004.png", width=640, height=480)
 
