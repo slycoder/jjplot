@@ -28,23 +28,34 @@ qplot.fast <-
     eval.color <- eval(match.call()$color, data)
     eval.fill <- eval(match.call()$fill, data)
     eval.size <- eval(match.call()$size, data)
+
+    color.expr <- match.call()$color
+    fill.expr <- match.call()$fill   
     
     facet.x <- NULL
     facet.y <- NULL
+    facet.color <- NULL
+    facet.fill <- NULL
     
     qplot.facet <- function(f, facet = NULL) {
       eval.facet <- eval(match.call()$facet, data)
       stopifnot(!is.null(eval.facet))
 
-      facet.call <- match.call()$f
+      facet.call <- match.call()$facet
+      f.call <- match.call()$f
       
       faceted.df <- by(data.frame(x = eval.x, y = eval.y,
                                   f = eval.facet),
                        eval.facet,
                        function(df) { facet.x <<- df$x;
                                       facet.y <<- df$y;
-                                      cbind(eval(facet.call),
-                                            f = df$f[1]) })
+                                      result <- eval(f.call)
+                                      if (!is.null(fill.expr) && facet.call == fill.expr)
+                                        result <- cbind(result, fill = df$f[1])
+                                      if (!is.null(color.expr) && facet.call == color.expr)
+                                        result <- cbind(result, color = df$f[1])
+                                      result <- cbind(result, .facet = df$f[1])
+                                    })
       do.call(rbind, faceted.df)
     }
 
@@ -75,8 +86,15 @@ qplot.fast <-
                  y = jitter(as.numeric(facet.y), yfactor))
     }
     
-    qplot.identity <- function() {
-      data.frame(x = facet.x, y = facet.y)
+    qplot.identity <- function() {      
+      result <- data.frame(x = facet.x, y = facet.y)
+      if (!is.null(facet.color)) {
+        result <- cbind(result, color = facet.color)
+      }
+      if (!is.null(facet.fill)) {
+        result <- cbind(result, fill = facet.fill)
+      }
+      result
     }
 
     ## Geoms
@@ -87,14 +105,16 @@ qplot.fast <-
     
     qplot.hline <- function(lwd = 1.5, col = NULL, lty = "solid") {
       abline(h = layer.data$y,
-             col = match.colors(col, layer.data$f, use.alpha = F),
+             col = match.colors(col, layer.data$color,
+               use.alpha = F),
              lwd = lwd,
              lty = lty)
     }    
     
     qplot.vline <- function(lwd = 1.5, col = NULL, lty = "solid") {
       abline(v = layer.data$x,
-             col = match.colors(col, layer.data$f, use.alpha = F),
+             col = match.colors(col, layer.data$color,
+               use.alpha = F),
              lwd = lwd,
              lty = lty)
     }
@@ -103,7 +123,8 @@ qplot.fast <-
       for (ii in 1:nrow(layer.data)) {
         abline(b = layer.data$a[ii],
                a = layer.data$b[ii],             
-               col = match.colors(col, layer.data$f[ii], use.alpha = F),
+               col = match.colors(col, layer.data$color[ii],
+                 use.alpha = F),
                lwd = lwd,
                lty = lty)
       }
@@ -113,10 +134,10 @@ qplot.fast <-
       points(layer.data$x, layer.data$y,
              pch = pch,
              cex = size,
-             col = match.colors(col, eval.color),
-             bg = match.colors(col, eval.fill, use.fill=TRUE))
+             col = match.colors(col, layer.data$color),
+             bg = match.colors(col, layer.data$fill, use.fill=TRUE))
     }
-    
+
     match.colors <- function(override.col, facet,
                              use.fill = FALSE,
                              use.alpha = TRUE) {
@@ -177,12 +198,16 @@ qplot.fast <-
     }
     
     is.stat <- function(layer.call) {
-      return (as.character(layer.call[[1]]) %in% stats.list)
+      return(is.call(layer.call) && as.character(layer.call[[1]]) %in% stats.list)
     }
 
     is.geom <- function(layer.call) {
-      return (as.character(layer.call[[1]]) %in% geoms.list)
+      return(is.call(layer.call) && as.character(layer.call[[1]]) %in% geoms.list)
     }
+
+    eval.grid.x <- eval(match.call()$grid.x, data)
+    eval.grid.y <- eval(match.call()$grid.y, data)
+    stopifnot(is.null(eval.grid.x))
     
     if (is.factor(eval.x)) {
       xrange <- range(1:nlevels(eval.x))
@@ -196,20 +221,26 @@ qplot.fast <-
       yrange <- range(eval.y)
     }
 
-    nlayers <- length(match.call()) - 6
+    nlayers <- length(match.call()) - 4
     layer.data.list <- list()
     for (layer in 1:nlayers) {
-      layer.call <- match.call()[[layer + 6]]
+      layer.call <- match.call()[[layer + 4]]
       facet.x <- eval.x
       facet.y <- eval.y
       if (is.stat(layer.call)) {
         cat("Working on stat ")
         print(layer)
-        cur.layer <- eval(layer.call)
-        layer.data.list <- c(layer.data.list,
-                             list(cur.layer))
+        if (!is.null(eval.grid.y)) {
+          cur.layer <- eval(substitute(qplot.facet(layer.call, grid.call),
+                                       list(layer.call = layer.call,
+                                            grid.call = match.call()$grid.y)))
+        } else {
+          cur.layer <- eval(layer.call)
+        }
         xrange <- range(c(xrange, cur.layer$x))
         yrange <- range(c(yrange, cur.layer$y))        
+        layer.data.list <- c(layer.data.list,
+                             list(cur.layer))
       }
     }
     
@@ -236,42 +267,163 @@ qplot.fast <-
       labels.y <- TRUE
       label.y.width <- 4      
     }
-    
-    plot.new()
-    par(mar = c(3, label.y.width, 1, 1))
-    plot.window(xlim = xrange, ylim = yrange, xaxs = "i", yaxs = "i")
-    rect(xrange[1], yrange[1],
-         xrange[2], yrange[2],
-         col = "grey90", border = NA)
-    grid.multi()
 
-    layer.data.index <- 0
-    for (layer in 1:nlayers) {
-      layer.call <- match.call()[[layer + 6]]
-      if (is.stat(layer.call)) {
-        layer.data.index <- layer.data.index + 1
-      } else if (is.geom(layer.call)) {
-        cat("Working on geom ")
-        print(layer)
-        if (layer.data.index == 0) {
-          ## Implicit identity
-          layer.data <- data.frame(x = eval.x,
-                                   y = eval.y)
-        } else {
-          layer.data <- layer.data.list[[layer.data.index]]
+    ..subplot <- function(calls, .subset = NULL,
+                          draw.x.axis = TRUE) {
+      plot.new()      
+      par(mar = c(ifelse(draw.x.axis, 3, 1), label.y.width, 1, 1))
+      plot.window(xlim = xrange, ylim = yrange, xaxs = "i", yaxs = "i")
+      print(par("fig")[4] - par("fig")[3])
+      rect(xrange[1], yrange[1],
+           xrange[2], yrange[2],
+           col = "grey90", border = NA)
+      grid.multi()
+      
+      layer.data.index <- 0
+      for (layer in 1:nlayers) {
+        layer.call <- calls[[layer + 4]]
+        if (is.stat(layer.call)) {
+          layer.data.index <- layer.data.index + 1
+        } else if (is.geom(layer.call)) {
+          cat("Working on geom ")
+          print(layer)
+          if (layer.data.index == 0) {
+            ## Implicit identity
+            layer.data <<- data.frame(x = eval.x,
+                                      y = eval.y)
+            if (!is.null(eval.color)) {
+              layer.data <<- cbind(layer.data, color = eval.color)
+            }
+            if (!is.null(eval.fill)) {
+              layer.data <<- cbind(layer.data, fill = eval.fill)
+            }
+          } else {
+            layer.data <<- layer.data.list[[layer.data.index]]
+          }
+          if (!is.null(.subset)) {
+            layer.data <<- subset(layer.data, .facet == .subset) 
+          }
+          eval(layer.call)
         }
-        eval(layer.call)
+      }
+
+      if (draw.x.axis) {
+        axis(side=1, pretty.x, col = "grey50", col.axis = "grey50",
+             cex.axis = .9, labels = labels.x)
+      }
+      par(mgp = c(label.y.width - 1, 1.0, 0))
+      axis(side=2, pretty.y, col = "grey50", col.axis = "grey50",
+           las=1, cex.axis = .9, labels = labels.y)
+      if (is.null(calls$ylab)) {
+        title(ylab = calls$y)
+      } else {
+        title(ylab = calls$ylab)
+      }
+      if (draw.x.axis) {
+        par(mgp = c(1.5, 0.5, 0))      
+        if (is.null(calls$xlab)) {
+          title(xlab = calls$x)
+        } else {
+          title(xlab = calls$xlab)
+        }
+      }
+      if (!is.null(.subset)) {
+        title(main = .subset, cex.main = 1.0)        
+      } else if (!is.null(calls$main)) {
+        title(main = calls$main)
       }
     }
 
-    axis(side=1, pretty.x, col = "grey50", col.axis = "grey50",
-         mgp = c(3, 0.5, 0), cex.axis = .9, labels = labels.x)
-    par(mgp = c(label.y.width - 1, 0, 0))
-    axis(side=2, pretty.y, col = "grey50", col.axis = "grey50",
-         mgp = c(3, 0.75, 0), las=1, cex.axis = .9, labels = labels.y)
-    title(ylab = match.call()$y)
-    par(mgp = c(1.5, 0, 0))
-    title(xlab = match.call()$x)
+    if (is.null(eval.grid.y)) {
+      ..subplot(match.call())
+    } else {
+      total.height <- par("din")[2] * 2.54
+      axis.padding <- 2 * par("mai")[1] / par("mar")[1] * 2.54
+      height <- total.height / (nlevels(eval.grid.y) + axis.padding)
+      height <- c(rep(height, nlevels(eval.grid.y) - 1),
+                  height + axis.padding)
+      print(par("mai") / par("mar"))
+      layout(matrix(1:nlevels(eval.grid.y),
+                    nrow = nlevels(eval.grid.y)),
+             height = lcm(height))
+      print(par("mai") / par("mar"))      
+      print(height)
+      print(par("mex"))
+      print(par("cex"))
+      for (ll in levels(eval.grid.y)) {
+        cat("Doing facet ")
+        print(ll)
+        ..subplot(match.call(), .subset = ll,
+                  draw.x.axis = ll == levels(eval.grid.y)[nlevels(eval.grid.y)])
+      }
+    }
 }
 
+## Code below should not be called by anyone!
+## It sucks.
+
+draw.strip <- function(x.left, x.right, y.top, txt,
+                       flip = FALSE) {  
+  height <- strheight(txt, units = "user", cex = 0.75) * 1.7
+  if (!flip) {
+    rect(x.left, y.top - height, x.right, y.top,
+         col = "grey50", border = "black")
+    text(x = (x.left + x.right) / 2,
+         ## Makes vertical alignment more pleasant
+         y = y.top - height / 2 - height * .05,
+         labels = txt,
+         cex = 0.75)
+  } else {
+    usr <- par("usr")
+    rescale <- (usr[4] - usr[3]) / (usr[2] - usr[1])
+    height <- height / rescale
+    rect(y.top - height, x.right, y.top, x.left,
+         col = "grey50", border = "black")
+    
+    text(y = ((x.left + x.right) / 2),
+         x = (y.top - height / 2 - height * .05),
+         labels = txt,
+         srt = -90,
+         cex = 0.75)
+  }
+}
+
+split.plot <- function(splits, txts,
+                       margin,
+                       flip = FALSE) {
+  usr <- par("usr")
+
+  if (flip) {
+    top <- usr[2]
+    left <- usr[3]
+    right <- usr[4]
+  } else {
+    top <- usr[4]
+    left <- usr[1]
+    right <- usr[2]
+  }
+
+  lefts <- c(left, splits + margin)
+  rights <- c(splits - margin, right)
+
+  stopifnot(length(lefts) == length(txts))
+
+  for (ii in 1:length(splits)) {
+    if (flip) {
+      rect(usr[1], splits[ii] + margin,
+           usr[2], splits[ii] - margin,
+           col = "white", border = "white")
+    } else {
+      rect(splits[ii] - margin, usr[3], 
+           splits[ii] + margin, usr[4], 
+           col = "white", border = "white")
+    }
+  }
+
+  for (ii in 1:length(lefts)) {
+    draw.strip(lefts[ii], rights[ii],
+               top, txts[ii], flip)
+
+  }
+}
 

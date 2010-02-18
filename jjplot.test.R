@@ -1,21 +1,39 @@
-require("ggplot2")
 source("jjplot.R")
+require("ggplot2")
 
 df <- data.frame(state = rownames(state.x77),
-                 t((t(state.x77) - colMeans(state.x77)) /
-                   apply(state.x77, 2, sd)))
+                 region = state.region,
+                 state.x77)
 
-quartz()
+png("jjplot_test_004.png", width=640, height=480)
 
-png("jjplot_test_003.png", width=640, height=480)
-
-qplot.fast(state, variable, data = melt(df),
-           alpha = 1.0, fill = value,
-           qplot.point(pch = 22, size = 2))
+qplot.fast(Income, Murder, data = df,
+           color = region,
+           grid.y = region,
+           qplot.identity(),
+           qplot.point(),
+           qplot.fit(),
+           qplot.abline())
 
 dev.off()
 
 ##### Examples ######
+
+png("jjplot_test_003.png", width=640, height=480)
+
+df <- data.frame(state = rownames(state.x77),
+                 region = state.region,
+                 t((t(state.x77) - colMeans(state.x77)) /
+                   apply(state.x77, 2, sd)))
+
+melted <- melt(df, id.vars = c("state", "region"))
+
+qplot.fast(variable, state, data = df,
+           alpha = 1.0, fill = value,
+           ylab = "", xlab = "",
+           qplot.point(pch = 22, size = 2))
+
+dev.off()
 
 df <- data.frame(x = rnorm(10000) + (1:4) * 1,
                  f = factor(c('A', 'B', 'C', 'D')))
@@ -28,6 +46,7 @@ system.time(qplot.fast(x, f, data = df,
                        qplot.jitter(yfactor = 1, xfactor=1),
                        qplot.point()))
             
+source("jjplot.R")
 system.time(qplot.fast(x + 2, y, data = df,
                        alpha = 0.10, color = f,
                        qplot.point(),
