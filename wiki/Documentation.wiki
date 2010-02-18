@@ -12,6 +12,16 @@ Simply download the source from the "Source" tab above.  In R, all you need to d
 === 2010/17/02  ===
   * Fills and numeric color scales
   * Better handling of axis labels.
+  * Example:
+{{{
+df <- data.frame(state = rownames(state.x77),
+                 t((t(state.x77) - colMeans(state.x77)) /
+                   apply(state.x77, 2, sd)))
+
+qplot.fast(state, variable, data = melt(df),
+           alpha = 1.0, fill = value,
+           qplot.point(pch = 22, size = 2))
+}}}
 http://jjplot.googlecode.com/files/jjplot_test_003.png
 
 = Todo =
