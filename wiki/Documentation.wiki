@@ -10,7 +10,7 @@ Simply download the source from the "Source" tab above.  In R, all you need to d
 = What's new =
 
 === 2010/18/02  ===
-  * Added text and line geoms.
+  * Added text, line and bar geoms.
   * Example:
 {{{
 df <- data.frame(x = 1:50,
@@ -29,6 +29,14 @@ qplot.fast(x, y, data = df,
 }}}
 http://jjplot.googlecode.com/files/jjplot_test_005.png
 
+{{{
+qplot.fast(x, y, data = df,
+           xlab = "song number",
+           ylab = "bpm",
+           fill = y,
+           qplot.bar(col = "black"))
+}}}
+http://jjplot.googlecode.com/files/jjplot_test_006.png
 === 2010/17/02  ===
   * Numerous bug fixes with color/fill aesthetic assignments.
   * Parameters to set titles/labels.
