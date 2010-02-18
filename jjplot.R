@@ -20,15 +20,15 @@ grid.multi <- function(lty = "solid",
 qplot.fast <-
   function(x = NULL,
            y = NULL,
-           alpha = NULL,
-           color = NULL,
            data = NULL,
            ...) {
     eval.x <- eval(match.call()$x, data)
     eval.y <- eval(match.call()$y, data)
     eval.alpha <- eval(match.call()$alpha, data)
     eval.color <- eval(match.call()$color, data)
-
+    eval.fill <- eval(match.call()$fill, data)
+    eval.size <- eval(match.call()$size, data)
+    
     facet.x <- NULL
     facet.y <- NULL
     
@@ -80,6 +80,11 @@ qplot.fast <-
     }
 
     ## Geoms
+    geoms.list <- c("qplot.hline",
+                    "qplot.vline",
+                    "qplot.abline",
+                    "qplot.point")
+    
     qplot.hline <- function(lwd = 1.5, col = NULL, lty = "solid") {
       abline(h = layer.data$y,
              col = match.colors(col, layer.data$f, use.alpha = F),
@@ -104,42 +109,79 @@ qplot.fast <-
       }
     }
     
-    qplot.point <- function(pch = 16, col = NULL) {      
+    qplot.point <- function(pch = 16, col = NULL, size = 1.0) {
       points(layer.data$x, layer.data$y,
              pch = pch,
-             col = match.colors(col, eval.color))
+             cex = size,
+             col = match.colors(col, eval.color),
+             bg = match.colors(col, eval.fill, use.fill=TRUE))
     }
     
-    match.colors <- function(override.col, facet, use.alpha = TRUE) {
+    match.colors <- function(override.col, facet,
+                             use.fill = FALSE,
+                             use.alpha = TRUE) {
       if (!is.null(override.col)) {
         override.col
       } else if (is.null(facet)) {
         "black"
       } else if (use.alpha) {
-        colors.with.alpha[facet]
+        if (use.fill) {
+          fills.with.alpha(facet)
+        } else {
+          colors.with.alpha(facet)          
+        }
       } else {
-        colors[facet]        
+        if (use.fill) {
+          fills(facet)
+        } else {
+          colors(facet)
+        }
       }
     }
 
-    if (is.null(eval.color)) {
-      colors <- "black"
-    } else {
-      stopifnot(is.factor(eval.color))
-      colors <- hcl(h = seq(0, 360, length.out = nlevels(eval.color) + 1),
-                    l = 75,
-                    c = 55)
-      colors <- colors[-length(colors)]
+    make.color.scale <- function(cc, alpha) {
+      if (is.null(cc)) {
+        function(z) { rgb(0, 0, 0, alpha) }
+      } else if (is.factor(cc)) {
+        colors <- hcl(h = seq(0, 360, length.out = nlevels(cc) + 1),
+                      l = 75,
+                      c = 55,
+                      alpha = alpha)
+        colors <- colors[-length(colors)]
+        function(z) { colors[z] }
+      } else {
+        cr <- colorRamp(c('red', 'white', 'blue'))
+        rr <- range(cc)
+        function(z) {
+          z[z > rr[2]] <- rr[2]
+          z[z < rr[1]] <- rr[1]
+          rgb(cr((z  - rr[1]) / (rr[2] - rr[1])),
+              alpha = alpha * 255,
+              maxColorValue = 255)
+        }
+      }
     }
 
-    if (!is.null(eval.alpha)) {
-      colors.with.alpha <- rgb(t(col2rgb(colors)),
-                               alpha = eval.alpha * 255,
-                               maxColorValue = 255)
+    if (is.null(eval.alpha)) {
+      eval.alpha <- 1.0
     }
+      
+    colors <- make.color.scale(eval.color, 1.0)
+    fills <- make.color.scale(eval.fill, 1.0)
 
+    colors.with.alpha <- make.color.scale(eval.color, eval.alpha)
+    fills.with.alpha <- make.color.scale(eval.fill, eval.alpha)
+
+    if (is.null(eval.size)) {
+      eval.size <- 1
+    }
+    
     is.stat <- function(layer.call) {
       return (as.character(layer.call[[1]]) %in% stats.list)
+    }
+
+    is.geom <- function(layer.call) {
+      return (as.character(layer.call[[1]]) %in% geoms.list)
     }
     
     if (is.factor(eval.x)) {
@@ -188,12 +230,15 @@ qplot.fast <-
     if (is.factor(eval.y)) {    
       pretty.y <- 1:nlevels(eval.y)
       labels.y <- levels(eval.y)
+      label.y.width <- max(nchar(levels(eval.y))) - 4
     } else {
       pretty.y <- pretty(yrange)
-      labels.y <- TRUE      
+      labels.y <- TRUE
+      label.y.width <- 4      
     }
     
     plot.new()
+    par(mar = c(3, label.y.width, 1, 1))
     plot.window(xlim = xrange, ylim = yrange, xaxs = "i", yaxs = "i")
     rect(xrange[1], yrange[1],
          xrange[2], yrange[2],
@@ -205,7 +250,7 @@ qplot.fast <-
       layer.call <- match.call()[[layer + 6]]
       if (is.stat(layer.call)) {
         layer.data.index <- layer.data.index + 1
-      } else {
+      } else if (is.geom(layer.call)) {
         cat("Working on geom ")
         print(layer)
         if (layer.data.index == 0) {
@@ -221,10 +266,12 @@ qplot.fast <-
 
     axis(side=1, pretty.x, col = "grey50", col.axis = "grey50",
          mgp = c(3, 0.5, 0), cex.axis = .9, labels = labels.x)
+    par(mgp = c(label.y.width - 1, 0, 0))
     axis(side=2, pretty.y, col = "grey50", col.axis = "grey50",
          mgp = c(3, 0.75, 0), las=1, cex.axis = .9, labels = labels.y)
-    title(main = match.call(),
-          xlab = match.call()$x, ylab = match.call()$y)
+    title(ylab = match.call()$y)
+    par(mgp = c(1.5, 0, 0))
+    title(xlab = match.call()$x)
 }
 
 
