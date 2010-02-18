@@ -7,12 +7,17 @@ jjplot is intended to be a replacement for ggplot2 written entirely in base grap
 = Installation =
 Simply download the source from the "Source" tab above.  In R, all you need to do is `source("jjplot.R")` and you're ready to go.  See jjplot.test.R (or documentation below) for example usages.
 
+= What's new =
+
+=== 2010/17/02  ===
+  * Fills and numeric color scales
+
+http://jjplot.googlecode.com/files/jjplot_test_003.png
+
 = Todo =
 I will add functionality as I need it.  Here is the short list:
 
-  * Numeric color scales
   * Expose methods to set title and axis titles/labels
-  * geom_fill or geom_tile
   * Faceting into multiple graphs
   * Legends
   * scale_size
