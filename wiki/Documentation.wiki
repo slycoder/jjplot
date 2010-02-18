@@ -10,7 +10,7 @@ Simply download the source from the "Source" tab above.  In R, all you need to d
 = What's new =
 
 === 2010/18/02  ===
-  * Added text, line and bar geoms.
+  * Added text, line, box and bar geoms.
   * Example:
 {{{
 df <- data.frame(x = 1:50,
@@ -37,6 +37,20 @@ qplot.fast(x, y, data = df,
            qplot.bar(col = "black"))
 }}}
 http://jjplot.googlecode.com/files/jjplot_test_006.png
+
+{{{
+df <- data.frame(state = rownames(state.x77),
+                 region = state.region,
+                 state.x77)
+
+qplot.fast(region, Income, data = df,
+           fill = region,
+           qplot.facet(qplot.quantile(),
+                       facet = region),
+           qplot.box())
+}}}
+http://jjplot.googlecode.com/files/jjplot_test_007.png
+
 === 2010/17/02  ===
   * Numerous bug fixes with color/fill aesthetic assignments.
   * Parameters to set titles/labels.
