@@ -118,6 +118,7 @@ Note that many of these typical graphical parameters such as `lwd` and `lty`.
   * `qplot.point()` - Draw points at positions given by `x` and `y` (i.e., a scatterplot).
   * `qplot.line()` - Draw lines between `x` and `y` points (i.e., a lineplot).
   * `qplot.text()` - Draw text at `x`, `y` locations using `label`.
+  * `qplot.bar()` - Draw bars centered at each `x` of height `y`.  
 
 = Examples =
 {{{
