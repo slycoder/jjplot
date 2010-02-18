@@ -10,6 +10,27 @@ Simply download the source from the "Source" tab above.  In R, all you need to d
 = What's new =
 
 === 2010/17/02  ===
+  * Numerous bug fixes with color/fill aesthetic assignments.
+  * Parameters to set titles/labels.
+  * Added `grid` parameters to plot facets in subplots.
+  * Example:
+{{{
+
+df <- data.frame(state = rownames(state.x77),
+                 region = state.region,
+                 state.x77)
+
+qplot.fast(Income, Murder, data = df,
+           color = region,
+           grid.y = region,
+           qplot.identity(),
+           qplot.point(),
+           qplot.fit(),
+           qplot.abline())
+}}}
+
+http://jjplot.googlecode.com/files/jjplot_test_004.png
+
   * Fills and numeric color scales
   * Better handling of axis labels.
   * Example:
@@ -27,12 +48,12 @@ http://jjplot.googlecode.com/files/jjplot_test_003.png
 = Todo =
 I will add functionality as I need it.  Here is the short list:
 
-  * Expose methods to set title and axis titles/labels
-  * Faceting into multiple graphs
   * Legends
   * scale_size
   * manual color scales
   * scale_shape
+  * Faceting along both axes
+  * Beter looking faceting
 
 = Concepts =
 The workhorse function of jjplot is `qplot.fast`, which takes the following formals:
