@@ -65,6 +65,7 @@ qplot.fast <-
                     "qplot.fit",
                     "qplot.jitter",
                     "qplot.identity",
+                    "qplot.quantile",
                     "qplot.facet")
     
     qplot.fun.x <- function(f) {
@@ -86,6 +87,14 @@ qplot.fast <-
                  y = jitter(as.numeric(facet.y), yfactor))
     }
     
+    qplot.quantile <- function() {
+      stopifnot(all(facet.x == facet.x[1]))
+      result <- data.frame(facet.x[1], t(quantile(facet.y)))
+      colnames(result) <- c("x", "quantile.0", "quantile.25", "quantile.50", "quantile.75", "quantile.100")
+      rownames(result) <- NULL
+      result
+    }
+    
     qplot.identity <- function() {      
       result <- data.frame(x = facet.x, y = facet.y)
       if (!is.null(facet.color)) {
@@ -104,7 +113,8 @@ qplot.fast <-
                     "qplot.point",
                     "qplot.line",
                     "qplot.text",
-                    "qplot.bar")
+                    "qplot.bar",
+                    "qplot.box")
     
     qplot.hline <- function(lwd = 1.5, col = NULL, lty = "solid") {
       abline(h = layer.data$y,
@@ -171,6 +181,27 @@ qplot.fast <-
            col = match.colors(fill, layer.data$fill, use.fill = TRUE),
            border = match.colors(col, layer.data$color))
     }
+
+    qplot.box <- function(col = NULL, fill = NULL, width = 0.5,
+                         lwd = 1.5, lty = "solid") {
+      rect(as.numeric(layer.data$x) - width / 2,
+           layer.data$quantile.25,
+           as.numeric(layer.data$x) + width / 2,
+           layer.data$quantile.75,
+           lwd = lwd,
+           lty = lty,
+           col = match.colors(fill, layer.data$fill, use.fill = TRUE),
+           border = match.colors(col, layer.data$color))
+
+      segments(c(layer.data$x, layer.data$x, as.numeric(layer.data$x) - width / 2),
+               c(layer.data$quantile.0, layer.data$quantile.100, layer.data$quantile.50),
+               c(layer.data$x, layer.data$x, as.numeric(layer.data$x) + width / 2),
+               c(layer.data$quantile.25, layer.data$quantile.75, layer.data$quantile.50),
+               lwd = lwd,
+               lty = lty,
+               col = match.colors(col, layer.data$color))
+    }
+
     
     match.colors <- function(override.col, facet,
                              use.fill = FALSE,
@@ -244,7 +275,7 @@ qplot.fast <-
     stopifnot(is.null(eval.grid.x))
     
     if (is.factor(eval.x)) {
-      xrange <- range(1:nlevels(eval.x))
+      xrange <- c(0.5, nlevels(eval.x) + 0.5)
     } else {
       xrange <- range(eval.x)
     }
