@@ -11,7 +11,7 @@ Simply download the source from the "Source" tab above.  In R, all you need to d
 
 === 2010/17/02  ===
   * Fills and numeric color scales
-
+  * Better handling of axis labels.
 http://jjplot.googlecode.com/files/jjplot_test_003.png
 
 = Todo =
