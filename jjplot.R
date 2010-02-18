@@ -101,7 +101,9 @@ qplot.fast <-
     geoms.list <- c("qplot.hline",
                     "qplot.vline",
                     "qplot.abline",
-                    "qplot.point")
+                    "qplot.point",
+                    "qplot.line",
+                    "qplot.text")
     
     qplot.hline <- function(lwd = 1.5, col = NULL, lty = "solid") {
       abline(h = layer.data$y,
@@ -136,6 +138,30 @@ qplot.fast <-
              cex = size,
              col = match.colors(col, layer.data$color),
              bg = match.colors(col, layer.data$fill, use.fill=TRUE))
+    }
+
+    qplot.line <- function(lty = "solid", col = NULL, lwd = 1.5) {
+      lines(layer.data$x, layer.data$y,
+             lty = lty,
+             lwd = lwd,
+             col = match.colors(col, layer.data$color))
+    }
+
+    qplot.text <- function(col = NULL, label = NULL,
+                           x = NULL, y = NULL, hjust = 0.5,
+                           vjust = 0.5) {
+      if (is.null(x)) {
+        x <- layer.data$x
+      }
+      if (is.null(y)) {
+        y <- layer.data$y
+      }
+      if (is.null(label)) {
+        label <- layer.data$label
+      }
+      text(x, y = y, labels = label,
+           adj = c(hjust, vjust),
+           col = match.colors(col, layer.data$color))
     }
 
     match.colors <- function(override.col, facet,
@@ -273,7 +299,6 @@ qplot.fast <-
       plot.new()      
       par(mar = c(ifelse(draw.x.axis, 3, 1), label.y.width, 1, 1))
       plot.window(xlim = xrange, ylim = yrange, xaxs = "i", yaxs = "i")
-      print(par("fig")[4] - par("fig")[3])
       rect(xrange[1], yrange[1],
            xrange[2], yrange[2],
            col = "grey90", border = NA)
@@ -342,14 +367,9 @@ qplot.fast <-
       height <- total.height / (nlevels(eval.grid.y) + axis.padding)
       height <- c(rep(height, nlevels(eval.grid.y) - 1),
                   height + axis.padding)
-      print(par("mai") / par("mar"))
       layout(matrix(1:nlevels(eval.grid.y),
                     nrow = nlevels(eval.grid.y)),
              height = lcm(height))
-      print(par("mai") / par("mar"))      
-      print(height)
-      print(par("mex"))
-      print(par("cex"))
       for (ll in levels(eval.grid.y)) {
         cat("Doing facet ")
         print(ll)
