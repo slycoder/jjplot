@@ -46,6 +46,16 @@ qplot.fast(Income, Murder, data = df,
 
 dev.off()
 
+png("jjplot_test_007.png", width=640, height=480)
+
+qplot.fast(region, Income, data = df,
+           fill = region,
+           qplot.facet(qplot.quantile(),
+                       facet = region),
+           qplot.box())
+
+dev.off()
+
 png("jjplot_test_003.png", width=640, height=480)
 
 df <- data.frame(state = rownames(state.x77),
