@@ -9,6 +9,26 @@ Simply download the source from the "Source" tab above.  In R, all you need to d
 
 = What's new =
 
+=== 2010/18/02  ===
+  * Added text and line geoms.
+  * Example:
+{{{
+df <- data.frame(x = 1:50,
+                 y = rnorm(50))
+
+qplot.fast(x, y, data = df,
+           xlab = "song number",
+           ylab = "bpm",
+           qplot.line(),
+           qplot.point(),
+           qplot.fun.y(mean),
+           qplot.hline(lty = "dashed", col = "red"),
+           qplot.text(label = "Some label",
+                      x = 50, y = -2,
+                      hjust = 1, vjust = 0))
+}}}
+http://jjplot.googlecode.com/files/jjplot_test_005.png
+
 === 2010/17/02  ===
   * Numerous bug fixes with color/fill aesthetic assignments.
   * Parameters to set titles/labels.
@@ -59,7 +79,7 @@ I will add functionality as I need it.  Here is the short list:
 The workhorse function of jjplot is `qplot.fast`, which takes the following formals:
 
 {{{
-  qplot.fast(x = NULL, y = NULL, data = NULL, alpha = NULL, color = NULL, ...)
+  qplot.fast(x = NULL, y = NULL, data = NULL, alpha = NULL, color = NULL, grid.y = NULL, grid.x = NULL, ...)
 }}}
 
   * `x` - An expression to map to the x-axis.
@@ -68,6 +88,7 @@ The workhorse function of jjplot is `qplot.fast`, which takes the following form
   * `alpha` - An expression to map to the alpha channel.
   * `color` - An expression to map to the colors of each element in the data frame.  This expression may be a factor or a numeric.   If it is a factor, colors will be chosen automatically by choosing maximally distinct hues for each factor.  For numerics, a continuous scale will be chosen.
   * `fill` - An expression to map to the colors of each element in the data frame, like `color`.  Unlike `color`, fill will be used to specify the background or fill of visual elements.  
+  * `grid.x` and `grid.y` - Build subplots for each facet defined by the factor passed to these functions (see example above for details).  Note that these implicitly wrap each subsequent statistic in `qplot.facet` (see below). 
   * `...` - Statistic and geometry functions to apply to the data.
 
 After the mapping performed by named arguments, each statistic and geometry function is successively applied.  Statistic functions can be understood as transformations of the data: they take a data frame, compute statistics over that data, and produce a new data frame.  Geometry functions take the data frames output by statistic functions and display them graphically.
@@ -87,7 +108,8 @@ Note that many of these typical graphical parameters such as `lwd` and `lty`.
   * `qplot.vline()` - Draw vertical lines at positions given by the column `x`.  
   * `qplot.abline()` - Draw lines with slope and intercept given by the columns `a` and `b`.  
   * `qplot.point()` - Draw points at positions given by `x` and `y` (i.e., a scatterplot).
-
+  * `qplot.line()` - Draw lines between `x` and `y` points (i.e., a lineplot).
+  * `qplot.text()` - Draw text at `x`, `y` locations using `label`.
 
 = Examples =
 {{{
