@@ -1,6 +1,6 @@
 = Introduction =
 
-jjplot is intended to be a replacement for ggplot2 written entirely in base graphics.  The hope is that it will be fast and functional.  Note that semantics may be slightly different that ggplot2 in places.
+jjplot is intended to be a replacement for ggplot2 written entirely in base graphics.  The hope is that it will be fast and functional.  Note that semantics may be slightly different than ggplot2 in places.
 
 *ggplot2 is still _way_ more functional than jjplot, so take comparisons with a grain of salt*
 
