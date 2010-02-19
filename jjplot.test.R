@@ -1,3 +1,4 @@
+source("jjplot.R")
 
 quartz()
 
@@ -77,13 +78,11 @@ df$y <- 1:4 * df$x + rnorm(10000)
 
 png("jjplot_test_%03d.png", width=640, height=480)
 
-source("jjplot.R")
 system.time(qplot.fast(x, f, data = df,
                        alpha = 0.10, color = f,
                        qplot.jitter(yfactor = 1, xfactor=1),
                        qplot.point()))
             
-source("jjplot.R")
 system.time(qplot.fast(x + 2, y, data = df,
                        alpha = 0.10, color = f,
                        qplot.point(),
