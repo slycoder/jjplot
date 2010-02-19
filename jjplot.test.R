@@ -2,6 +2,14 @@ source("jjplot.R")
 
 quartz()
 
+df <- data.frame(x = sample(factor(LETTERS[1:10]), 100, replace=TRUE),
+                 y = seq(0, 20, length.out = 100))
+
+jjplot(x, y, data = df,
+       ylab = "count",
+       jjplot.table(),
+       jjplot.bar(col = "white"))
+
 ##### Examples ######
 
 df <- data.frame(x = 1:50,

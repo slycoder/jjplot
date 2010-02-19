@@ -49,6 +49,7 @@ jjplot <-
                     "jjplot.jitter",
                     "jjplot.identity",
                     "jjplot.quantile",
+                    "jjplot.table",
                     "jjplot.facet")
     
     jjplot.fun.x <- function(f) {
@@ -78,6 +79,11 @@ jjplot <-
       rownames(result) <- NULL
       result
     }
+
+    jjplot.table <- function() {
+      tt <- table(facet.data$x)
+      print(data.frame(x = names(tt), y = as.numeric(tt)))
+    }    
     
     jjplot.identity <- function() {
       facet.data
