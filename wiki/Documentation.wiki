@@ -93,6 +93,7 @@ http://jjplot.googlecode.com/files/jjplot_test_003.png
 = Todo =
 I will add functionality as I need it.  Here is the short list:
 
+  * Tweak margins/ axis
   * Legends
   * scale_size
   * manual color scales
@@ -147,10 +148,10 @@ df$y <- 1:4 * df$x + rnorm(10000)
 }}}
 
 {{{
-> qplot.fast(x, f, data = df,
-             alpha = 0.10, color = f,
-             qplot.jitter(yfactor = 1, xfactor=1),
-             qplot.point()))
+> jjplot(x, f, data = df,
+         alpha = 0.10, color = f,
+         jjplot.jitter(yfactor = 1, xfactor=1),
+         jjplot.point()))
 }}}
 
 This function will first set x values to the numeric column `x` in the data frame. 
@@ -160,13 +161,13 @@ The points are jittered along both the x and y axis, and then these jittered poi
 http://jjplot.googlecode.com/files/jjplot_test_001.png
 
 {{{
-> qplot.fast(x + 2, y, data = df,
-             alpha = 0.10, color = f,
-             qplot.point(),
-             qplot.facet(qplot.fit(), facet = f),
-             qplot.abline(),
-             qplot.fun.y(mean),
-             qplot.hline(lty = "dashed")))
+> jjplot(x + 2, y, data = df,
+         alpha = 0.10, color = f,
+         jjplot.point(),
+         jjplot.facet(qplot.fit(), facet = f),
+         jjplot.abline(),
+         jjplot.fun.y(mean),
+         jjplot.hline(lty = "dashed")))
 }}}
 
 This function will set the x values to `x + 2` and the y values to the `y` column in the data frame.  Once again, points will be colored according to `f`.   The first `qplot.point()` will then plot these as a scatter plot (because of the implicit identity statistic).  The next statement applies a least-squares fit to each subset of the data defined by `f`, and the following line draws lines corresponding to these fits.   Finally, the last two lines compute the mean y value of all the points in the data frame and draws a dashed horizontal line at the mean value.
@@ -174,22 +175,23 @@ This function will set the x values to `x + 2` and the y values to the `y` colum
 http://jjplot.googlecode.com/files/jjplot_test_002.png
 
 = Performance Comparison =
+* Warning, these may be out of date! *
 == jjplot ==
 {{{
-> system.time(qplot.fast(x, f, data = df,
-                         alpha = 0.10, color = f,
-                         qplot.jitter(yfactor = 1, xfactor=1),
-                         qplot.point()))
+> system.time(jjplot(x, f, data = df,
+                     alpha = 0.10, color = f,
+                     jjplot.jitter(yfactor = 1, xfactor=1),
+                     jjplot.point()))
 utilisateur     système      écoulé 
       0.249       0.006       0.267 
 
-> system.time(qplot.fast(x + 2, y, data = df,
-                         alpha = 0.10, color = f,
-                         qplot.point(),
-                         qplot.facet(qplot.fit(), facet = f),
-                         qplot.abline(),
-                         qplot.fun.y(mean),
-                         qplot.hline(lty = "dashed")))
+> system.time(jjplot(x + 2, y, data = df,
+                     alpha = 0.10, color = f,
+                     jjplot.point(),
+                     jjplot.facet(qplot.fit(), facet = f),
+                     jjplot.abline(),
+                     jjplot.fun.y(mean),
+                     jjplot.hline(lty = "dashed")))
 utilisateur     système      écoulé 
       0.355       0.011       0.388 
 }}}
