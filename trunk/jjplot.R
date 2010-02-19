@@ -4,7 +4,6 @@ require("grid")
 
 jjplot <-
   function(x = NULL,
-           y = NULL,
            data = NULL,
            ...) {
     op <- par(no.readonly = TRUE)
@@ -82,7 +81,7 @@ jjplot <-
 
     jjplot.table <- function() {
       tt <- table(facet.data$x)
-      print(data.frame(x = names(tt), y = as.numeric(tt)))
+      data.frame(x = names(tt), y = as.numeric(tt))
     }    
     
     jjplot.identity <- function() {
@@ -212,7 +211,6 @@ jjplot <-
                       col = match.colors(col, layer.data$color)))
     }
 
-    
     match.colors <- function(override.col, facet,
                              use.fill = FALSE) {
       if (!is.null(override.col)) {
@@ -270,26 +268,34 @@ jjplot <-
       return(is.call(layer.call) && as.character(layer.call[[1]]) %in% geoms.list)
     }
 
+    geom.expansion <- function(call) {
+      if (is.call(layer.call) && as.character(layer.call[[1]]) == "jjplot.bar") {
+        list(y = 0)
+      } else {
+        list()
+      }
+    }
+        
     eval.grid.x <- eval(match.call()$grid.x, data)
     eval.grid.y <- eval(match.call()$grid.y, data)
     stopifnot(is.null(eval.grid.x))
+
+    expand.range <- function(old.range, new.data) {
+      if (is.factor(new.data)) {
+        range(c(0.5, nlevels(new.data) + 0.5, old.range))
+      } else {
+        range(c(old.range, new.data))
+      }
+    }
+
+    xrange <- NULL
+    yrange <- NULL
     
-    if (is.factor(eval.x)) {
-      xrange <- c(0.5, nlevels(eval.x) + 0.5)
-    } else {
-      xrange <- range(eval.x)
-    }
-
-    if (is.factor(eval.y)) {
-      yrange <- range(1:nlevels(eval.y))      
-    } else {
-      yrange <- range(eval.y)
-    }
-
-    nlayers <- length(match.call()) - 4
+    nlayers <- length(match.call()) - 3
     layer.data.list <- list()
+    stat.before.geom <- FALSE
     for (layer in 1:nlayers) {
-      layer.call <- match.call()[[layer + 4]]
+      layer.call <- match.call()[[layer + 3]]
 
       facet.data <- data.frame(x = eval.x,
                                y = eval.y)
@@ -307,10 +313,20 @@ jjplot <-
         } else {
           cur.layer <- eval(layer.call)
         }
-        xrange <- range(c(xrange, cur.layer$x))
-        yrange <- range(c(yrange, cur.layer$y))        
+        xrange <- expand.range(xrange, cur.layer$x)
+        yrange <- expand.range(yrange, cur.layer$y)    
         layer.data.list <- c(layer.data.list,
                              list(cur.layer))
+        stat.before.geom <- TRUE
+      }
+      if (is.geom(layer.call) && !stat.before.geom) {        
+        xrange <- expand.range(xrange, eval.x)
+        yrange <- expand.range(yrange, eval.y)    
+      }
+      if (is.geom(layer.call)) {
+        extra.data <- geom.expansion(layer.call)
+        xrange <- expand.range(xrange, extra.data$x)
+        yrange <- expand.range(yrange, extra.data$y)
       }
     }
     
@@ -363,7 +379,7 @@ jjplot <-
 
       layer.data.index <- 0
       for (layer in 1:nlayers) {
-        layer.call <- calls[[layer + 4]]
+        layer.call <- calls[[layer + 3]]
         if (is.stat(layer.call)) {
           layer.data.index <- layer.data.index + 1
         } else if (is.geom(layer.call)) {
