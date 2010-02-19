@@ -18,11 +18,8 @@ qplot.fast <-
 
     color.expr <- match.call()$color
     fill.expr <- match.call()$fill   
-    
-    facet.x <- NULL
-    facet.y <- NULL
-    facet.color <- NULL
-    facet.fill <- NULL
+
+    facet.data <- NULL
     
     qplot.facet <- function(f, facet = NULL) {
       eval.facet <- eval(match.call()$facet, data)
@@ -31,17 +28,16 @@ qplot.fast <-
       facet.call <- match.call()$facet
       f.call <- match.call()$f
       
-      faceted.df <- by(data.frame(x = eval.x, y = eval.y,
-                                  f = eval.facet),
+      faceted.df <- by(cbind(facet.data, .facet = eval.facet),
                        eval.facet,
-                       function(df) { facet.x <<- df$x;
-                                      facet.y <<- df$y;
+                       function(df) { facet.data <<- df
                                       result <- eval(f.call)
                                       if (!is.null(fill.expr) && facet.call == fill.expr)
-                                        result <- cbind(result, fill = df$f[1])
+                                        result$fill <- df$.facet[1]
                                       if (!is.null(color.expr) && facet.call == color.expr)
-                                        result <- cbind(result, color = df$f[1])
-                                      result <- cbind(result, .facet = df$f[1])
+                                        result$color <- df$.facet[1]
+                                      result$.facet <- df$.facet[1]
+                                      result
                                     })
       do.call(rbind, faceted.df)
     }
@@ -56,48 +52,35 @@ qplot.fast <-
                     "qplot.facet")
     
     qplot.fun.x <- function(f) {
-      data.frame(x = f(facet.x))
+      data.frame(x = f(facet.data$x))
     }
 
     qplot.fun.y <- function(f) {
-      data.frame(y = f(facet.y))
+      data.frame(y = f(facet.data$y))
     }
 
     qplot.fit <- function() {
-      model <- lm(facet.y ~ facet.x)
+      model <- lm(facet.data$y ~ facet.data$x)
       data.frame(b = coef(model)[1],
                  a = coef(model)[2])
     }
 
     qplot.jitter <- function(xfactor = 0, yfactor = 0) {
-      result <- data.frame(x = jitter(as.numeric(facet.x), xfactor),
-                           y = jitter(as.numeric(facet.y), yfactor))
-      if (!is.null(facet.color)) {
-        result <- cbind(result, color = facet.color)
-      }
-      if (!is.null(facet.fill)) {
-        result <- cbind(result, fill = facet.fill)
-      }
-      result
+      transform(facet.data,
+                x = jitter(as.numeric(facet.data$x), xfactor),
+                y = jitter(as.numeric(facet.data$y), yfactor))
     }
     
     qplot.quantile <- function() {
-      stopifnot(all(facet.x == facet.x[1]))
-      result <- data.frame(facet.x[1], t(quantile(facet.y)))
+      stopifnot(all(facet.data$x == facet.data$x[1]))
+      result <- data.frame(facet.data$x[1], t(quantile(facet.data$y)))
       colnames(result) <- c("x", "quantile.0", "quantile.25", "quantile.50", "quantile.75", "quantile.100")
       rownames(result) <- NULL
       result
     }
     
-    qplot.identity <- function() {      
-      result <- data.frame(x = facet.x, y = facet.y)
-      if (!is.null(facet.color)) {
-        result <- cbind(result, color = facet.color)
-      }
-      if (!is.null(facet.fill)) {
-        result <- cbind(result, fill = facet.fill)
-      }
-      result
+    qplot.identity <- function() {
+      facet.data
     }
 
     ## Geoms
@@ -301,10 +284,13 @@ qplot.fast <-
     layer.data.list <- list()
     for (layer in 1:nlayers) {
       layer.call <- match.call()[[layer + 4]]
-      facet.x <- eval.x
-      facet.y <- eval.y
-      facet.color <- eval.color
-      facet.fill <- eval.fill
+
+      facet.data <- data.frame(x = eval.x,
+                               y = eval.y)
+      if (!is.null(eval.color))
+        facet.data$color <- eval.color
+      if (!is.null(eval.fill))
+        facet.data$fill <- eval.fill
       if (is.stat(layer.call)) {
         cat("Working on stat ")
         print(layer)
@@ -349,9 +335,9 @@ qplot.fast <-
     xrange <- range(c(xrange, pretty.x))    
     yrange <- range(c(yrange, pretty.y))
     
+    grid.newpage()
     ..subplot <- function(calls, .subset = NULL,
                           draw.x.axis = TRUE) {
-      grid.newpage()
       grid.rect()
       pushViewport(plotViewport(c(3.1, 4.1, 2.1, 1.1)))      
       pushViewport(dataViewport(xscale = xrange,
@@ -407,21 +393,25 @@ qplot.fast <-
                  gp = gpar(col = "grey50", cex = 0.8))
       
       if (is.null(calls$ylab)) {
-        grid.text(calls$y, x = unit(-3, "lines"), rot = 90)        
+        grid.text(calls$y, x = unit(-3, "lines"), rot = 90,
+                  gp = gpar(col = "grey50", cex= 0.9))        
       } else {
-        grid.text(calls$ylab, x = unit(-3, "lines"), rot = 90)
+        grid.text(calls$ylab, x = unit(-3, "lines"), rot = 90,
+                  gp = gpar(col = "grey50", cex= 0.9))
       }
       if (draw.x.axis) {
         if (is.null(calls$xlab)) {
-          grid.text(calls$x, y = unit(-2, "lines"))
+          grid.text(calls$x, y = unit(-2, "lines"),
+                    gp = gpar(col = "grey50", cex= 0.9))
         } else {
-          grid.text(calls$xlab, y = unit(-2, "lines"))          
+          grid.text(calls$xlab, y = unit(-2, "lines"),
+                    gp = gpar(col = "grey50", cex= 0.9))
         }
       }
       if (!is.null(.subset)) {
-        title(main = .subset, cex.main = 1.0)        
+        grid.text(.subset, vjust = 0.0, y = unit(1, "npc"))
       } else if (!is.null(calls$main)) {
-        title(main = calls$main)
+        grid.text(calls$main, y = unit(2, "lines"))
       }
       popViewport(2)
     }
@@ -429,20 +419,27 @@ qplot.fast <-
     if (is.null(eval.grid.y)) {
       ..subplot(match.call())
     } else {
-      total.height <- par("din")[2] * 2.54
-      axis.padding <- 2 * par("mai")[1] / par("mar")[1] * 2.54
-      height <- total.height / (nlevels(eval.grid.y) + axis.padding)
-      height <- c(rep(height, nlevels(eval.grid.y) - 1),
-                  height + axis.padding)
-      layout(matrix(1:nlevels(eval.grid.y),
-                    nrow = nlevels(eval.grid.y)),
-             height = lcm(height))
-      for (ll in levels(eval.grid.y)) {
+##       total.height <- par("din")[2] * 2.54
+##       axis.padding <- 2 * par("mai")[1] / par("mar")[1] * 2.54
+##       height <- total.height / (nlevels(eval.grid.y) + axis.padding)
+##       height <- c(rep(height, nlevels(eval.grid.y) - 1),
+##                   height + axis.padding)
+      top.vp <- viewport(layout = grid.layout(nlevels(eval.grid.y), 1))
+      subplots <- list()
+      for (ll in 1:nlevels(eval.grid.y)) {
+        subplots[[ll]] <- viewport(name = paste(".subplot", ll, sep = "."),
+                                   layout.pos.row = ll, layout.pos.col = 1)
+      }
+      pushViewport(vpTree(top.vp, do.call(vpList, subplots)))
+      for (ll in 1:nlevels(eval.grid.y)) {
+        seekViewport(paste(".subplot", ll, sep = "."))
         cat("Doing facet ")
         print(ll)
-        ..subplot(match.call(), .subset = ll,
-                  draw.x.axis = ll == levels(eval.grid.y)[nlevels(eval.grid.y)])
+        ..subplot(match.call(), .subset = levels(eval.grid.y)[ll],
+                  draw.x.axis = T)
+#                  draw.x.axis = ll == nlevels(eval.grid.y))
       }
+      popViewport()
     }
 }
 
