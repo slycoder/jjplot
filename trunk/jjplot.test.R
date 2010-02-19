@@ -1,5 +1,3 @@
-source("jjplot.R")
-require("ggplot2")
 
 quartz()
 
@@ -63,9 +61,10 @@ df <- data.frame(state = rownames(state.x77),
                  t((t(state.x77) - colMeans(state.x77)) /
                    apply(state.x77, 2, sd)))
 
+require("ggplot2")
 melted <- melt(df, id.vars = c("state", "region"))
 
-qplot.fast(variable, state, data = df,
+qplot.fast(variable, state, data = melted,
            alpha = 1.0, fill = value,
            ylab = "", xlab = "",
            qplot.point(pch = 22, size = 2))
@@ -78,6 +77,7 @@ df$y <- 1:4 * df$x + rnorm(10000)
 
 png("jjplot_test_%03d.png", width=640, height=480)
 
+source("jjplot.R")
 system.time(qplot.fast(x, f, data = df,
                        alpha = 0.10, color = f,
                        qplot.jitter(yfactor = 1, xfactor=1),

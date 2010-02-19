@@ -1,21 +1,6 @@
 #!Rscript
 
-grid.multi <- function(lty = "solid",
-                       col = "white",
-                       size.major = 1.5,
-                       size.minor = 0.5) {
-  x.ticks <- axTicks(1)
-  y.ticks <- axTicks(2)
-  abline(v = x.ticks,
-         lty = lty, col = col, lwd = size.major)
-  abline(h = y.ticks,
-         lty = lty, col = col, lwd = size.major)
-
-  abline(v = (x.ticks[-1] + x.ticks[-length(x.ticks)]) / 2,
-         lty = lty, col = col, lwd = size.minor)         
-  abline(h = (y.ticks[-1] + y.ticks[-length(y.ticks)]) / 2,
-         lty = lty, col = col, lwd = size.minor)         
-}
+require("grid")
 
 qplot.fast <-
   function(x = NULL,
@@ -85,8 +70,15 @@ qplot.fast <-
     }
 
     qplot.jitter <- function(xfactor = 0, yfactor = 0) {
-      data.frame(x = jitter(as.numeric(facet.x), xfactor),
-                 y = jitter(as.numeric(facet.y), yfactor))
+      result <- data.frame(x = jitter(as.numeric(facet.x), xfactor),
+                           y = jitter(as.numeric(facet.y), yfactor))
+      if (!is.null(facet.color)) {
+        result <- cbind(result, color = facet.color)
+      }
+      if (!is.null(facet.fill)) {
+        result <- cbind(result, fill = facet.fill)
+      }
+      result
     }
     
     qplot.quantile <- function() {
@@ -119,45 +111,65 @@ qplot.fast <-
                     "qplot.box")
     
     qplot.hline <- function(lwd = 1.5, col = NULL, lty = "solid") {
-      abline(h = layer.data$y,
-             col = match.colors(col, layer.data$color,
-               use.alpha = F),
-             lwd = lwd,
-             lty = lty)
+      grid.lines(y = layer.data$y,
+                 default.units = "native",
+                 gp = gpar(col = match.colors(col, layer.data$color),
+                   lwd = lwd,
+                   lty = lty))
     }    
     
     qplot.vline <- function(lwd = 1.5, col = NULL, lty = "solid") {
-      abline(v = layer.data$x,
-             col = match.colors(col, layer.data$color,
-               use.alpha = F),
-             lwd = lwd,
-             lty = lty)
+      grid.lines(x = layer.data$x,
+                 default.units = "native",
+                 gp = gpar(col = match.colors(col, layer.data$color),
+                   lwd = lwd,
+                   lty = lty))
     }
 
     qplot.abline <- function(lwd = 1.5, col = NULL, lty = "solid") {
-      for (ii in 1:nrow(layer.data)) {
-        abline(b = layer.data$a[ii],
-               a = layer.data$b[ii],             
-               col = match.colors(col, layer.data$color[ii],
-                 use.alpha = F),
-               lwd = lwd,
-               lty = lty)
-      }
+      ## Find limits
+      xlim <- convertX(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)
+      ylim <- convertY(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)      
+
+      ystart <- xlim[1] * layer.data$a + layer.data$b
+      yend <- xlim[2] * layer.data$a + layer.data$b      
+
+      xstart <- (ylim[1] - layer.data$b) / layer.data$a
+      xend <- (ylim[2] - layer.data$b) / layer.data$a      
+
+      ystart <- ifelse(xstart < xlim[1],
+                       ystart,
+                       ylim[1])
+      yend <- ifelse(xend > xlim[2],
+                     yend,
+                     ylim[2])
+      
+      xstart <- pmax(xstart, xlim[1])
+      xend <- pmin(xend, xlim[2])      
+      
+      grid.segments(xstart, ystart, xend, yend,
+                    default.units = "native",
+                    gp = gpar(lwd = lwd,
+                      lty = lty,
+                      col = match.colors(col, layer.data$color)))
     }
     
     qplot.point <- function(pch = 16, col = NULL, size = 1.0) {
-      points(layer.data$x, layer.data$y,
-             pch = pch,
-             cex = size,
-             col = match.colors(col, layer.data$color),
-             bg = match.colors(col, layer.data$fill, use.fill=TRUE))
+      grid.points(layer.data$x,
+                  layer.data$y,
+                  pch = pch,
+                  size = unit(0.5 * size, "char"),
+                  gp = gpar(alpha = eval.alpha,
+                    col = match.colors(col, layer.data$color),
+                    fill = match.colors(col, layer.data$fill, use.fill = TRUE)))
     }
 
     qplot.line <- function(lty = "solid", col = NULL, lwd = 1.5) {
-      lines(layer.data$x, layer.data$y,
-             lty = lty,
-             lwd = lwd,
-             col = match.colors(col, layer.data$color))
+      grid.lines(x = layer.data$x, y = layer.data$y,
+                 default.units = "native",
+                 gp = gpar(col = match.colors(col, layer.data$color),
+                   lwd = lwd,
+                   lty = lty))
     }
 
     qplot.text <- function(col = NULL, label = NULL,
@@ -172,52 +184,52 @@ qplot.fast <-
       if (is.null(label)) {
         label <- layer.data$label
       }
-      text(x, y = y, labels = label,
-           adj = c(hjust, vjust),
-           col = match.colors(col, layer.data$color))
+      grid.text(label = label, x = x, y = y, 
+                hjust = hjust, vjust = vjust,
+                gp = gpar(col = match.colors(col, layer.data$color)))
     }
 
     qplot.bar <- function(col = NULL, fill = NULL, width = 1) {
-      rect(layer.data$x - width / 2, 0,
-           layer.data$x + width / 2, layer.data$y,
-           col = match.colors(fill, layer.data$fill, use.fill = TRUE),
-           border = match.colors(col, layer.data$color))
+      grid.rect(layer.data$x,
+                0,
+                width,
+                layer.data$y,
+                just = c("center", "bottom"),
+                default.units = "native",
+                gp = gpar(fill = match.colors(fill, layer.data$fill, use.fill = TRUE),                  
+                  col = match.colors(col, layer.data$color)))
     }
 
     qplot.box <- function(col = NULL, fill = NULL, width = 0.5,
                          lwd = 1.5, lty = "solid") {
-      rect(as.numeric(layer.data$x) - width / 2,
-           layer.data$quantile.25,
-           as.numeric(layer.data$x) + width / 2,
-           layer.data$quantile.75,
-           lwd = lwd,
-           lty = lty,
-           col = match.colors(fill, layer.data$fill, use.fill = TRUE),
-           border = match.colors(col, layer.data$color))
+      grid.rect(as.numeric(layer.data$x),
+                layer.data$quantile.25,
+                width,
+                layer.data$quantile.75 - layer.data$quantile.25,
+                default.units = "native",
+                just = c("center", "bottom"),
+                gp = gpar(lwd = lwd,
+                  lty = lty,
+                  fill = match.colors(fill, layer.data$fill, use.fill = TRUE),
+                  col = match.colors(col, layer.data$color)))
 
-      segments(c(layer.data$x, layer.data$x, as.numeric(layer.data$x) - width / 2),
-               c(layer.data$quantile.0, layer.data$quantile.100, layer.data$quantile.50),
-               c(layer.data$x, layer.data$x, as.numeric(layer.data$x) + width / 2),
-               c(layer.data$quantile.25, layer.data$quantile.75, layer.data$quantile.50),
-               lwd = lwd,
-               lty = lty,
-               col = match.colors(col, layer.data$color))
+      grid.segments(c(layer.data$x, layer.data$x, as.numeric(layer.data$x) - width / 2),
+                    c(layer.data$quantile.0, layer.data$quantile.100, layer.data$quantile.50),
+                    c(layer.data$x, layer.data$x, as.numeric(layer.data$x) + width / 2),
+                    c(layer.data$quantile.25, layer.data$quantile.75, layer.data$quantile.50),
+                    default.units = "native",
+                    gp = gpar(lwd = lwd,
+                      lty = lty,
+                      col = match.colors(col, layer.data$color)))
     }
 
     
     match.colors <- function(override.col, facet,
-                             use.fill = FALSE,
-                             use.alpha = TRUE) {
+                             use.fill = FALSE) {
       if (!is.null(override.col)) {
         override.col
       } else if (is.null(facet)) {
         "black"
-      } else if (use.alpha) {
-        if (use.fill) {
-          fills.with.alpha(facet)
-        } else {
-          colors.with.alpha(facet)          
-        }
       } else {
         if (use.fill) {
           fills(facet)
@@ -257,9 +269,6 @@ qplot.fast <-
     colors <- make.color.scale(eval.color, 1.0)
     fills <- make.color.scale(eval.fill, 1.0)
 
-    colors.with.alpha <- make.color.scale(eval.color, eval.alpha)
-    fills.with.alpha <- make.color.scale(eval.fill, eval.alpha)
-
     if (is.null(eval.size)) {
       eval.size <- 1
     }
@@ -294,6 +303,8 @@ qplot.fast <-
       layer.call <- match.call()[[layer + 4]]
       facet.x <- eval.x
       facet.y <- eval.y
+      facet.color <- eval.color
+      facet.fill <- eval.fill
       if (is.stat(layer.call)) {
         cat("Working on stat ")
         print(layer)
@@ -311,8 +322,8 @@ qplot.fast <-
       }
     }
     
-    xrange[1] <- xrange[1] - (xrange[2] - xrange[1]) * .04
-    xrange[2] <- xrange[2] + (xrange[2] - xrange[1]) * .04
+#    xrange[1] <- xrange[1] - (xrange[2] - xrange[1]) * .04
+#    xrange[2] <- xrange[2] + (xrange[2] - xrange[1]) * .04
 
     if (is.factor(eval.x)) {    
       pretty.x <- 1:nlevels(eval.x)
@@ -322,8 +333,8 @@ qplot.fast <-
       labels.x <- TRUE
     }
 
-    yrange[1] <- yrange[1] - (yrange[2] - yrange[1]) * .04
-    yrange[2] <- yrange[2] + (yrange[2] - yrange[1]) * .04
+#    yrange[1] <- yrange[1] - (yrange[2] - yrange[1]) * .04
+#    yrange[2] <- yrange[2] + (yrange[2] - yrange[1]) * .04
 
     if (is.factor(eval.y)) {    
       pretty.y <- 1:nlevels(eval.y)
@@ -335,16 +346,29 @@ qplot.fast <-
       label.y.width <- 4      
     }
 
+    xrange <- range(c(xrange, pretty.x))    
+    yrange <- range(c(yrange, pretty.y))
+    
     ..subplot <- function(calls, .subset = NULL,
                           draw.x.axis = TRUE) {
-      plot.new()      
-      par(mar = c(ifelse(draw.x.axis, 3, 1), label.y.width, 1, 1))
-      plot.window(xlim = xrange, ylim = yrange, xaxs = "i", yaxs = "i")
-      rect(xrange[1], yrange[1],
-           xrange[2], yrange[2],
-           col = "grey90", border = NA)
-      grid.multi()
+      grid.newpage()
+      grid.rect()
+      pushViewport(plotViewport(c(3.1, 4.1, 2.1, 1.1)))      
+      pushViewport(dataViewport(xscale = xrange,
+                                yscale = yrange))
+      grid.rect(gp = gpar(fill = "grey90", col = "white"))
+      grid.grill(pretty.y, pretty.x,
+                 gp = gpar(col = "white", lwd = 1.5),
+                 default.units = "native")
+
+      midpoints <- function(v) {
+        (v[-1] + v[-length(v)]) / 2
+      }
       
+      grid.grill(midpoints(pretty.y), midpoints(pretty.x),
+                 gp = gpar(col = "white", lwd = 0.5),
+                 default.units = "native")
+
       layer.data.index <- 0
       for (layer in 1:nlayers) {
         layer.call <- calls[[layer + 4]]
@@ -374,23 +398,24 @@ qplot.fast <-
       }
 
       if (draw.x.axis) {
-        axis(side=1, pretty.x, col = "grey50", col.axis = "grey50",
-             cex.axis = .9, labels = labels.x)
+        grid.xaxis(at = pretty.x,
+                   label = labels.x,
+                   gp = gpar(col = "grey50", cex = 0.8))
       }
-      par(mgp = c(label.y.width - 1, 1.0, 0))
-      axis(side=2, pretty.y, col = "grey50", col.axis = "grey50",
-           las=1, cex.axis = .9, labels = labels.y)
+      grid.yaxis(at = pretty.y,
+                 label = labels.y,
+                 gp = gpar(col = "grey50", cex = 0.8))
+      
       if (is.null(calls$ylab)) {
-        title(ylab = calls$y)
+        grid.text(calls$y, x = unit(-3, "lines"), rot = 90)        
       } else {
-        title(ylab = calls$ylab)
+        grid.text(calls$ylab, x = unit(-3, "lines"), rot = 90)
       }
       if (draw.x.axis) {
-        par(mgp = c(1.5, 0.5, 0))      
         if (is.null(calls$xlab)) {
-          title(xlab = calls$x)
+          grid.text(calls$x, y = unit(-2, "lines"))
         } else {
-          title(xlab = calls$xlab)
+          grid.text(calls$xlab, y = unit(-2, "lines"))          
         }
       }
       if (!is.null(.subset)) {
@@ -398,6 +423,7 @@ qplot.fast <-
       } else if (!is.null(calls$main)) {
         title(main = calls$main)
       }
+      popViewport(2)
     }
 
     if (is.null(eval.grid.y)) {
@@ -418,75 +444,5 @@ qplot.fast <-
                   draw.x.axis = ll == levels(eval.grid.y)[nlevels(eval.grid.y)])
       }
     }
-
-    par(op)
-}
-
-## Code below should not be called by anyone!
-## It sucks.
-
-draw.strip <- function(x.left, x.right, y.top, txt,
-                       flip = FALSE) {  
-  height <- strheight(txt, units = "user", cex = 0.75) * 1.7
-  if (!flip) {
-    rect(x.left, y.top - height, x.right, y.top,
-         col = "grey50", border = "black")
-    text(x = (x.left + x.right) / 2,
-         ## Makes vertical alignment more pleasant
-         y = y.top - height / 2 - height * .05,
-         labels = txt,
-         cex = 0.75)
-  } else {
-    usr <- par("usr")
-    rescale <- (usr[4] - usr[3]) / (usr[2] - usr[1])
-    height <- height / rescale
-    rect(y.top - height, x.right, y.top, x.left,
-         col = "grey50", border = "black")
-    
-    text(y = ((x.left + x.right) / 2),
-         x = (y.top - height / 2 - height * .05),
-         labels = txt,
-         srt = -90,
-         cex = 0.75)
-  }
-}
-
-split.plot <- function(splits, txts,
-                       margin,
-                       flip = FALSE) {
-  usr <- par("usr")
-
-  if (flip) {
-    top <- usr[2]
-    left <- usr[3]
-    right <- usr[4]
-  } else {
-    top <- usr[4]
-    left <- usr[1]
-    right <- usr[2]
-  }
-
-  lefts <- c(left, splits + margin)
-  rights <- c(splits - margin, right)
-
-  stopifnot(length(lefts) == length(txts))
-
-  for (ii in 1:length(splits)) {
-    if (flip) {
-      rect(usr[1], splits[ii] + margin,
-           usr[2], splits[ii] - margin,
-           col = "white", border = "white")
-    } else {
-      rect(splits[ii] - margin, usr[3], 
-           splits[ii] + margin, usr[4], 
-           col = "white", border = "white")
-    }
-  }
-
-  for (ii in 1:length(lefts)) {
-    draw.strip(lefts[ii], rights[ii],
-               top, txts[ii], flip)
-
-  }
 }
 
