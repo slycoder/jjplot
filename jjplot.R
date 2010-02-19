@@ -2,7 +2,7 @@
 
 require("grid")
 
-qplot.fast <-
+jjplot <-
   function(x = NULL,
            y = NULL,
            data = NULL,
@@ -21,7 +21,7 @@ qplot.fast <-
 
     facet.data <- NULL
     
-    qplot.facet <- function(f, facet = NULL) {
+    jjplot.facet <- function(f, facet = NULL) {
       eval.facet <- eval(match.call()$facet, data)
       stopifnot(!is.null(eval.facet))
 
@@ -43,35 +43,35 @@ qplot.fast <-
     }
 
     ## Stats
-    stats.list <- c("qplot.fun.x",
-                    "qplot.fun.y",
-                    "qplot.fit",
-                    "qplot.jitter",
-                    "qplot.identity",
-                    "qplot.quantile",
-                    "qplot.facet")
+    stats.list <- c("jjplot.fun.x",
+                    "jjplot.fun.y",
+                    "jjplot.fit",
+                    "jjplot.jitter",
+                    "jjplot.identity",
+                    "jjplot.quantile",
+                    "jjplot.facet")
     
-    qplot.fun.x <- function(f) {
+    jjplot.fun.x <- function(f) {
       data.frame(x = f(facet.data$x))
     }
 
-    qplot.fun.y <- function(f) {
+    jjplot.fun.y <- function(f) {
       data.frame(y = f(facet.data$y))
     }
 
-    qplot.fit <- function() {
+    jjplot.fit <- function() {
       model <- lm(facet.data$y ~ facet.data$x)
       data.frame(b = coef(model)[1],
                  a = coef(model)[2])
     }
 
-    qplot.jitter <- function(xfactor = 0, yfactor = 0) {
+    jjplot.jitter <- function(xfactor = 0, yfactor = 0) {
       transform(facet.data,
                 x = jitter(as.numeric(facet.data$x), xfactor),
                 y = jitter(as.numeric(facet.data$y), yfactor))
     }
     
-    qplot.quantile <- function() {
+    jjplot.quantile <- function() {
       stopifnot(all(facet.data$x == facet.data$x[1]))
       result <- data.frame(facet.data$x[1], t(quantile(facet.data$y)))
       colnames(result) <- c("x", "quantile.0", "quantile.25", "quantile.50", "quantile.75", "quantile.100")
@@ -79,21 +79,21 @@ qplot.fast <-
       result
     }
     
-    qplot.identity <- function() {
+    jjplot.identity <- function() {
       facet.data
     }
 
     ## Geoms
-    geoms.list <- c("qplot.hline",
-                    "qplot.vline",
-                    "qplot.abline",
-                    "qplot.point",
-                    "qplot.line",
-                    "qplot.text",
-                    "qplot.bar",
-                    "qplot.box")
+    geoms.list <- c("jjplot.hline",
+                    "jjplot.vline",
+                    "jjplot.abline",
+                    "jjplot.point",
+                    "jjplot.line",
+                    "jjplot.text",
+                    "jjplot.bar",
+                    "jjplot.box")
     
-    qplot.hline <- function(lwd = 1.5, col = NULL, lty = "solid") {
+    jjplot.hline <- function(lwd = 1.5, col = NULL, lty = "solid") {
       grid.lines(y = layer.data$y,
                  default.units = "native",
                  gp = gpar(col = match.colors(col, layer.data$color),
@@ -101,7 +101,7 @@ qplot.fast <-
                    lty = lty))
     }    
     
-    qplot.vline <- function(lwd = 1.5, col = NULL, lty = "solid") {
+    jjplot.vline <- function(lwd = 1.5, col = NULL, lty = "solid") {
       grid.lines(x = layer.data$x,
                  default.units = "native",
                  gp = gpar(col = match.colors(col, layer.data$color),
@@ -109,7 +109,7 @@ qplot.fast <-
                    lty = lty))
     }
 
-    qplot.abline <- function(lwd = 1.5, col = NULL, lty = "solid") {
+    jjplot.abline <- function(lwd = 1.5, col = NULL, lty = "solid") {
       ## Find limits
       xlim <- convertX(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)
       ylim <- convertY(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)      
@@ -137,7 +137,7 @@ qplot.fast <-
                       col = match.colors(col, layer.data$color)))
     }
     
-    qplot.point <- function(pch = 16, col = NULL, size = 1.0) {
+    jjplot.point <- function(pch = 16, col = NULL, size = 1.0) {
       grid.points(layer.data$x,
                   layer.data$y,
                   pch = pch,
@@ -147,7 +147,7 @@ qplot.fast <-
                     fill = match.colors(col, layer.data$fill, use.fill = TRUE)))
     }
 
-    qplot.line <- function(lty = "solid", col = NULL, lwd = 1.5) {
+    jjplot.line <- function(lty = "solid", col = NULL, lwd = 1.5) {
       grid.lines(x = layer.data$x, y = layer.data$y,
                  default.units = "native",
                  gp = gpar(col = match.colors(col, layer.data$color),
@@ -155,7 +155,7 @@ qplot.fast <-
                    lty = lty))
     }
 
-    qplot.text <- function(col = NULL, label = NULL,
+    jjplot.text <- function(col = NULL, label = NULL,
                            x = NULL, y = NULL, hjust = 0.5,
                            vjust = 0.5) {
       if (is.null(x)) {
@@ -172,7 +172,7 @@ qplot.fast <-
                 gp = gpar(col = match.colors(col, layer.data$color)))
     }
 
-    qplot.bar <- function(col = NULL, fill = NULL, width = 1) {
+    jjplot.bar <- function(col = NULL, fill = NULL, width = 1) {
       grid.rect(layer.data$x,
                 0,
                 width,
@@ -183,7 +183,7 @@ qplot.fast <-
                   col = match.colors(col, layer.data$color)))
     }
 
-    qplot.box <- function(col = NULL, fill = NULL, width = 0.5,
+    jjplot.box <- function(col = NULL, fill = NULL, width = 0.5,
                          lwd = 1.5, lty = "solid") {
       grid.rect(as.numeric(layer.data$x),
                 layer.data$quantile.25,
@@ -295,7 +295,7 @@ qplot.fast <-
         cat("Working on stat ")
         print(layer)
         if (!is.null(eval.grid.y)) {
-          cur.layer <- eval(substitute(qplot.facet(layer.call, grid.call),
+          cur.layer <- eval(substitute(jjplot.facet(layer.call, grid.call),
                                        list(layer.call = layer.call,
                                             grid.call = match.call()$grid.y)))
         } else {
