@@ -22,6 +22,8 @@ qplot.fast <-
            y = NULL,
            data = NULL,
            ...) {
+    op <- par(no.readonly = TRUE)
+    
     eval.x <- eval(match.call()$x, data)
     eval.y <- eval(match.call()$y, data)
     eval.alpha <- eval(match.call()$alpha, data)
@@ -416,6 +418,8 @@ qplot.fast <-
                   draw.x.axis = ll == levels(eval.grid.y)[nlevels(eval.grid.y)])
       }
     }
+
+    par(op)
 }
 
 ## Code below should not be called by anyone!
