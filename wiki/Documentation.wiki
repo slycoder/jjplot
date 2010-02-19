@@ -20,24 +20,24 @@ df <- data.frame(x = 1:50,
                  y = rnorm(50))
 
 jjplot(x, y, data = df,
-      xlab = "song number",
-      ylab = "bpm",
-      jjplot.line(),
-      jjplot.point(),
-      jjplot.fun.y(mean),
-      jjplot.hline(lty = "dashed", col = "red"),
-      jjplot.text(label = "Some label",
-                  x = 50, y = -2,
-                  hjust = 1, vjust = 0))
+       xlab = "song number",
+       ylab = "bpm",
+       jjplot.line(),
+       jjplot.point(),
+       jjplot.fun.y(mean),
+       jjplot.hline(lty = "dashed", col = "red"),
+       jjplot.text(label = "Some label",
+                   x = 50, y = -2,
+                   hjust = 1, vjust = 0))
 }}}
 http://jjplot.googlecode.com/files/jjplot_test_005.png
 
 {{{
-qplot.fast(x, y, data = df,
-           xlab = "song number",
-           ylab = "bpm",
-           fill = y,
-           qplot.bar(col = "black"))
+jjplot(x, y, data = df,
+       xlab = "song number",
+       ylab = "bpm",
+       fill = y,
+       jjplot.bar(col = "black"))
 }}}
 http://jjplot.googlecode.com/files/jjplot_test_006.png
 
@@ -46,11 +46,11 @@ df <- data.frame(state = rownames(state.x77),
                  region = state.region,
                  state.x77)
 
-qplot.fast(region, Income, data = df,
-           fill = region,
-           qplot.facet(qplot.quantile(),
-                       facet = region),
-           qplot.box())
+jjplot(region, Income, data = df,
+       fill = region,
+       jjplot.facet(qplot.quantile(),
+                    facet = region),
+       jjplot.box())
 }}}
 http://jjplot.googlecode.com/files/jjplot_test_007.png
 
@@ -65,13 +65,13 @@ df <- data.frame(state = rownames(state.x77),
                  region = state.region,
                  state.x77)
 
-qplot.fast(Income, Murder, data = df,
-           color = region,
-           grid.y = region,
-           qplot.identity(),
-           qplot.point(),
-           qplot.fit(),
-           qplot.abline())
+jjplot(Income, Murder, data = df,
+       color = region,
+       grid.y = region,
+       jjplot.identity(),
+       jjplot.point(),
+       jjplot.fit(),
+       jjplot.abline())
 }}}
 
 http://jjplot.googlecode.com/files/jjplot_test_004.png
@@ -84,9 +84,9 @@ df <- data.frame(state = rownames(state.x77),
                  t((t(state.x77) - colMeans(state.x77)) /
                    apply(state.x77, 2, sd)))
 
-qplot.fast(state, variable, data = melt(df),
-           alpha = 1.0, fill = value,
-           qplot.point(pch = 22, size = 2))
+jjplot(state, variable, data = melt(df),
+       alpha = 1.0, fill = value,
+       jjplot.point(pch = 22, size = 2))
 }}}
 http://jjplot.googlecode.com/files/jjplot_test_003.png
 
@@ -101,10 +101,10 @@ I will add functionality as I need it.  Here is the short list:
   * Beter looking faceting
 
 = Concepts =
-The workhorse function of jjplot is `qplot.fast`, which takes the following formals:
+The workhorse function of jjplot is `jjplot`, which takes the following formals:
 
 {{{
-  qplot.fast(x = NULL, y = NULL, data = NULL, alpha = NULL, color = NULL, grid.y = NULL, grid.x = NULL, ...)
+  jjplot(x = NULL, y = NULL, data = NULL, alpha = NULL, color = NULL, grid.y = NULL, grid.x = NULL, ...)
 }}}
 
   * `x` - An expression to map to the x-axis.
@@ -120,24 +120,24 @@ After the mapping performed by named arguments, each statistic and geometry func
 
 
 == Statistics == 
-  * `qplot.identity` - Returns the original data unchanged.  *This statistic is implicitly called as the first statistic*.
-  * `qplot.fun.x(f)` - Computes a function `f` over the x margin of the data.  Outputs column `x` with the computed statistic. 
-  * `qplot.fun.y(f)` - Computes a function `f` over the y margin of the data.  Outputs column `y` with the computed statistic. 
-  * `qplot.fit()` - Produces a least-squares fit via `lm` over `y ~ x`.   Outputs columns  `a` and `b` for the slope and intercept of the fit.
-  * `qplot.jitter(xfactor = 0, yfactor = 0)` - Returns the original data jittered by the amounts given as parameters.
-  * `qplot.quantile()` - For each `x`, computes the 0th, 25th, 50th, 75th, and 100th quantiles over `y` values.
-  * `qplot.facet(f, facet)` - Calls the statistic function `f` on each subset of the data defined by facet `facet`.  Outputs the columns of `f` along with a column indicating the associated facet of each data point.
+  * `jjplot.identity` - Returns the original data unchanged.  *This statistic is implicitly called as the first statistic*.
+  * `jjplot.fun.x(f)` - Computes a function `f` over the x margin of the data.  Outputs column `x` with the computed statistic. 
+  * `jjplot.fun.y(f)` - Computes a function `f` over the y margin of the data.  Outputs column `y` with the computed statistic. 
+  * `jjplot.fit()` - Produces a least-squares fit via `lm` over `y ~ x`.   Outputs columns  `a` and `b` for the slope and intercept of the fit.
+  * `jjplot.jitter(xfactor = 0, yfactor = 0)` - Returns the original data jittered by the amounts given as parameters.
+  * `jjplot.quantile()` - For each `x`, computes the 0th, 25th, 50th, 75th, and 100th quantiles over `y` values.
+  * `jjplot.facet(f, facet)` - Calls the statistic function `f` on each subset of the data defined by facet `facet`.  Outputs the columns of `f` along with a column indicating the associated facet of each data point.
 
 == Geometries ==
 Note that many of these typical graphical parameters such as `lwd` and `lty`. 
-  * `qplot.hline()` - Draw horizontal lines at positions given by the column `y`.  
-  * `qplot.vline()` - Draw vertical lines at positions given by the column `x`.  
-  * `qplot.abline()` - Draw lines with slope and intercept given by the columns `a` and `b`.  
-  * `qplot.point()` - Draw points at positions given by `x` and `y` (i.e., a scatterplot).
-  * `qplot.line()` - Draw lines between `x` and `y` points (i.e., a lineplot).
-  * `qplot.text()` - Draw text at `x`, `y` locations using `label`.
-  * `qplot.bar()` - Draw bars centered at each `x` of height `y`.  
-  * `qplot.box()` - Draw a boxplot.
+  * `jjplot.hline()` - Draw horizontal lines at positions given by the column `y`.  
+  * `jjplot.vline()` - Draw vertical lines at positions given by the column `x`.  
+  * `jjplot.abline()` - Draw lines with slope and intercept given by the columns `a` and `b`.  
+  * `jjplot.point()` - Draw points at positions given by `x` and `y` (i.e., a scatterplot).
+  * `jjplot.line()` - Draw lines between `x` and `y` points (i.e., a lineplot).
+  * `jjplot.text()` - Draw text at `x`, `y` locations using `label`.
+  * `jjplot.bar()` - Draw bars centered at each `x` of height `y`.  
+  * `jjplot.box()` - Draw a boxplot.
 
 = Examples =
 {{{
