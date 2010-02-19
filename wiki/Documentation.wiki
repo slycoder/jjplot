@@ -1,13 +1,16 @@
 = Introduction =
 
-jjplot is intended to be a replacement for ggplot2 written entirely in base graphics.  The hope is that it will be fast and functional.  Note that semantics may be slightly different than ggplot2 in places.
+jjplot is a plotting library for R inspired by ggplot2, written using grid.  It intends to make it easy to do exploratory data analysis through a rich repertoire of expressive and fast plots.
 
-*ggplot2 is still _way_ more functional than jjplot, so take comparisons with a grain of salt*
+jjplot is *NOT* a replacement for ggplot2, since the latter is still _way_ more functional than jjplot.  But in many simple cases, we think that jjplot will suffice.
 
 = Installation =
 Simply download the source from the "Source" tab above.  In R, all you need to do is `source("jjplot.R")` and you're ready to go.  See jjplot.test.R (or documentation below) for example usages.
 
 = What's new =
+
+===2010/19/02 ===
+  * Rewrote in grid.
 
 === 2010/18/02  ===
   * Added text, line, box and bar geoms.
@@ -16,16 +19,16 @@ Simply download the source from the "Source" tab above.  In R, all you need to d
 df <- data.frame(x = 1:50,
                  y = rnorm(50))
 
-qplot.fast(x, y, data = df,
-           xlab = "song number",
-           ylab = "bpm",
-           qplot.line(),
-           qplot.point(),
-           qplot.fun.y(mean),
-           qplot.hline(lty = "dashed", col = "red"),
-           qplot.text(label = "Some label",
-                      x = 50, y = -2,
-                      hjust = 1, vjust = 0))
+jjplot(x, y, data = df,
+      xlab = "song number",
+      ylab = "bpm",
+      jjplot.line(),
+      jjplot.point(),
+      jjplot.fun.y(mean),
+      jjplot.hline(lty = "dashed", col = "red"),
+      jjplot.text(label = "Some label",
+                  x = 50, y = -2,
+                  hjust = 1, vjust = 0))
 }}}
 http://jjplot.googlecode.com/files/jjplot_test_005.png
 
