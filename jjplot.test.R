@@ -2,13 +2,13 @@ source("jjplot.R")
 
 quartz()
 
-df <- data.frame(x = sample(factor(LETTERS[1:10]), 100, replace=TRUE),
-                 y = seq(0, 20, length.out = 100))
+df <- data.frame(x = sample(factor(LETTERS[1:10]), 100, replace=TRUE))
 
-jjplot(x, y, data = df,
+source("jjplot.R")
+jjplot(x, data = df,
        ylab = "count",
        jjplot.table(),
-       jjplot.bar(col = "white"))
+       jjplot.bar(width = 0.5))
 
 ##### Examples ######
 
