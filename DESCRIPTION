@@ -1,6 +1,6 @@
 Package: jjplot
 Type: Package
-Title: jjplot: Beautiful plots, fast and simple!
+Title: The jjplot plotting library for making beautiful plots fast and simple.
 Version: 1.0
 Date: 2010-02-24
 Author: Jonathan Chang, Eytan Bakshy
