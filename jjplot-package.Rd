@@ -16,7 +16,7 @@ Package: \tab jjplot\cr
 Type: \tab Package\cr
 Version: \tab 1.0\cr
 Date: \tab 2010-02-24\cr
-License: \tab What license is it under?\cr
+License: \tab LGPL\cr
 LazyLoad: \tab yes\cr
 }
 ~~ An overview of how to use the package, including the most important ~~
