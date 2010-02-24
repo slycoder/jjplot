@@ -1,27 +1,18 @@
 df <- data.frame(x = sample(factor(LETTERS[1:10]), 100, replace=TRUE))
 
-source("jjplot.R")
 jjplot(x, data = df,
        ylab = "count",
        jjplot.table(),
        jjplot.bar(width = 0.5))
 
-##### Examples ######
-
 df <- data.frame(x = 1:50,
                  y = rnorm(50))
-
-png("jjplot_test_006.png", width=640, height=480)
 
 jjplot(x, y, data = df,
        xlab = "song number",
        ylab = "bpm",
        fill = y,
        jjplot.bar(col = "black"))
-
-dev.off()
-
-png("jjplot_test_005.png", width=640, height=480)
 
 jjplot(x, y, data = df,
        xlab = "song number",
@@ -30,10 +21,6 @@ jjplot(x, y, data = df,
        jjplot.point(),
        jjplot.fun.y(mean),
        jjplot.hline(lty = "dashed", col = "red"))
-
-dev.off()
-
-png("jjplot_test_004.png", width=640, height=480)
 
 df <- data.frame(state = rownames(state.x77),
                  region = state.region,
@@ -47,19 +34,11 @@ jjplot(Income, Murder, data = df,
        jjplot.fit(),
        jjplot.abline())
 
-dev.off()
-
-png("jjplot_test_007.png", width=640, height=480)
-
 jjplot(region, Income, data = df,
        fill = region,
        jjplot.facet(jjplot.quantile(),
                     facet = region),
        jjplot.box())
-
-dev.off()
-
-png("jjplot_test_003.png", width=640, height=480)
 
 df <- data.frame(state = rownames(state.x77),
                  region = state.region,
