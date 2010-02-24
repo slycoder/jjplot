@@ -17,4 +17,4 @@ Description: jjplot is a plotting library inspired by ggplot2.  jjplot
 License: LGPL
 LazyLoad: yes
 Depends: grid
-Suggests: ggplot2
+Suggests: ggplot2, reshape

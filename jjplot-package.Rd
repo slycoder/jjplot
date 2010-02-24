@@ -40,4 +40,7 @@ Eytan Bakshy <ebakshy@gmail.com>
 \examples{
  ## See the demos for example usages.
  \dontrun{demo(jjplot)}
+
+ ## See the following demo for speed tests.
+ \dontrun{demo(jjplot.performance)}
 }
