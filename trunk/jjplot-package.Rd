@@ -1,14 +1,16 @@
 \name{jjplot-package}
 \alias{jjplot-package}
-\alias{jjplot}
 \docType{package}
 \title{
-What the package does (short line)
-~~ package title ~~
+  The jjplot plotting library for making beautiful plots fast and simple.
 }
 \description{
-More about what it does (maybe more than one line)
-~~ A concise (1-5 lines) description of the package ~~
+  jjplot is a plotting library inspired by ggplot2.  jjplot is written in
+grid and while not yet as functional as ggplot2, jjplot can quickly and
+easily produce beautiful graphics including line graphs, scatter plots,
+bar graphs, and boxplots.  jjplot also makes it straightfoward to
+compute and overlay statistics and fits onto graphs, and to facet graphs
+by factor via subplots and automatic color scales.
 }
 \details{
 \tabular{ll}{
@@ -19,25 +21,23 @@ Date: \tab 2010-02-24\cr
 License: \tab LGPL\cr
 LazyLoad: \tab yes\cr
 }
-~~ An overview of how to use the package, including the most important ~~
-~~ functions ~~
+
+Full up-to-date documentation with examples can be found at:
+\url{http://code.google.com/p/jjplot/wiki/Documentation}
 }
 \author{
-Who wrote it
-
-Maintainer: Who to complain to <yourfault@somewhere.net>
-~~ The author and/or maintainer of the package ~~
+Jonathan Chang <jcone@princeton.edu>
+Eytan Bakshy <ebakshy@gmail.com>  
 }
 \references{
-~~ Literature or other references for background information ~~
+  The \code{ggplot2} package is the inpsiration for (and a more
+  feature-rich version of) this package.
 }
-~~ Optionally other standard keywords, one per line, from file KEYWORDS in ~~
-~~ the R documentation directory ~~
 \keyword{ package }
 \seealso{
-~~ Optional links to other man pages, e.g. ~~
-~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
+  \code{\link{jjplot}}
 }
 \examples{
-~~ simple examples of the most important functions ~~
+ ## See the demos for example usages.
+ \dontrun{demo(jjplot)}
 }
