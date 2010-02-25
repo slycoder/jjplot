@@ -3,13 +3,43 @@
 require("grid")
 
 jjplot <-
-  function(x = NULL,
-           data = NULL,
+  function(x,
+           y = NULL,
+           data,
            ...) {
     op <- par(no.readonly = TRUE)
-    
-    eval.x <- eval(match.call()$x, data)
-    eval.y <- eval(match.call()$y, data)
+    stats.list <- c("jjplot.fun.x",
+                    "jjplot.fun.y",
+                    "jjplot.fit",
+                    "jjplot.jitter",
+                    "jjplot.identity",
+                    "jjplot.quantile",
+                    "jjplot.table",
+                    "jjplot.facet")
+    geoms.list <- c("jjplot.hline",
+                    "jjplot.vline",
+                    "jjplot.abline",
+                    "jjplot.point",
+                    "jjplot.line",
+                    "jjplot.text",
+                    "jjplot.bar",
+                    "jjplot.box")
+    is.stat <- function(layer.call) {
+      return(is.call(layer.call) && as.character(layer.call[[1]]) %in% stats.list)
+    }
+
+    is.geom <- function(layer.call) {
+      return(is.call(layer.call) && as.character(layer.call[[1]]) %in% geoms.list)
+    }
+
+    eval.x <- eval(match.call()[["x"]], data)
+
+    if (is.stat(match.call()[["y"]]) || is.geom(match.call()[["y"]])) {
+      eval.y <- NULL
+    } else {
+      eval.y <- eval(match.call()[["y"]], data)
+    }
+
     eval.alpha <- eval(match.call()$alpha, data)
     eval.color <- eval(match.call()$color, data)
     eval.fill <- eval(match.call()$fill, data)
@@ -19,6 +49,7 @@ jjplot <-
     fill.expr <- match.call()$fill   
 
     facet.data <- NULL
+    layer.data <- NULL
     
     jjplot.facet <- function(f, facet = NULL) {
       eval.facet <- eval(match.call()$facet, data)
@@ -42,14 +73,6 @@ jjplot <-
     }
 
     ## Stats
-    stats.list <- c("jjplot.fun.x",
-                    "jjplot.fun.y",
-                    "jjplot.fit",
-                    "jjplot.jitter",
-                    "jjplot.identity",
-                    "jjplot.quantile",
-                    "jjplot.table",
-                    "jjplot.facet")
     
     jjplot.fun.x <- function(f) {
       data.frame(x = f(facet.data$x))
@@ -89,14 +112,6 @@ jjplot <-
     }
 
     ## Geoms
-    geoms.list <- c("jjplot.hline",
-                    "jjplot.vline",
-                    "jjplot.abline",
-                    "jjplot.point",
-                    "jjplot.line",
-                    "jjplot.text",
-                    "jjplot.bar",
-                    "jjplot.box")
     
     jjplot.hline <- function(lwd = 1.5, col = NULL, lty = "solid") {
       grid.lines(y = layer.data$y,
@@ -125,9 +140,11 @@ jjplot <-
       xstart <- (ylim[1] - layer.data$b) / layer.data$a
       xend <- (ylim[2] - layer.data$b) / layer.data$a      
 
+#      ystart <- ifelse(xstart < xlim[1] | xstart > xlim[2],
       ystart <- ifelse(xstart < xlim[1],
                        ystart,
                        ylim[1])
+#      yend <- ifelse(xend > xlim[2] | xend < xlim[1],
       yend <- ifelse(xend > xlim[2],
                      yend,
                      ylim[2])
@@ -260,17 +277,12 @@ jjplot <-
       eval.size <- 1
     }
     
-    is.stat <- function(layer.call) {
-      return(is.call(layer.call) && as.character(layer.call[[1]]) %in% stats.list)
-    }
-
-    is.geom <- function(layer.call) {
-      return(is.call(layer.call) && as.character(layer.call[[1]]) %in% geoms.list)
-    }
-
-    geom.expansion <- function(call) {
-      if (is.call(layer.call) && as.character(layer.call[[1]]) == "jjplot.bar") {
+    geom.expansion <- function(.call) {
+      if (is.call(.call) && as.character(.call[[1]]) == "jjplot.bar") {
         list(y = 0)
+      } else if (is.call(.call) && as.character(.call[[1]]) == "jjplot.box") {
+        ld <- layer.data.list[[length(layer.data.list)]]
+        list(y = c(ld$quantile.0, ld$quantile.100))
       } else {
         list()
       }
@@ -281,6 +293,9 @@ jjplot <-
     stopifnot(is.null(eval.grid.x))
 
     expand.range <- function(old.range, new.data) {
+      if (is.null(old.range) && is.null(new.data)) {
+        return(NULL)
+      }
       if (is.factor(new.data)) {
         range(c(0.5, nlevels(new.data) + 0.5, old.range))
       } else {
@@ -291,14 +306,15 @@ jjplot <-
     xrange <- NULL
     yrange <- NULL
     
-    nlayers <- length(match.call()) - 3
+    nlayers <- length(match.call())
     layer.data.list <- list()
     stat.before.geom <- FALSE
     for (layer in 1:nlayers) {
-      layer.call <- match.call()[[layer + 3]]
-
-      facet.data <- data.frame(x = eval.x,
-                               y = eval.y)
+      layer.call <- match.call()[[layer]]
+      
+      facet.data <- data.frame(x = eval.x)
+      if (!is.null(eval.y))
+        facet.data$y <- eval.y
       if (!is.null(eval.color))
         facet.data$color <- eval.color
       if (!is.null(eval.fill))
@@ -314,12 +330,13 @@ jjplot <-
           cur.layer <- eval(layer.call)
         }
         xrange <- expand.range(xrange, cur.layer$x)
-        yrange <- expand.range(yrange, cur.layer$y)    
+        yrange <- expand.range(yrange, cur.layer$y)
+        
         layer.data.list <- c(layer.data.list,
                              list(cur.layer))
         stat.before.geom <- TRUE
       }
-      if (is.geom(layer.call) && !stat.before.geom) {        
+      if (is.geom(layer.call) && !stat.before.geom) {
         xrange <- expand.range(xrange, eval.x)
         yrange <- expand.range(yrange, eval.y)    
       }
@@ -379,7 +396,7 @@ jjplot <-
 
       layer.data.index <- 0
       for (layer in 1:nlayers) {
-        layer.call <- calls[[layer + 3]]
+        layer.call <- calls[[layer]]
         if (is.stat(layer.call)) {
           layer.data.index <- layer.data.index + 1
         } else if (is.geom(layer.call)) {
@@ -399,7 +416,7 @@ jjplot <-
             layer.data <<- layer.data.list[[layer.data.index]]
           }
           if (!is.null(.subset)) {
-            layer.data <<- subset(layer.data, .facet == .subset) 
+            layer.data <<- subset(layer.data, layer.data$.facet == .subset) 
           }
           eval(layer.call)
         }

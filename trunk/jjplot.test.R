@@ -1,6 +1,5 @@
 df <- data.frame(x = sample(factor(LETTERS[1:10]), 100, replace=TRUE))
 
-source("jjplot.R")
 jjplot(x, data = df,
        ylab = "count",
        jjplot.table(),
@@ -39,6 +38,7 @@ df <- data.frame(state = rownames(state.x77),
                  region = state.region,
                  state.x77)
 
+source("jjplot.R")
 jjplot(Income, Murder, data = df,
        color = region,
        grid.y = region,
