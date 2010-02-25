@@ -4,14 +4,17 @@
   The workhorse plotting function for the jjplot plotting library.
 }
 \description{
-  The main entry 
+    This is the main entry point for generating plots via the jjplot
+    library.   It is typically caled by specifying a data frame on which
+    to operate, along with aesthetic mappings followed by a sequence of
+    statistic and geometry commands.
 }
 \usage{
 jjplot(x = NULL, data = NULL, ...)
 }
 \arguments{
   \item{x}{
-    
+    An expression to map to the \var{x} values of the plot.
   }
   \item{data}{
     A data frame in whose scope the data expressions (i.e., \code{x})
@@ -24,18 +27,14 @@ jjplot(x = NULL, data = NULL, ...)
   }
 }
 \details{
-Full up-to-date documentation with examples can be found at:
-\url{http://code.google.com/p/jjplot/wiki/Documentation}
+  Full up-to-date documentation with examples can be found at:
+  \url{http://code.google.com/p/jjplot/wiki/Documentation}
 }
 \value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
+  The function is called only for its side effect (namely, a plot!).
 }
 \references{
-%% ~put references to the literature/web site here ~
+  \url{http://code.google.com/p/jjplot/wiki/Documentation}
 }
 \author{
 Jonathan Chang <jcone@princeton.edu>
@@ -48,7 +47,4 @@ Eytan Bakshy <ebakshy@gmail.com>
  ## See the following demo for speed tests.
  \dontrun{demo(jjplot.performance)}
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+%% \keyword{ ~kwd1 }
