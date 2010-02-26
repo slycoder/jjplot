@@ -289,9 +289,12 @@ jjplot <-
       if (is.null(ss)) {
         function(z) { 1.0 }
       } else {
-        size.levels <- c(0.5, 1.0, 2.0, 3.3, 4.5)
+        min.size <- 0.8
+        max.size <- 3.3
+        num.sizes <- 10
+        size.levels <- seq(sqrt(min.size), sqrt(max.size), length.out = num.sizes)^2
         rr <- range(ss)
-        function(z) { size.levels[round(5 * (z - rr[1]) / (rr[2] - rr[1]))] }
+        function(z) { size.levels[round(num.sizes * (z - rr[1]) / (rr[2] - rr[1]))] }
       }          
     }
     
@@ -431,8 +434,8 @@ jjplot <-
         pretty.x <- pretty(xrange)
         labels.x <- TRUE
         label.x.height <- 3.1
-        if (!is.null(match.call()$labels.x)) {
-          labels.x <- eval(match.call()$labels.x, data)
+        if (!is.null(calls$labels.x)) {
+          labels.x <- eval(calls$labels.x, data)
           label.x.height <- convertHeight(unit(1, "strheight", labels.x[which.max(nchar(labels.x))]),
                                           "lines", valueOnly = TRUE) + 2.1
         }
@@ -470,8 +473,22 @@ jjplot <-
     
     ..subplot <- function(calls, plot.params,
                           .subset = NULL,
-                          draw.x.axis = TRUE) {
-      pushViewport(plotViewport(c(plot.params$label.x.height, plot.params$label.y.width, 2.1, 1.1)))
+                          draw.x.axis = TRUE,
+                          allocate.x.axis.space = TRUE) {
+
+      if (draw.x.axis && allocate.x.axis.space) {
+        xmargin <- plot.params$label.x.height
+      } else {
+        xmargin <- 0
+      }
+
+      if (!is.null(calls$main)) {
+        titlemargin <- 2.1
+      } else {
+        titlemargin <- 0.4
+      }
+      
+      pushViewport(plotViewport(c(xmargin, plot.params$label.y.width, titlemargin, 1.1)))
 
       pushViewport(dataViewport(xscale = plot.params$xrange,
                                 yscale = plot.params$yrange))
@@ -535,41 +552,57 @@ jjplot <-
         grid.text(calls$main, y = unit(2, "lines"))
       }
 
-      x.left <- convertX(unit(1.0, "npc"), "native", valueOnly=TRUE)
-      y.lim <- convertY(unit(c(0, 1), "npc"), "native", valueOnly=TRUE)
+      if (!is.null(.subset)) {
+        x.left <- convertX(unit(1.0, "npc"), "native", valueOnly=TRUE)
+        y.lim <- convertY(unit(c(0, 1), "npc"), "native", valueOnly=TRUE)
+        
+        grid.rect(x.left, (y.lim[2] + y.lim[1]) / 2,
+                  unit(.9, "lines"), y.lim[2] - y.lim[1],
+                  hjust = 0,
+                  default.units = "native",
+                  gp = gpar(fill = "grey70"))
 
-      grid.rect(x.left, (y.lim[2] + y.lim[1]) / 2,
-                unit(1, "lines"), y.lim[2] - y.lim[1],
-                hjust = 0,
-                default.units = "native",
-                gp = gpar(fill = "grey50"))
-
-      grid.text(x = x.left, y = (y.lim[2] + y.lim[1]) / 2,
-                vjust = -0.5,
-                label = .subset, rot = 270,
-                default.units = "native", gp = gpar(cex = 0.8))
-      
+        subset.label <- .subset
+        if (!is.null(calls$grid.y.labeler)) {
+          subset.label <- eval(calls$grid.y.labeler)(.subset)
+        }
+        
+        grid.text(x = x.left, y = (y.lim[2] + y.lim[1]) / 2,
+                  vjust = -0.5,
+                  label = subset.label, rot = 270,
+                  default.units = "native", gp = gpar(cex = 0.8))
+      }
       popViewport(2)
     }
 
     if (is.null(eval.grid.y)) {
       ..subplot(match.call(), .get.plot.range(match.call()))
     } else {
-      top.vp <- viewport(layout = grid.layout(nlevels(eval.grid.y), 1))
+      calls <- match.call()
+      plot.params <- lapply(1:nlevels(eval.grid.y), function(ll)
+                            .get.plot.range(calls, .subset = levels(eval.grid.y)[ll]))
+      heights <- sapply(plot.params, function(pp) pp$yrange[2] - pp$yrange[1])
+      top.vp <- viewport(layout = grid.layout(nlevels(eval.grid.y) + 1, 1,
+                         heights = unit.c(unit(heights, "null"),
+                                          unit(plot.params[[1]]$label.x.height, "lines"))))
+      
       subplots <- list()
       for (ll in 1:nlevels(eval.grid.y)) {
         subplots[[ll]] <- viewport(name = paste(".subplot", ll, sep = "."),
                                    layout.pos.row = ll, layout.pos.col = 1)
       }
+      subplots[[nlevels(eval.grid.y) + 1]] <- viewport(name = "xaxis",
+                                                       layout.pos.row = nlevels(eval.grid.y) + 1,
+                                                       layout.pos.col = 1)
       pushViewport(vpTree(top.vp, do.call(vpList, subplots)))
       for (ll in 1:nlevels(eval.grid.y)) {
         seekViewport(paste(".subplot", ll, sep = "."))
         cat("Doing facet ")
         print(ll)
         ..subplot(match.call(),
-                  .get.plot.range(match.call(), .subset = levels(eval.grid.y)[ll]),
+                  plot.params[[ll]],
                   .subset = levels(eval.grid.y)[ll],
-                 draw.x.axis = ll == nlevels(eval.grid.y))
+                 draw.x.axis = ll == nlevels(eval.grid.y), allocate.x.axis.space = FALSE)
       }
       popViewport()
     }
