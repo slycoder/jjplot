@@ -45,11 +45,18 @@ jjplot <-
     eval.fill <- eval(match.call()$fill, data)
     eval.size <- eval(match.call()$size, data)
 
+    eval.expand <- eval(match.call()$expand, data)    
+    if (is.null(eval.expand))
+      eval.expand <- c(0.04, 0.04)
+
     color.expr <- match.call()$color
-    fill.expr <- match.call()$fill   
+    fill.expr <- match.call()$fill
+    size.expr <- match.call()$size
 
     facet.data <- NULL
     layer.data <- NULL
+
+    squash.unused <- if (is.null(match.call()$squash.unused)) FALSE else eval(match.call()$squash.unused)
     
     jjplot.facet <- function(f, facet = NULL) {
       eval.facet <- eval(match.call()$facet, data)
@@ -66,6 +73,8 @@ jjplot <-
                                         result$fill <- df$.facet[1]
                                       if (!is.null(color.expr) && facet.call == color.expr)
                                         result$color <- df$.facet[1]
+                                      if (!is.null(size.expr) && facet.call == size.expr)
+                                        result$size <- df$.facet[1]
                                       result$.facet <- df$.facet[1]
                                       result
                                     })
@@ -159,11 +168,11 @@ jjplot <-
                       col = match.colors(col, layer.data$color)))
     }
     
-    jjplot.point <- function(pch = 16, col = NULL, size = 1.0) {
+    jjplot.point <- function(pch = 16, col = NULL, size = NULL) {
       grid.points(layer.data$x,
                   layer.data$y,
                   pch = pch,
-                  size = unit(0.5 * size, "char"),
+                  size = unit(0.5 * match.sizes(size, layer.data$size), "char"),
                   gp = gpar(alpha = eval.alpha,
                     col = match.colors(col, layer.data$color),
                     fill = match.colors(col, layer.data$fill, use.fill = TRUE)))
@@ -242,6 +251,16 @@ jjplot <-
         }
       }
     }
+    
+    match.sizes <- function(override.size, facet) {
+      if (!is.null(override.size)) {
+        override.size
+      } else if (is.null(facet)) {
+        1.0
+      } else {
+        sizes(facet)
+      }
+    }
 
     make.color.scale <- function(cc, alpha) {
       if (is.null(cc)) {
@@ -266,23 +285,30 @@ jjplot <-
       }
     }
 
+    make.size.scale <- function(ss) {
+      if (is.null(ss)) {
+        function(z) { 1.0 }
+      } else {
+        size.levels <- c(0.5, 1.0, 2.0, 3.3, 4.5)
+        rr <- range(ss)
+        function(z) { size.levels[round(5 * (z - rr[1]) / (rr[2] - rr[1]))] }
+      }          
+    }
+    
+
     if (is.null(eval.alpha)) {
       eval.alpha <- 1.0
     }
       
     colors <- make.color.scale(eval.color, 1.0)
     fills <- make.color.scale(eval.fill, 1.0)
+    sizes <- make.size.scale(eval.size)    
 
-    if (is.null(eval.size)) {
-      eval.size <- 1
-    }
-    
     geom.expansion <- function(.call) {
       if (is.call(.call) && as.character(.call[[1]]) == "jjplot.bar") {
         list(y = 0)
       } else if (is.call(.call) && as.character(.call[[1]]) == "jjplot.box") {
-        ld <- layer.data.list[[length(layer.data.list)]]
-        list(y = c(ld$quantile.0, ld$quantile.100))
+        list(y = c(layer.data$quantile.0, layer.data$quantile.100))
       } else {
         list()
       }
@@ -302,13 +328,9 @@ jjplot <-
         range(c(old.range, new.data))
       }
     }
-
-    xrange <- NULL
-    yrange <- NULL
     
     nlayers <- length(match.call())
     layer.data.list <- list()
-    stat.before.geom <- FALSE
     for (layer in 1:nlayers) {
       layer.call <- match.call()[[layer]]
       
@@ -319,6 +341,8 @@ jjplot <-
         facet.data$color <- eval.color
       if (!is.null(eval.fill))
         facet.data$fill <- eval.fill
+      if (!is.null(eval.size))
+        facet.data$size <- eval.size
       if (is.stat(layer.call)) {
         cat("Working on stat ")
         print(layer)
@@ -329,60 +353,130 @@ jjplot <-
         } else {
           cur.layer <- eval(layer.call)
         }
-        xrange <- expand.range(xrange, cur.layer$x)
-        yrange <- expand.range(yrange, cur.layer$y)
-        
+
         layer.data.list <- c(layer.data.list,
                              list(cur.layer))
-        stat.before.geom <- TRUE
-      }
-      if (is.geom(layer.call) && !stat.before.geom) {
-        xrange <- expand.range(xrange, eval.x)
-        yrange <- expand.range(yrange, eval.y)    
-      }
-      if (is.geom(layer.call)) {
-        extra.data <- geom.expansion(layer.call)
-        xrange <- expand.range(xrange, extra.data$x)
-        yrange <- expand.range(yrange, extra.data$y)
       }
     }
-    
-#    xrange[1] <- xrange[1] - (xrange[2] - xrange[1]) * .04
-#    xrange[2] <- xrange[2] + (xrange[2] - xrange[1]) * .04
-
-    if (is.factor(eval.x)) {    
-      pretty.x <- 1:nlevels(eval.x)
-      labels.x <- levels(eval.x)
-    } else {
-      pretty.x <- pretty(xrange)
-      labels.x <- TRUE
-    }
-
-#    yrange[1] <- yrange[1] - (yrange[2] - yrange[1]) * .04
-#    yrange[2] <- yrange[2] + (yrange[2] - yrange[1]) * .04
-
-    if (is.factor(eval.y)) {    
-      pretty.y <- 1:nlevels(eval.y)
-      labels.y <- levels(eval.y)
-      label.y.width <- max(nchar(levels(eval.y))) - 4
-    } else {
-      pretty.y <- pretty(yrange)
-      labels.y <- TRUE
-      label.y.width <- 4      
-    }
-
-    xrange <- range(c(xrange, pretty.x))    
-    yrange <- range(c(yrange, pretty.y))
     
     grid.newpage()
-    ..subplot <- function(calls, .subset = NULL,
+
+
+    .set.plotting.layer <- function(layer.data.index, .subset) {
+      if (layer.data.index == 0) {
+        ## Implicit identity
+        layer.data <<- data.frame(x = eval.x)
+        if (!is.null(eval.y)) {
+          layer.data <<- cbind(layer.data, y = eval.y)
+        }
+        if (!is.null(eval.color)) {
+          layer.data <<- cbind(layer.data, color = eval.color)
+        }
+        if (!is.null(eval.fill)) {
+          layer.data <<- cbind(layer.data, fill = eval.fill)
+        }
+        if (!is.null(eval.size)) {
+          layer.data <<- cbind(layer.data, size = eval.size)
+        }
+      } else {
+        layer.data <<- layer.data.list[[layer.data.index]]
+      }
+
+      if (!is.null(.subset)) {
+        layer.data <<- subset(layer.data, layer.data$.facet == .subset) 
+      }
+
+      NULL
+    }
+    
+    .get.plot.range <- function(calls, .subset = NULL) {
+      xrange <- NULL
+      yrange <- NULL
+      
+      stat.before.geom <- FALSE
+      layer.data.index <- 0
+      first.y <- NULL
+      .set.plotting.layer(layer.data.index, .subset)
+      for (layer in 1:nlayers) {
+        layer.call <- calls[[layer]]
+        if (is.stat(layer.call)) {
+          layer.data.index <- layer.data.index + 1
+          ## Get the range of the data on the layer.
+          .set.plotting.layer(layer.data.index, .subset)
+          xrange <- expand.range(xrange, layer.data$x)
+          yrange <- expand.range(yrange, layer.data$y)
+          stat.before.geom <- TRUE
+        } 
+        if (!is.null(layer.data$y) && length(layer.data$y) > 0 && is.null(first.y)) {
+          first.y <- layer.data$y
+        }
+        if (is.geom(layer.call)) {
+          extra.data <- geom.expansion(layer.call)
+          xrange <- expand.range(xrange, extra.data$x)
+          yrange <- expand.range(yrange, extra.data$y)
+        }
+        if (is.geom(layer.call) && !stat.before.geom) {
+          xrange <- expand.range(xrange, eval.x)
+          yrange <- expand.range(yrange, eval.y)    
+        }
+      }
+      
+      .set.plotting.layer(0, .subset)
+      if (is.factor(layer.data$x)) {    
+        pretty.x <- 1:nlevels(layer.data$x)
+        labels.x <- levels(layer.data$x)
+        label.x.height <- convertHeight(unit(1, "strheight", labels.x[which.max(nchar(labels.x))]),
+                                        "lines", valueOnly = TRUE) + 2.1
+      } else {
+        pretty.x <- pretty(xrange)
+        labels.x <- TRUE
+        label.x.height <- 3.1
+        if (!is.null(match.call()$labels.x)) {
+          labels.x <- eval(match.call()$labels.x, data)
+          label.x.height <- convertHeight(unit(1, "strheight", labels.x[which.max(nchar(labels.x))]),
+                                          "lines", valueOnly = TRUE) + 2.1
+        }
+      }
+      if (is.factor(first.y)) {
+        ## Figure how wide the text is going to be:
+        labels.y <- levels(first.y)        
+        label.y.width <- convertWidth(unit(1, "strwidth", labels.y[which.max(nchar(labels.y))]),
+                                    "lines", valueOnly = TRUE)
+        if (squash.unused) {
+          first.y <- factor(first.y)
+          yrange <- c(1, nlevels(first.y))
+        }
+        pretty.y <- 1:(nlevels(first.y))
+        labels.y <- levels(first.y)
+      } else {
+        pretty.y <- pretty(yrange)
+        labels.y <- TRUE
+        label.y.width <- 4.1
+      }
+        
+      xrange <- range(c(xrange, pretty.x))    
+      yrange <- range(c(yrange, pretty.y))
+      
+      xrange[1] <- xrange[1] - (xrange[2] - xrange[1]) * eval.expand[1]
+      xrange[2] <- xrange[2] + (xrange[2] - xrange[1]) * eval.expand[1]
+      
+      yrange[1] <- yrange[1] - (yrange[2] - yrange[1]) * eval.expand[2]
+      yrange[2] <- yrange[2] + (yrange[2] - yrange[1]) * eval.expand[2]
+
+      list(xrange = xrange, yrange = yrange, pretty.x = pretty.x, pretty.y = pretty.y,
+           labels.x = labels.x, labels.y  = labels.y, label.x.height = label.x.height, label.y.width = label.y.width)
+    }
+    
+    
+    ..subplot <- function(calls, plot.params,
+                          .subset = NULL,
                           draw.x.axis = TRUE) {
-      grid.rect()
-      pushViewport(plotViewport(c(3.1, 4.1, 2.1, 1.1)))      
-      pushViewport(dataViewport(xscale = xrange,
-                                yscale = yrange))
+      pushViewport(plotViewport(c(plot.params$label.x.height, plot.params$label.y.width, 2.1, 1.1)))
+
+      pushViewport(dataViewport(xscale = plot.params$xrange,
+                                yscale = plot.params$yrange))
       grid.rect(gp = gpar(fill = "grey90", col = "white"))
-      grid.grill(pretty.y, pretty.x,
+      grid.grill(plot.params$pretty.y, plot.params$pretty.x,
                  gp = gpar(col = "white", lwd = 1.5),
                  default.units = "native")
 
@@ -390,7 +484,7 @@ jjplot <-
         (v[-1] + v[-length(v)]) / 2
       }
       
-      grid.grill(midpoints(pretty.y), midpoints(pretty.x),
+      grid.grill(midpoints(plot.params$pretty.y), midpoints(plot.params$pretty.x),
                  gp = gpar(col = "white", lwd = 0.5),
                  default.units = "native")
 
@@ -402,33 +496,23 @@ jjplot <-
         } else if (is.geom(layer.call)) {
           cat("Working on geom ")
           print(layer)
-          if (layer.data.index == 0) {
-            ## Implicit identity
-            layer.data <<- data.frame(x = eval.x,
-                                      y = eval.y)
-            if (!is.null(eval.color)) {
-              layer.data <<- cbind(layer.data, color = eval.color)
-            }
-            if (!is.null(eval.fill)) {
-              layer.data <<- cbind(layer.data, fill = eval.fill)
-            }
-          } else {
-            layer.data <<- layer.data.list[[layer.data.index]]
+          .set.plotting.layer(layer.data.index, .subset)
+
+          if (squash.unused && is.factor(layer.data$y)) {
+            layer.data$y <<- factor(layer.data$y)
           }
-          if (!is.null(.subset)) {
-            layer.data <<- subset(layer.data, layer.data$.facet == .subset) 
-          }
+          
           eval(layer.call)
         }
       }
 
       if (draw.x.axis) {
-        grid.xaxis(at = pretty.x,
-                   label = labels.x,
+        grid.xaxis(at = plot.params$pretty.x,
+                   label = plot.params$labels.x,
                    gp = gpar(col = "grey50", cex = 0.8))
       }
-      grid.yaxis(at = pretty.y,
-                 label = labels.y,
+      grid.yaxis(at = plot.params$pretty.y,
+                 label = plot.params$labels.y,
                  gp = gpar(col = "grey50", cex = 0.8))
       
       if (is.null(calls$ylab)) {
@@ -440,29 +524,37 @@ jjplot <-
       }
       if (draw.x.axis) {
         if (is.null(calls$xlab)) {
-          grid.text(calls$x, y = unit(-2, "lines"),
+          grid.text(calls$x, y = unit(-plot.params$label.x.height + 0.5, "lines"),
                     gp = gpar(col = "grey50", cex= 0.9))
         } else {
-          grid.text(calls$xlab, y = unit(-2, "lines"),
+          grid.text(calls$xlab, y = unit(-plot.params$label.x.height + 0.5, "lines"),
                     gp = gpar(col = "grey50", cex= 0.9))
         }
       }
-      if (!is.null(.subset)) {
-        grid.text(.subset, vjust = 0.0, y = unit(1, "npc"))
-      } else if (!is.null(calls$main)) {
+      if (!is.null(calls$main)) {
         grid.text(calls$main, y = unit(2, "lines"))
       }
+
+      x.left <- convertX(unit(1.0, "npc"), "native", valueOnly=TRUE)
+      y.lim <- convertY(unit(c(0, 1), "npc"), "native", valueOnly=TRUE)
+
+      grid.rect(x.left, (y.lim[2] + y.lim[1]) / 2,
+                unit(1, "lines"), y.lim[2] - y.lim[1],
+                hjust = 0,
+                default.units = "native",
+                gp = gpar(fill = "grey50"))
+
+      grid.text(x = x.left, y = (y.lim[2] + y.lim[1]) / 2,
+                vjust = -0.5,
+                label = .subset, rot = 270,
+                default.units = "native", gp = gpar(cex = 0.8))
+      
       popViewport(2)
     }
 
     if (is.null(eval.grid.y)) {
-      ..subplot(match.call())
+      ..subplot(match.call(), .get.plot.range(match.call()))
     } else {
-##       total.height <- par("din")[2] * 2.54
-##       axis.padding <- 2 * par("mai")[1] / par("mar")[1] * 2.54
-##       height <- total.height / (nlevels(eval.grid.y) + axis.padding)
-##       height <- c(rep(height, nlevels(eval.grid.y) - 1),
-##                   height + axis.padding)
       top.vp <- viewport(layout = grid.layout(nlevels(eval.grid.y), 1))
       subplots <- list()
       for (ll in 1:nlevels(eval.grid.y)) {
@@ -474,9 +566,10 @@ jjplot <-
         seekViewport(paste(".subplot", ll, sep = "."))
         cat("Doing facet ")
         print(ll)
-        ..subplot(match.call(), .subset = levels(eval.grid.y)[ll],
-                  draw.x.axis = T)
-#                  draw.x.axis = ll == nlevels(eval.grid.y))
+        ..subplot(match.call(),
+                  .get.plot.range(match.call(), .subset = levels(eval.grid.y)[ll]),
+                  .subset = levels(eval.grid.y)[ll],
+                 draw.x.axis = ll == nlevels(eval.grid.y))
       }
       popViewport()
     }
