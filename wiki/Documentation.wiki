@@ -9,6 +9,10 @@ Simply download the source from the "Source" tab above.  In R, all you need to d
 
 = What's new =
 
+===2010/25/02 ===
+  * Make subplots aesthetically pleasing.
+  * Package as library.
+
 ===2010/19/02 ===
   * Rewrote in grid.
 
@@ -93,13 +97,10 @@ http://jjplot.googlecode.com/files/jjplot_test_003.png
 = Todo =
 I will add functionality as I need it.  Here is the short list:
 
-  * Tweak margins/ axis
   * Legends
-  * scale_size
   * manual color scales
   * scale_shape
   * Faceting along both axes
-  * Beter looking faceting
 
 = Concepts =
 The workhorse function of jjplot is `jjplot`, which takes the following formals:
