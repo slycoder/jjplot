@@ -101,6 +101,7 @@ I will add functionality as I need it.  Here is the short list:
   * manual color scales
   * scale_shape
   * Faceting along both axes
+  * Add support for log-transform of axes 
 
 = Concepts =
 The workhorse function of jjplot is `jjplot`, which takes the following formals:
@@ -128,6 +129,8 @@ After the mapping performed by named arguments, each statistic and geometry func
   * `jjplot.fit()` - Produces a least-squares fit via `lm` over `y ~ x`.   Outputs columns  `a` and `b` for the slope and intercept of the fit.
   * `jjplot.jitter(xfactor = 0, yfactor = 0)` - Returns the original data jittered by the amounts given as parameters.
   * `jjplot.quantile()` - For each `x`, computes the 0th, 25th, 50th, 75th, and 100th quantiles over `y` values.
+  * `jjplot.table()` - Computes the frequency of each `x`
+  * `jjplot.ccdf()` - Computes the complementary cumulative density of `x`
   * `jjplot.facet(f, facet)` - Calls the statistic function `f` on each subset of the data defined by facet `facet`.  Outputs the columns of `f` along with a column indicating the associated facet of each data point.
 
 == Geometries ==
