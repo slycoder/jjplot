@@ -15,6 +15,7 @@ jjplot <-
                     "jjplot.identity",
                     "jjplot.quantile",
                     "jjplot.table",
+                    "jjplot.ccdf",
                     "jjplot.facet")
     geoms.list <- c("jjplot.hline",
                     "jjplot.vline",
@@ -114,7 +115,23 @@ jjplot <-
     jjplot.table <- function() {
       tt <- table(facet.data$x)
       data.frame(x = names(tt), y = as.numeric(tt))
-    }    
+    }
+
+    jjplot.ccdf <- function(density=FALSE,maxpoints=FALSE,log='xy') {
+      freqs = table(facet.data$x)
+      df <- data.frame(x=as.numeric(rev(names(freqs))),y=cumsum(rev(freqs)))
+      if(density) {
+      	df$y <- df$y/nrow(df)
+      }
+      if(maxpoints != FALSE && is.numeric(maxpoints)) {
+        group = cut(log10(df$x), b=maxpoints)
+        df <- do.call(rbind, by(df, group,
+          function(X) X[order(X$x)[floor(length(X)/2)],]))
+      }
+      if(log=='xy') {df$x <- log10(df$x); df$y <- log10(df$y)}
+      df
+    }
+    
     
     jjplot.identity <- function() {
       facet.data
@@ -534,18 +551,18 @@ jjplot <-
       
       if (is.null(calls$ylab)) {
         grid.text(calls$y, x = unit(-3, "lines"), rot = 90,
-                  gp = gpar(col = "grey50", cex= 0.9))        
+                  gp = gpar(col = "grey20", cex= 0.9))        
       } else {
         grid.text(calls$ylab, x = unit(-3, "lines"), rot = 90,
-                  gp = gpar(col = "grey50", cex= 0.9))
+                  gp = gpar(col = "grey20", cex= 0.9))
       }
       if (draw.x.axis) {
         if (is.null(calls$xlab)) {
           grid.text(calls$x, y = unit(-plot.params$label.x.height + 0.5, "lines"),
-                    gp = gpar(col = "grey50", cex= 0.9))
+                    gp = gpar(col = "grey20", cex= 0.9))
         } else {
           grid.text(calls$xlab, y = unit(-plot.params$label.x.height + 0.5, "lines"),
-                    gp = gpar(col = "grey50", cex= 0.9))
+                    gp = gpar(col = "grey20", cex= 0.9))
         }
       }
       if (!is.null(calls$main)) {
