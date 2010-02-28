@@ -435,7 +435,7 @@ jjplot <-
         labels.x <- TRUE
         label.x.height <- 3.1
         if (!is.null(calls$labels.x)) {
-          labels.x <- eval(calls$labels.x, data)
+          labels.x <- eval(calls$labels.x, parent.frame(n = 4))
           label.x.height <- convertHeight(unit(1, "strheight", labels.x[which.max(nchar(labels.x))]),
                                           "lines", valueOnly = TRUE) + 2.1
         }

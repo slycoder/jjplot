@@ -62,7 +62,7 @@ jjplot(variable, state, data = melted,
        jjplot.point(pch = 22, size = 2))
 
 
-### Example of the jiter statistic to make a pseudo box-plot ###
+### Example of the jitter statistic to make a pseudo box-plot ###
 df <- data.frame(x = rnorm(10000) + (1:4) * 1,
                  f = factor(c('A', 'B', 'C', 'D')))
 df$y <- 1:4 * df$x + rnorm(10000)
