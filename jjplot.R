@@ -553,7 +553,7 @@ jjplot <-
         grid.text(calls$y, x = unit(-3, "lines"), rot = 90,
                   gp = gpar(col = "grey20", cex= 0.9))        
       } else {
-        grid.text(calls$ylab, x = unit(-3, "lines"), rot = 90,
+        grid.text(eval(calls$ylab), x = unit(-3, "lines"), rot = 90,
                   gp = gpar(col = "grey20", cex= 0.9))
       }
       if (draw.x.axis) {
@@ -561,7 +561,7 @@ jjplot <-
           grid.text(calls$x, y = unit(-plot.params$label.x.height + 0.5, "lines"),
                     gp = gpar(col = "grey20", cex= 0.9))
         } else {
-          grid.text(calls$xlab, y = unit(-plot.params$label.x.height + 0.5, "lines"),
+          grid.text(eval(calls$xlab), y = unit(-plot.params$label.x.height + 0.5, "lines"),
                     gp = gpar(col = "grey20", cex= 0.9))
         }
       }

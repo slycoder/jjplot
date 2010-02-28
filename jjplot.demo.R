@@ -84,6 +84,6 @@ jjplot(x + 2, y, data = df,
 # plot ccdf of heavy tailed distribution
 df <- data.frame(x=rlnorm(1000,2,2.5))
 jjplot(x, data = df,
-       ylab=expression(paste('Pr(',x >= X,')')),
-       xlab=expression('log_10(x)'),
+       ylab=expression(Pr(x >= X)),
+       xlab=expression(log[10](x)),
        jjplot.ccdf(density=TRUE,log='xy'), jjplot.point())
