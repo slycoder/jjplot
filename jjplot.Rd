@@ -10,11 +10,14 @@
     statistic and geometry commands.
 }
 \usage{
-jjplot(x = NULL, data = NULL, ...)
+jjplot(x, y = NULL, data, ...)
 }
 \arguments{
   \item{x}{
     An expression to map to the \var{x} values of the plot.
+  }
+  \item{y}{
+    An optional expression to map to the \var{y} values of the plot.
   }
   \item{data}{
     A data frame in whose scope the data expressions (i.e., \code{x})
