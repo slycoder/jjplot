@@ -587,6 +587,7 @@ jjplot <-
         } else {
           grid.text(ylab.default, x = unit(-3, "lines"), rot = 90,
                     gp = gpar(col = "grey20", cex= 0.9))
+          ylab.default <<- NULL
         }        	      
       } else {
         grid.text(eval(calls$ylab), x = unit(-3, "lines"), rot = 90,
