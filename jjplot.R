@@ -33,13 +33,25 @@ jjplot <-
       return(is.call(layer.call) && as.character(layer.call[[1]]) %in% geoms.list)
     }
 
+    # flag whether x or y axis is to be log-transformed
+    log.arg = match.call()$log
+    log.x <- (!is.null(log.arg) && (log.arg == 'x' || log.arg == 'xy'))
+    log.y <- (!is.null(log.arg) && (log.arg == 'y' || log.arg == 'xy'))
     eval.x <- eval(match.call()[["x"]], data)
+
+    if(log.x && is.numeric(eval.x)) {
+      eval.x <- log10(eval.x)
+    }
 
     if (is.stat(match.call()[["y"]]) || is.geom(match.call()[["y"]])) {
       eval.y <- NULL
     } else {
       eval.y <- eval(match.call()[["y"]], data)
+      if(log.y && is.numeric(eval.y)) {
+        eval.y <- log10(eval.y)
+      }
     }
+
 
     eval.alpha <- eval(match.call()$alpha, data)
     eval.color <- eval(match.call()$color, data)
@@ -53,6 +65,7 @@ jjplot <-
     color.expr <- match.call()$color
     fill.expr <- match.call()$fill
     size.expr <- match.call()$size
+    x.expr <- match.call()$x
 
     facet.data <- NULL
     layer.data <- NULL
@@ -114,21 +127,32 @@ jjplot <-
 
     jjplot.table <- function() {
       tt <- table(facet.data$x)
-      data.frame(x = names(tt), y = as.numeric(tt))
+      df <- data.frame(x = names(tt), y = as.numeric(tt))
+      if(log.y) {
+      	df$y <- log10(df$y)
+      }
+      ylab.default <<- parse(text=paste('Count(', bquote(.(x.expr)), ')'))
+      df
     }
 
-    jjplot.ccdf <- function(density=FALSE,maxpoints=FALSE,log='xy') {
+    jjplot.ccdf <- function(density=FALSE,maxpoints=FALSE) {
       freqs = table(facet.data$x)
       df <- data.frame(x=as.numeric(rev(names(freqs))),y=cumsum(rev(freqs)))
       if(density) {
       	df$y <- df$y/nrow(df)
+      	ylab.default <<- parse(text=paste('Pr(', bquote(.(x.expr)),'>=',toupper(bquote(.(x.expr))),')'))
+      } else {
+        ylab.default <<- parse(text=paste('Count(', bquote(.(x.expr)),'>=',toupper(bquote(.(x.expr))),')'))
       }
-      if(maxpoints != FALSE && is.numeric(maxpoints)) {
-        group = cut(log10(df$x), b=maxpoints)
+      if(log.y) {
+      	df$y <- log10(df$y)
+      }
+      if(log.x && maxpoints != FALSE && is.numeric(maxpoints)) {
+        group = cut(df$x, b=maxpoints)
         df <- do.call(rbind, by(df, group,
           function(X) X[order(X$x)[floor(length(X)/2)],]))
       }
-      if(log=='xy') {df$x <- log10(df$x); df$y <- log10(df$y)}
+      
       df
     }
     
@@ -540,6 +564,12 @@ jjplot <-
         }
       }
 
+      if(log.x) {
+     	plot.params$labels.x <- paste('10^', plot.params$pretty.x,sep='')
+      }
+      if(log.y) {
+      	plot.params$labels.y <- paste('10^', plot.params$pretty.y,sep='')
+      }
       if (draw.x.axis) {
         grid.xaxis(at = plot.params$pretty.x,
                    label = plot.params$labels.x,
@@ -549,9 +579,15 @@ jjplot <-
                  label = plot.params$labels.y,
                  gp = gpar(col = "grey50", cex = 0.8))
       
+      
       if (is.null(calls$ylab)) {
-        grid.text(calls$y, x = unit(-3, "lines"), rot = 90,
-                  gp = gpar(col = "grey20", cex= 0.9))        
+      	if(is.null(ylab.default)) {
+          grid.text(calls$y, x = unit(-3, "lines"), rot = 90,
+                    gp = gpar(col = "grey20", cex= 0.9))
+        } else {
+          grid.text(ylab.default, x = unit(-3, "lines"), rot = 90,
+                    gp = gpar(col = "grey20", cex= 0.9))
+        }        	      
       } else {
         grid.text(eval(calls$ylab), x = unit(-3, "lines"), rot = 90,
                   gp = gpar(col = "grey20", cex= 0.9))
