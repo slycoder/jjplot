@@ -131,7 +131,7 @@ jjplot <-
       if(log.y) {
       	df$y <- log10(df$y)
       }
-      ylab.default <<- parse(text=paste('Count(', bquote(.(x.expr)), ')'))
+      ylab.default <<- substitute(Count(x),list(x=x.expr))
       df
     }
 
@@ -140,9 +140,9 @@ jjplot <-
       df <- data.frame(x=as.numeric(rev(names(freqs))),y=cumsum(rev(freqs)))
       if(density) {
       	df$y <- df$y/nrow(df)
-      	ylab.default <<- parse(text=paste('Pr(', bquote(.(x.expr)),'>=',toupper(bquote(.(x.expr))),')'))
+      	ylab.default <<- substitute(Pr(x>=X),list(x=x.expr,X=toupper(x.expr)))
       } else {
-        ylab.default <<- parse(text=paste('Count(', bquote(.(x.expr)),'>=',toupper(bquote(.(x.expr))),')'))
+      	ylab.default <<- substitute(Count(x>=X),list(x=x.expr,X=toupper(x.expr)))
       }
       if(log.y) {
       	df$y <- log10(df$y)
