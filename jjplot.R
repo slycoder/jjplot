@@ -220,11 +220,22 @@ jjplot <-
     }
 
     jjplot.line <- function(lty = "solid", col = NULL, lwd = 1.5) {
-      grid.lines(x = layer.data$x, y = layer.data$y,
-                 default.units = "native",
-                 gp = gpar(col = match.colors(col, layer.data$color),
-                   lwd = lwd,
-                   lty = lty))
+      if (!is.null(layer.data$color) && is.null(col))  {
+        by(layer.data,
+           layer.data$color,
+           function(zz)
+           grid.lines(x = zz$x, y = zz$y,
+                      default.units = "native",
+                      gp = gpar(col = match.colors(col, zz$color),
+                        lwd = lwd,
+                        lty = lty)))
+      } else {
+        grid.lines(x = layer.data$x, y = layer.data$y,
+                   default.units = "native",
+                   gp = gpar(col = match.colors(col, layer.data$color),
+                     lwd = lwd,
+                     lty = lty))
+      }
     }
 
     jjplot.text <- function(col = NULL, label = NULL,
@@ -251,7 +262,7 @@ jjplot <-
                 layer.data$y,
                 just = c("center", "bottom"),
                 default.units = "native",
-                gp = gpar(fill = match.colors(fill, layer.data$fill, use.fill = TRUE),                  
+                gp = gpar(fill = match.colors(fill, layer.data$fill, use.fill = TRUE), 
                   col = match.colors(col, layer.data$color)))
     }
 
