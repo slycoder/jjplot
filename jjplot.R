@@ -484,8 +484,6 @@ jjplot <-
       if (is.factor(first.y)) {
         ## Figure how wide the text is going to be:
         labels.y <- levels(first.y)        
-        label.y.width <- convertWidth(unit(1, "strwidth", labels.y[which.max(nchar(labels.y))]),
-                                    "lines", valueOnly = TRUE)
         if (squash.unused) {
           first.y <- factor(first.y)
           yrange <- c(1, nlevels(first.y))
@@ -494,9 +492,13 @@ jjplot <-
         labels.y <- levels(first.y)
       } else {
         pretty.y <- pretty(yrange)
-        labels.y <- TRUE
-        label.y.width <- 4.1
+        labels.y <- prettyNum(pretty.y)
       }
+
+      label.y.width <- convertWidth(unit(1, "strwidth",
+                                         labels.y[which.max(nchar(labels.y))]),
+                                    "lines", valueOnly = TRUE)
+      print(label.y.width)
         
       xrange <- range(c(xrange, pretty.x))    
       yrange <- range(c(yrange, pretty.y))
@@ -529,7 +531,7 @@ jjplot <-
         titlemargin <- 0.4
       }
       
-      pushViewport(plotViewport(c(xmargin, plot.params$label.y.width, titlemargin, 1.1)))
+      pushViewport(plotViewport(c(xmargin, plot.params$label.y.width + 1.5, titlemargin, 1.1)))
 
       pushViewport(dataViewport(xscale = plot.params$xrange,
                                 yscale = plot.params$yrange))
@@ -582,15 +584,15 @@ jjplot <-
       
       if (is.null(calls$ylab)) {
       	if(is.null(ylab.default)) {
-          grid.text(calls$y, x = unit(-3, "lines"), rot = 90,
+          grid.text(calls$y, x = unit(-plot.params$label.y.width - 1.5, "lines"), rot = 90,
                     gp = gpar(col = "grey20", cex= 0.9))
         } else {
-          grid.text(ylab.default, x = unit(-3, "lines"), rot = 90,
+          grid.text(ylab.default, x = unit(-plot.params$label.y.width - 1.5, "lines"), rot = 90,
                     gp = gpar(col = "grey20", cex= 0.9))
           ylab.default <<- NULL
         }        	      
       } else {
-        grid.text(eval(calls$ylab), x = unit(-3, "lines"), rot = 90,
+        grid.text(eval(calls$ylab), x = unit(-plot.params$label.y.width - 1.5, "lines"), rot = 90,
                   gp = gpar(col = "grey20", cex= 0.9))
       }
       if (draw.x.axis) {
