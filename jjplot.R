@@ -171,8 +171,8 @@ jjplot <-
                    lty = lty))
     }    
     
-    jjplot.vline <- function(lwd = 1.5, col = NULL, lty = "solid") {
-      grid.lines(x = layer.data$x,
+    jjplot.vline <- function(manual.x = NULL, lwd = 1.5, col = NULL, lty = "solid") {
+      grid.lines(x = if (is.null(manual.x)) layer.data$x else manual.x,
                  default.units = "native",
                  gp = gpar(col = match.colors(col, layer.data$color),
                    lwd = lwd,
