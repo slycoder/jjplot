@@ -16,6 +16,8 @@ jjplot <-
                     "jjplot.quantile",
                     "jjplot.table",
                     "jjplot.ccdf",
+                    "jjplot.cumsum",
+                    "jjplot.hist",
                     "jjplot.facet")
     geoms.list <- c("jjplot.hline",
                     "jjplot.vline",
@@ -38,7 +40,8 @@ jjplot <-
     log.x <- (!is.null(log.arg) && (log.arg == 'x' || log.arg == 'xy'))
     log.y <- (!is.null(log.arg) && (log.arg == 'y' || log.arg == 'xy'))
     eval.x <- eval(match.call()[["x"]], data)
-
+    ylab.default <- NULL
+    
     if(log.x && is.numeric(eval.x)) {
       eval.x <- log10(eval.x)
     }
@@ -66,6 +69,7 @@ jjplot <-
     fill.expr <- match.call()$fill
     size.expr <- match.call()$size
     x.expr <- match.call()$x
+    y.expr <- match.call()$y
 
     facet.data <- NULL
     layer.data <- NULL
@@ -144,10 +148,10 @@ jjplot <-
       } else {
       	ylab.default <<- substitute(Count(x>=X),list(x=x.expr,X=toupper(x.expr)))
       }
-      if(log.y) {
+      if (log.y) {
       	df$y <- log10(df$y)
       }
-      if(log.x && maxpoints != FALSE && is.numeric(maxpoints)) {
+      if (log.x && maxpoints != FALSE && is.numeric(maxpoints)) {
         group = cut(df$x, b=maxpoints)
         df <- do.call(rbind, by(df, group,
           function(X) X[order(X$x)[floor(length(X)/2)],]))
@@ -155,12 +159,32 @@ jjplot <-
       
       df
     }
-    
+
+    jjplot.cumsum <- function(decreasing=TRUE) {
+      oo <- order(facet.data$x, decreasing=decreasing)
+      ylab.default <<- substitute(cumsum(x), list(x = y.expr))
+      data.frame(x = facet.data$x[oo], y = cumsum(facet.data$y[oo]))
+    }
     
     jjplot.identity <- function() {
       facet.data
     }
 
+    jjplot.hist <- function(align = c("left", "right", "middle"),
+                            breaks = 20,
+                            ...) {
+      align <- match.arg(align)
+      h <- hist(facet.data$x, breaks = breaks, plot = FALSE, ...)
+      if (align == "left") {
+        hx <- h$breaks[-length(h$breaks)]
+      } else if (align == "right") {
+        hx <- h$breaks[-1]
+      } else {
+        hx <- h$mids
+      }
+      data.frame(x = hx, y = h$density)
+    }
+    
     ## Geoms
     
     jjplot.hline <- function(lwd = 1.5, col = NULL, lty = "solid") {
@@ -219,10 +243,15 @@ jjplot <-
                     fill = match.colors(col, layer.data$fill, use.fill = TRUE)))
     }
 
-    jjplot.line <- function(lty = "solid", col = NULL, lwd = 1.5) {
+    jjplot.line <- function(lty = "solid", col = NULL, lwd = 1.5, ordered = TRUE) {
+      if (ordered) {
+        oo <- order(layer.data$x)
+      } else {
+        oo <- 1:nrow(layer.data)
+      }
       if (!is.null(layer.data$color) && is.null(col))  {
-        by(layer.data,
-           layer.data$color,
+        by(layer.data[oo,],
+           layer.data$color[oo],
            function(zz)
            grid.lines(x = zz$x, y = zz$y,
                       default.units = "native",
@@ -230,17 +259,17 @@ jjplot <-
                         lwd = lwd,
                         lty = lty)))
       } else {
-        grid.lines(x = layer.data$x, y = layer.data$y,
+        grid.lines(x = layer.data$x[oo], y = layer.data$y[oo],
                    default.units = "native",
-                   gp = gpar(col = match.colors(col, layer.data$color),
+                   gp = gpar(col = match.colors(col, layer.data$color[oo]),
                      lwd = lwd,
                      lty = lty))
       }
     }
 
     jjplot.text <- function(col = NULL, label = NULL,
-                           x = NULL, y = NULL, hjust = 0.5,
-                           vjust = 0.5) {
+                            x = NULL, y = NULL, hjust = 0.5,
+                            vjust = 0.5) {
       if (is.null(x)) {
         x <- layer.data$x
       }
@@ -492,6 +521,12 @@ jjplot <-
                                           "lines", valueOnly = TRUE) + 2.1
         }
       }
+      if (log.x) {
+     	labels.x <- sapply(pretty.x, function(x)
+                           substitute(10^x, list(x = x)),
+                           simplify=FALSE)
+        labels.x <- do.call(expression, labels.x)
+      }
       if (is.factor(first.y)) {
         ## Figure how wide the text is going to be:
         labels.y <- levels(first.y)        
@@ -504,6 +539,13 @@ jjplot <-
       } else {
         pretty.y <- pretty(yrange)
         labels.y <- prettyNum(pretty.y)
+      }
+
+      if (log.y) {
+     	labels.y <- sapply(pretty.y, function(x)
+                           substitute(10^x, list(x = x)),
+                           simplify=FALSE)
+        labels.y <- do.call(expression, labels.y)
       }
 
       label.y.width <- convertWidth(unit(1, "strwidth",
@@ -577,12 +619,6 @@ jjplot <-
         }
       }
 
-      if(log.x) {
-     	plot.params$labels.x <- paste('10^', plot.params$pretty.x,sep='')
-      }
-      if(log.y) {
-      	plot.params$labels.y <- paste('10^', plot.params$pretty.y,sep='')
-      }
       if (draw.x.axis) {
         grid.xaxis(at = plot.params$pretty.x,
                    label = plot.params$labels.x,
@@ -600,7 +636,6 @@ jjplot <-
         } else {
           grid.text(ylab.default, x = unit(-plot.params$label.y.width - 1.5, "lines"), rot = 90,
                     gp = gpar(col = "grey20", cex= 0.9))
-          ylab.default <<- NULL
         }        	      
       } else {
         grid.text(eval(calls$ylab), x = unit(-plot.params$label.y.width - 1.5, "lines"), rot = 90,
