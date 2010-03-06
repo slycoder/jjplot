@@ -81,6 +81,16 @@ jjplot(x + 2, y, data = df,
        jjplot.fun.y(mean),
        jjplot.hline(lty = "dashed"))
 
-# plot ccdf of heavy tailed distribution
+### CCDF of a heavy tailed distribution.
 df <- data.frame(x=rlnorm(1000,2,2.5))
-jjplot(x, data = df, jjplot.ccdf(density=TRUE), jjplot.point(),log='xy')
+jjplot(x, data = df,
+       jjplot.ccdf(density=TRUE),
+       jjplot.point(),
+       log='xy')
+
+### Histogram of the same distribution.
+jjplot(x, data = df,
+       jjplot.hist(align="left"),
+       jjplot.bar(),
+       log = 'xy')
+       
