@@ -18,7 +18,7 @@ jjplot <-
                     "jjplot.ccdf",
                     "jjplot.cumsum",
                     "jjplot.hist",
-                    "jjplot.facet")
+                    "jjplot.group")
     geoms.list <- c("jjplot.hline",
                     "jjplot.vline",
                     "jjplot.abline",
@@ -76,7 +76,7 @@ jjplot <-
 
     squash.unused <- if (is.null(match.call()$squash.unused)) FALSE else eval(match.call()$squash.unused)
     
-    jjplot.facet <- function(f, facet = NULL) {
+    jjplot.group <- function(f, facet = NULL) {
       eval.facet <- eval(match.call()$facet, data)
       stopifnot(!is.null(eval.facet))
 
@@ -182,6 +182,7 @@ jjplot <-
       } else {
         hx <- h$mids
       }
+      ylab.default <<- substitute(Count(x), list(x = x.expr))
       data.frame(x = hx, y = h$density)
     }
     
@@ -409,8 +410,8 @@ jjplot <-
       }
     }
         
-    eval.grid.x <- eval(match.call()$grid.x, data)
-    eval.grid.y <- eval(match.call()$grid.y, data)
+    eval.grid.x <- eval(match.call()$facet.x, data)
+    eval.grid.y <- eval(match.call()$facet.y, data)
     stopifnot(is.null(eval.grid.x))
 
     expand.range <- function(old.range, new.data) {
@@ -442,9 +443,9 @@ jjplot <-
         cat("Working on stat ")
         print(layer)
         if (!is.null(eval.grid.y)) {
-          cur.layer <- eval(substitute(jjplot.facet(layer.call, grid.call),
+          cur.layer <- eval(substitute(jjplot.group(layer.call, grid.call),
                                        list(layer.call = layer.call,
-                                            grid.call = match.call()$grid.y)))
+                                            grid.call = match.call()$facet.y)))
         } else {
           cur.layer <- eval(layer.call)
         }

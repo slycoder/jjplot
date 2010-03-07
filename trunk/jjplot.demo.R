@@ -1,17 +1,15 @@
+source("jjplot.R")
+
 ### Simple bar plot example with a color scale ###
 df <- data.frame(x = 1:50,
                  y = rnorm(50))
 
 jjplot(x, y, data = df,
-       xlab = "song number",
-       ylab = "bpm",
        fill = y,
        jjplot.bar(col = "black"))
 
 ### Line plot of the same data, annotated with mean ## #
 jjplot(x, y, data = df,
-       xlab = "song number",
-       ylab = "bpm",
        jjplot.line(),
        jjplot.point(),
        jjplot.fun.y(mean),
@@ -24,14 +22,14 @@ df <- data.frame(state = rownames(state.x77),
 
 jjplot(region, Income, data = df,
        fill = region,
-       jjplot.facet(jjplot.quantile(),
+       jjplot.group(jjplot.quantile(),
                     facet = region),
        jjplot.box())
 
 ### Same data, faceted by sub-scatterplots instead of boxplots ###
 jjplot(Income, Murder, data = df,
        color = region,
-       grid.y = region,
+       facet.y = region,
        jjplot.identity(),
        jjplot.point(),
        jjplot.fit(),
@@ -40,7 +38,6 @@ jjplot(Income, Murder, data = df,
 
 ### Bar plot example using the table statistic ###
 df <- data.frame(x = sample(factor(LETTERS[1:10]), 100, replace=TRUE))
-
 jjplot(x, data = df,
        ylab = "count",
        jjplot.table(),
@@ -75,7 +72,7 @@ jjplot(x, f, data = df,
 jjplot(x + 2, y, data = df,
        alpha = 0.10, color = f,
        jjplot.point(),
-       jjplot.facet(jjplot.fit(), facet = f),
+       jjplot.group(jjplot.fit(), facet = f),
        jjplot.abline(),
        jjplot.fun.y(mean),
        jjplot.hline(lty = "dashed"))
