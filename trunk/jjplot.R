@@ -209,22 +209,33 @@ jjplot <-
       ylim <- convertY(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)      
 
       ystart <- xlim[1] * layer.data$a + layer.data$b
-      yend <- xlim[2] * layer.data$a + layer.data$b      
+      yend <- xlim[2] * layer.data$a + layer.data$b
 
-      xstart <- (ylim[1] - layer.data$b) / layer.data$a
-      xend <- (ylim[2] - layer.data$b) / layer.data$a      
+      xstart <- ifelse(layer.data$a < 0,
+                       (ylim[2] - layer.data$b) / layer.data$a,
+                       (ylim[1] - layer.data$b) / layer.data$a)
+      xend <- ifelse(layer.data$a < 0,
+                     (ylim[1] - layer.data$b) / layer.data$a,
+                     (ylim[2] - layer.data$b) / layer.data$a)
 
-#      ystart <- ifelse(xstart < xlim[1] | xstart > xlim[2],
+      ## Invariant: xstart <= xend,
+      ## So that left hand coordinate should be xtart or xlim[1]
+      ## and right hand should be xend or xlim[2].      
+
       ystart <- ifelse(xstart < xlim[1],
                        ystart,
-                       ylim[1])
-#      yend <- ifelse(xend > xlim[2] | xend < xlim[1],
+                       ifelse(layer.data$a < 0,
+                              ylim[2],
+                              ylim[1]))
+
       yend <- ifelse(xend > xlim[2],
                      yend,
-                     ylim[2])
-      
+                     ifelse(layer.data$a < 0,
+                            ylim[1],
+                            ylim[2]))
+
       xstart <- pmax(xstart, xlim[1])
-      xend <- pmin(xend, xlim[2])      
+      xend <- pmin(xend, xlim[2])
       
       grid.segments(xstart, ystart, xend, yend,
                     default.units = "native",

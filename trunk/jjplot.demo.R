@@ -46,7 +46,6 @@ jjplot(x, data = df,
        jjplot.table(),
        jjplot.bar(width = 0.5))
 
-
 ### Heatmap-style scatter plot ###
 require("reshape")
 df <- data.frame(state = rownames(state.x77),
@@ -65,7 +64,7 @@ jjplot(variable, state, data = melted,
 ### Example of the jitter statistic to make a pseudo box-plot ###
 df <- data.frame(x = rnorm(10000) + (1:4) * 1,
                  f = factor(c('A', 'B', 'C', 'D')))
-df$y <- 1:4 * df$x + rnorm(10000)
+df$y <- c(-6, -2, 2, 4) * df$x + rnorm(10000)
 
 jjplot(x, f, data = df,
        alpha = 0.10, color = f,
