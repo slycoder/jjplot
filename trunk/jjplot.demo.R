@@ -1,5 +1,3 @@
-source("jjplot.R")
-
 ### Simple bar plot example with a color scale ###
 df <- data.frame(x = 1:50,
                  y = rnorm(50))
@@ -23,7 +21,7 @@ df <- data.frame(state = rownames(state.x77),
 jjplot(region, Income, data = df,
        fill = region,
        jjplot.group(jjplot.quantile(),
-                    facet = region),
+                    by = region),
        jjplot.box())
 
 ### Same data, faceted by sub-scatterplots instead of boxplots ###
@@ -68,11 +66,11 @@ jjplot(x, f, data = df,
        jjplot.jitter(yfactor = 1, xfactor=1),
        jjplot.point())
 
-### Using faceting and statistics to create best-fit lines for each factor ###
+### Using grouping and statistics to create best-fit lines for each factor ###
 jjplot(x + 2, y, data = df,
        alpha = 0.10, color = f,
        jjplot.point(),
-       jjplot.group(jjplot.fit(), facet = f),
+       jjplot.group(jjplot.fit(), by = f),
        jjplot.abline(),
        jjplot.fun.y(mean),
        jjplot.hline(lty = "dashed"))
@@ -89,4 +87,4 @@ jjplot(x, data = df,
        jjplot.hist(align="left"),
        jjplot.bar(),
        log = 'xy')
-       
+
