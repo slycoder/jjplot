@@ -84,7 +84,7 @@ jjplot(x, data = df,
 
 ### Histogram of the same distribution.
 jjplot(x, data = df,
-       jjplot.hist(align="left"),
+       jjplot.hist(align="left", density=FALSE),
        jjplot.bar(),
-       log = 'xy')
+       log = 'x')
 
