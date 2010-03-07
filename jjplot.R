@@ -76,14 +76,14 @@ jjplot <-
 
     squash.unused <- if (is.null(match.call()$squash.unused)) FALSE else eval(match.call()$squash.unused)
     
-    jjplot.group <- function(f, facet = NULL) {
-      eval.facet <- eval(match.call()$facet, data)
+    jjplot.group <- function(f, by = NULL) {
+      eval.facet <- eval(match.call()$by, data)
       stopifnot(!is.null(eval.facet))
 
-      facet.call <- match.call()$facet
+      facet.call <- match.call()$by
       f.call <- match.call()$f
       
-      faceted.df <- by(cbind(facet.data, .facet = eval.facet),
+      faceted.df <- base:::by(cbind(facet.data, .facet = eval.facet),
                        eval.facet,
                        function(df) { facet.data <<- df
                                       result <- eval(f.call)
