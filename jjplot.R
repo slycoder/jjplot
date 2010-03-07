@@ -163,7 +163,11 @@ jjplot <-
     jjplot.cumsum <- function(decreasing=TRUE) {
       oo <- order(facet.data$x, decreasing=decreasing)
       ylab.default <<- substitute(cumsum(x), list(x = y.expr))
-      data.frame(x = facet.data$x[oo], y = cumsum(facet.data$y[oo]))
+      cs <- cumsum(facet.data$y[oo])
+      if (log.y) {
+      	cs <- log10(cs)
+      }      
+      data.frame(x = facet.data$x[oo], y = cs)
     }
     
     jjplot.identity <- function() {
@@ -172,6 +176,7 @@ jjplot <-
 
     jjplot.hist <- function(align = c("left", "right", "middle"),
                             breaks = 20,
+                            density = TRUE,
                             ...) {
       align <- match.arg(align)
       h <- hist(facet.data$x, breaks = breaks, plot = FALSE, ...)
@@ -183,7 +188,19 @@ jjplot <-
         hx <- h$mids
       }
       ylab.default <<- substitute(Count(x), list(x = x.expr))
-      data.frame(x = hx, y = h$density)
+
+      cs <- h$density
+      if (!density) {
+        cs <- cs * length(facet.data$x)
+      }
+      
+      if (log.y) {
+      	dens <- log10(cs)
+      } else {
+        dens <- cs
+      }
+      
+      data.frame(x = hx, y = dens)
     }
     
     ## Geoms
@@ -402,7 +419,18 @@ jjplot <-
 
     geom.expansion <- function(.call) {
       if (is.call(.call) && as.character(.call[[1]]) == "jjplot.bar") {
-        list(y = 0)
+        width <- 1.0
+        if (!is.null(.call$width)) {
+          width <- .call$width
+        }
+        xlim <- range(as.numeric(layer.data$x))
+        x.padding <- (xlim[2] - xlim[1]) * eval.expand[1]
+        if (x.padding >= width / 2) {
+          list(x = c(xlim[1] - width / 2 + x.padding,
+                     xlim[2] + width / 2 - x.padding), y = 0)
+        } else {
+          list(y = 0)          
+        }
       } else if (is.call(.call) && as.character(.call[[1]]) == "jjplot.box") {
         list(y = c(layer.data$quantile.0, layer.data$quantile.100))
       } else {
