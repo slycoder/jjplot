@@ -22,7 +22,7 @@ jjplot.table <- function(data, x.expr, y.expr, log.y = FALSE) {
   if (log.y) {
     df$y <- log10(df$y)
   }
-  list(data=df, x.expr=substitute(Count(x), list(x=x.expr)), y.expr=y.expr)
+  list(data=df, x.expr=x.expr, y.expr = substitute(Count(x), list(x=x.expr)))
 }
 
 jjplot.hist <- function(data, x.expr, y.expr,
@@ -59,9 +59,11 @@ jjplot.hist <- function(data, x.expr, y.expr,
 
 jjplot.jitter <- function(data, x.expr, y.expr,
                           xfactor = 0, yfactor = 0) {
-  list(data = transform(data,
-         x = jitter(as.numeric(x), xfactor),
-         y = jitter(as.numeric(y), yfactor)),
+  data <- transform(data, x = jitter(as.numeric(x), xfactor))
+  if (!is.null(data$y)) {
+    data <- transform(data, y = jitter(as.numeric(y), yfactor))    
+  }
+  list(data = data,
        x.expr = if (xfactor != 0) substitute(jitter(x), list(x=x.expr)) else x.expr,
        y.expr = if (yfactor != 0) substitute(jitter(x), list(x=y.expr)) else y.expr)
 }

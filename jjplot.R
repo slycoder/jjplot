@@ -124,7 +124,8 @@ formula.apply <- function(f,
   }
 }
 
-.get.plot.params <- function(f, stats, log.x, log.y, expand, .subset = NULL) {
+.get.plot.params <- function(f, stats, log.x, log.y, expand,
+                             .subset = NULL, squash.unused = FALSE) {
   ## Length-2 numerics.
   xrange <- NULL
   yrange <- NULL
@@ -183,7 +184,7 @@ formula.apply <- function(f,
                 data, stats)
   
   if (is.character(x.is.factor)) {
-    pretty.x <- length(x.is.factor)
+    pretty.x <- 1:length(x.is.factor)
     labels.x <- x.is.factor
     label.x.height <- convertHeight(unit(1, "strheight",
                                          labels.x[which.max(nchar(labels.x))]),
