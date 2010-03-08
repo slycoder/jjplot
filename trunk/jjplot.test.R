@@ -23,41 +23,36 @@ jjplot(state ~ point(pch = 22, size = 2) + variable, data = melted,
        alpha = 1.0, fill = value,
        ylab = "", xlab = "")
 
-
-### EXAMPLES THAT DON'T WORK ###
-
-source("jjplot.R")
-jjplot(Income ~ box() : group(quantile(), by = region) + region,
-       data = df, fill = region)
-
-
-data <- data.frame(x = rnorm(100), y = rnorm(100),
-                   f = factor(c('A', 'B', 'C', 'D')))
-jjplot(y ~ hline(lty = "dashed") : fun.y(mean) +
-           abline() : group(fit(), by = f) +
-           point(alpha = 0.2) : jitter(xfactor = 1) +
-           x, data = data, color = f)
-
-df <- data.frame(x = sample(factor(LETTERS[1:10]), 100, replace=TRUE))
-jjplot( ~ bar(width = 0.5) : table() + x, data = df)
-
 df <- data.frame(state = rownames(state.x77),
                  region = state.region,
                  state.x77)
+jjplot(Income ~ box() : group(quantile(), by = region) + region,
+       data = df, fill = region)
 
-jjplot(Income, Murder, data = df,
-       color = region,
-       grid.y = region,
-       jjplot.identity(),
-       jjplot.point(),
-       jjplot.fit(),
-       jjplot.abline())
-dev.off()
+df <- data.frame(x = sample(factor(LETTERS[1:10]), 100, replace=TRUE))
+jjplot( ~ bar(width = 0.5) : table() + x, data = df)
 
 df <- data.frame(x = rnorm(10000) + (1:4) * 1,
                  f = factor(c('A', 'B', 'C', 'D')))
 df$y <- 1:4 * df$x + rnorm(10000)
 
-jjplot(f ~ point() : jitter(yfactor=1, xfactor=1) + x,
-       data = data, alpha = 1.0, color = f)
+jjplot(y ~ hline(lty = "dashed") : fun.y(mean) +
+           abline() : group(fit(), by = f) +
+           point(alpha = 0.1) : jitter(xfactor = 1) +
+           x, data = df, color = f)
+
+### EXAMPLES THAT DON'T WORK ###
+source("jjplot.R")
+
+df <- data.frame(state = rownames(state.x77),
+                 region = state.region,
+                 state.x77)
+jjplot(Murder ~ abline() : fit() + point() + Income,
+       data = df, color = region, facet.y = region)
+
+df <- data.frame(x = rnorm(10000) + (1:4) * 1,
+                 f = factor(c('A', 'B', 'C', 'D')))
+df$y <- 1:4 * df$x + rnorm(10000)
+jjplot(f ~ point(alpha = 0.1) : jitter(yfactor=1, xfactor=1) + x,
+       data = df, color = f)
 

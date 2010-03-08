@@ -165,3 +165,20 @@ jjplot.box <- function(data, x.expr, y.expr, scales,
                   col = match.scale(col, data$color, scales)))
 }
 
+jjplot.expand.bar <- function(data, x.expr, y.expr, width = 1.0,
+                              col = NULL) {
+  ## FIXME
+  ##  xlim <- range(as.numeric(layer.data$x))
+  ##  x.padding <- (xlim[2] - xlim[1]) * eval.expand[1]
+  ##  if (x.padding >= width / 2) {
+  ##    list(x = c(xlim[1] - width / 2 + x.padding,
+  ##           xlim[2] + width / 2 - x.padding), y = 0)
+  ##  } else {
+  list(y = 0)
+  ##  }
+}
+
+jjplot.expand.box <- function(data, x.expr, y.expr, width = 0.5) {
+  list(x = c(min(as.numeric(data$x)) - width / 2, max(as.numeric(data$x)) + width / 2),
+       y = c(data$quantile.0, data$quantile.100))
+}        

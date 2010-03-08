@@ -70,8 +70,14 @@ jjplot.jitter <- function(data, x.expr, y.expr,
     
 jjplot.fit <- function(data, x.expr, y.expr) {
   model <- lm(data$y ~ data$x)
-  list(data = data.frame(b = coef(model)[1],
-                  a = coef(model)[2]),
+  result <- data.frame(b = coef(model)[1],
+                       a = coef(model)[2])
+  if (!is.null(data$color)) {
+    if (all(data$color == data$color[1])) {
+      result$color <- data$color[1]
+    } 
+  }
+  list(data = result, 
        x.expr = x.expr, y.expr = y.expr)
 }
 
@@ -90,6 +96,13 @@ jjplot.quantile <- function(data, x.expr, y.expr) {
   result <- data.frame(data$x[1], t(quantile(data$y)))
   colnames(result) <- c("x", "quantile.0", "quantile.25", "quantile.50", "quantile.75", "quantile.100")
   rownames(result) <- NULL
+
+  if (!is.null(data$fill)) {
+    if (all(data$fill == data$fill[1])) {
+      result$fill <- data$fill[1]
+    }
+  }
+  
   list(data = result,
        x.expr = x.expr,
        y.expr = y.expr)
@@ -137,25 +150,15 @@ jjplot.cumsum <- function(data, x.expr, y.expr,
 jjplot.group <- function(data, x.expr, y.expr,
                          fun, by) {
   eval.by <- eval(match.call()$by, data)  
-  ##  facet.call <- match.call()$by
   fun.call <- match.call()$fun
-  
+
   faceted.df <- base:::by(cbind(data, .by = eval.by),
                           eval.by,
                           function(df) {
-                            state <- data.frame(data = data,
-                                                x.expr = x.expr,
-                                                y.expr = y.expr)
-                            result <- call.with.data(fun.call, state)
-##                             if (!is.null(fill.expr) && facet.call == fill.expr)
-##                               result$fill <- df$.facet[1]
-##                             if (!is.null(color.expr) && facet.call == color.expr)
-##                               result$color <- df$.facet[1]
-##                             if (!is.null(size.expr) && facet.call == size.expr)
-##                               result$size <- df$.facet[1]
-#                            result$.facet <- df$.facet[1]
-#                            result
+                            state <- list(data = df,
+                                          x.expr = x.expr,
+                                          y.expr = y.expr)
+                            result <- call.with.data(fun.call, state)$data
                           })
   list(data = do.call(rbind, faceted.df), x.expr = x.expr, y.expr = y.expr)
 }
-
