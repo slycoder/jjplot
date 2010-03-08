@@ -83,3 +83,52 @@ jjplot.fun.y <- function(data, x.expr, y.expr, fun) {
        x.expr = x.expr, y.expr = y.expr)
 }
 
+jjplot.quantile <- function(data, x.expr, y.expr) {
+  stopifnot(all(data$x == data$x[1]))
+  result <- data.frame(data$x[1], t(quantile(data$y)))
+  colnames(result) <- c("x", "quantile.0", "quantile.25", "quantile.50", "quantile.75", "quantile.100")
+  rownames(result) <- NULL
+  list(data = result,
+       x.expr = x.expr,
+       y.expr = y.expr)
+}
+
+jjplot.ccdf <- function(data, x.expr, y.expr,
+                        density = FALSE, maxpoints = FALSE,
+                        log.y = FALSE) {
+  freqs <- table(data$x)
+  df <- data.frame(x=as.numeric(rev(names(freqs))),
+                   y=cumsum(rev(freqs)))
+  if (density) {
+    df$y <- df$y/nrow(df)
+  } 
+  if (log.y) {
+    df$y <- log10(df$y)
+  }
+  if (log.x && maxpoints != FALSE && is.numeric(maxpoints)) {
+    group <- cut(df$x, b=maxpoints)
+    df <- do.call(rbind, by(df, group,
+                            function(X) X[order(X$x)[floor(length(X)/2)],]))
+  }
+  
+  list(data = df, x.expr = x.expr,
+       y.expr = if (density) {
+         substitute(Pr(x>=X),list(x=x.expr,X=toupper(x.expr)))
+       } else {
+         substitute(Count(x>=X),list(x=x.expr,X=toupper(x.expr)))
+       })
+}
+
+jjplot.cumsum <- function(data, x.expr, y.expr,
+                          decreasing=TRUE,
+                          log.y = FALSE) {
+  oo <- order(data$x, decreasing=decreasing)
+  cs <- cumsum(data$y[oo])
+  if (log.y) {
+    cs <- log10(cs)
+  }      
+  list(data = data.frame(x = data$x[oo], y = cs),
+       x.expr = x.expr,
+       y.expr = substitute(cumsum(x), list(x = y.expr)))
+}
+    

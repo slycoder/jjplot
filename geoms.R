@@ -121,3 +121,47 @@ jjplot.vline <- function(data, x.expr, y.expr, scales,
                lwd = lwd,
                lty = lty))
 }
+
+jjplot.text <- function(data, x.expr, y.expr, scales,
+                        col = NULL, label = NULL,
+                        x = NULL, y = NULL, hjust = 0.5,
+                        vjust = 0.5) {
+  if (is.null(x)) {
+    x <- data$x
+  }
+  if (is.null(y)) {
+    y <- data$y
+  }
+  if (is.null(label)) {
+    label <- data$label
+  }
+  grid.text(label = label, x = x, y = y, 
+            hjust = hjust, vjust = vjust,
+                default.unit = "native",
+            gp = gpar(col = match.scale(col, data$color, scales)))
+}
+
+jjplot.box <- function(data, x.expr, y.expr, scales,
+                       col = NULL, fill = NULL, width = 0.5,
+                       lwd = 1.5, lty = "solid") {
+  grid.rect(as.numeric(data$x),
+            data$quantile.25,
+            width,
+            data$quantile.75 - data$quantile.25,
+            default.units = "native",
+            just = c("center", "bottom"),
+            gp = gpar(lwd = lwd,
+              lty = lty,
+              fill = match.scale(fill, data$fill, scales, type="fill"),
+              col = match.scale(col, data$color, scales)))
+  
+  grid.segments(c(data$x, data$x, as.numeric(data$x) - width / 2),
+                c(data$quantile.0, data$quantile.100, data$quantile.50),
+                c(data$x, data$x, as.numeric(data$x) + width / 2),
+                c(data$quantile.25, data$quantile.75, data$quantile.50),
+                default.units = "native",
+                gp = gpar(lwd = lwd,
+                      lty = lty,
+                  col = match.scale(col, data$color, scales)))
+}
+

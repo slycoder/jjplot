@@ -57,15 +57,26 @@ formula.apply <- function(f,
                           data,
                           memoization = NULL,
                           color = NULL, fill = NULL, size = NULL) {
-  y.expr <- f[[2]]
-  rhs <- f[[3]]
+  if (length(f) == 3) {
+    y.expr <- f[[2]]
+    rhs <- f[[3]]
+  } else if (length(f) == 2) {
+    y.expr <- NULL
+    rhs <- f[[2]]
+  } else {
+    stop("Malformed formula.")
+  }
+  
   stopifnot(rhs[[1]] == "+")
   x.expr <- rhs[[3]]
   if (is.null(memoization)) {
-    state <- list(data = data.frame(x = eval(x.expr, data),
-                    y = eval(y.expr, data)),
+    state <- list(data = data.frame(x = eval(x.expr, data)),
                   x.expr = x.expr,
                   y.expr = y.expr)
+    eval.y <- eval(y.expr, data)
+    if (!is.null(eval.y)) {
+      state$data$y <- eval.y
+    }
     if (!is.null(color)) {
       state$data$color <- color
     }
@@ -133,6 +144,7 @@ formula.apply <- function(f,
       }
     }
     if (is.null(y.is.factor)) {
+      print(state$data$y)
       if (is.factor(state$data$y)) {        
         y.is.factor <<- levels(state$data$y)
       } else {
@@ -380,88 +392,6 @@ jjplot.old <-
                                       result
                                     })
       do.call(rbind, faceted.df)
-    }
-
-    ## Stats    
-    jjplot.quantile <- function() {
-      stopifnot(all(facet.data$x == facet.data$x[1]))
-      result <- data.frame(facet.data$x[1], t(quantile(facet.data$y)))
-      colnames(result) <- c("x", "quantile.0", "quantile.25", "quantile.50", "quantile.75", "quantile.100")
-      rownames(result) <- NULL
-      result
-    }
-
-    jjplot.ccdf <- function(density=FALSE,maxpoints=FALSE) {
-      freqs = table(facet.data$x)
-      df <- data.frame(x=as.numeric(rev(names(freqs))),y=cumsum(rev(freqs)))
-      if(density) {
-      	df$y <- df$y/nrow(df)
-      	ylab.default <<- substitute(Pr(x>=X),list(x=x.expr,X=toupper(x.expr)))
-      } else {
-      	ylab.default <<- substitute(Count(x>=X),list(x=x.expr,X=toupper(x.expr)))
-      }
-      if (log.y) {
-      	df$y <- log10(df$y)
-      }
-      if (log.x && maxpoints != FALSE && is.numeric(maxpoints)) {
-        group = cut(df$x, b=maxpoints)
-        df <- do.call(rbind, by(df, group,
-          function(X) X[order(X$x)[floor(length(X)/2)],]))
-      }
-      
-      df
-    }
-
-    jjplot.cumsum <- function(decreasing=TRUE) {
-      oo <- order(facet.data$x, decreasing=decreasing)
-      ylab.default <<- substitute(cumsum(x), list(x = y.expr))
-      cs <- cumsum(facet.data$y[oo])
-      if (log.y) {
-      	cs <- log10(cs)
-      }      
-      data.frame(x = facet.data$x[oo], y = cs)
-    }
-    
-    ## Geoms    
-    jjplot.text <- function(col = NULL, label = NULL,
-                            x = NULL, y = NULL, hjust = 0.5,
-                            vjust = 0.5) {
-      if (is.null(x)) {
-        x <- layer.data$x
-      }
-      if (is.null(y)) {
-        y <- layer.data$y
-      }
-      if (is.null(label)) {
-        label <- layer.data$label
-      }
-      grid.text(label = label, x = x, y = y, 
-                hjust = hjust, vjust = vjust,
-                default.unit = "native",
-                gp = gpar(col = match.colors(col, layer.data$color)))
-    }
-
-    jjplot.box <- function(col = NULL, fill = NULL, width = 0.5,
-                         lwd = 1.5, lty = "solid") {
-      grid.rect(as.numeric(layer.data$x),
-                layer.data$quantile.25,
-                width,
-                layer.data$quantile.75 - layer.data$quantile.25,
-                default.units = "native",
-                just = c("center", "bottom"),
-                gp = gpar(lwd = lwd,
-                  lty = lty,
-                  fill = match.colors(fill, layer.data$fill, use.fill = TRUE),
-                  col = match.colors(col, layer.data$color)))
-
-      grid.segments(c(layer.data$x, layer.data$x, as.numeric(layer.data$x) - width / 2),
-                    c(layer.data$quantile.0, layer.data$quantile.100, layer.data$quantile.50),
-                    c(layer.data$x, layer.data$x, as.numeric(layer.data$x) + width / 2),
-                    c(layer.data$quantile.25, layer.data$quantile.75, layer.data$quantile.50),
-                    default.units = "native",
-                    gp = gpar(lwd = lwd,
-                      lty = lty,
-                      col = match.colors(col, layer.data$color)))
     }
 
     geom.expansion <- function(.call) {
