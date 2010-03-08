@@ -4,7 +4,10 @@ data <- data.frame(x = rnorm(100), y = rnorm(100),
                    f = factor(c('A', 'B', 'C', 'D')))
 
 source("jjplot.R")
-jjplot(y ~ bar(width=0.1) : hist() : jitter(xfactor = 1) + x, data = data)
+jjplot(y ~ hline() : fun.y(mean) +
+           abline() : fit() +
+           point(alpha = 0.2) : jitter(xfactor = 1) +
+           x, data = data, color = f)
 
 df <- data.frame(x = sample(factor(LETTERS[1:10]), 100, replace=TRUE))
 

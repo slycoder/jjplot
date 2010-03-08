@@ -2,191 +2,20 @@
 
 require("grid")
 
-### SCALES ###
-match.scale <- function(override, group, scales,
-                        defaults = list(color = "black",
-                                        size = 1.0,
-                                        fill = "black"),
-                        type = c("color", "size", "fill")) {
-  type <- match.arg(type)
-  if (!is.null(override)) {
-    if (is.factor(override)) {
-      scales[[type]](override)
-    } else {
-      override
-    }
-  } else if (is.null(group)) {
-    defaults[[type]]
-  } else {
-    scales[[type]](group)
-  }
-}
-
-make.color.scale <- function(cc, alpha) {
-  if (is.null(cc)) {
-    function(z) { rgb(0, 0, 0, alpha) }
-  } else if (is.factor(cc)) {
-    colors <- hcl(h = seq(0, 360, length.out = nlevels(cc) + 1),
-                  l = 75,
-                  c = 55,
-                  alpha = alpha)
-    colors <- colors[-length(colors)]
-    function(z) { colors[z] }
-  } else {
-    cr <- colorRamp(c('red', 'white', 'blue'))
-    rr <- range(cc)
-    function(z) {
-      z[z > rr[2]] <- rr[2]
-      z[z < rr[1]] <- rr[1]
-      rgb(cr((z  - rr[1]) / (rr[2] - rr[1])),
-          alpha = alpha * 255,
-          maxColorValue = 255)
-    }
-  }
-}
-
-make.size.scale <- function(ss) {
-  if (is.null(ss)) {
-    function(z) { 1.0 }
-  } else {
-    min.size <- 0.8
-    max.size <- 3.3
-    num.sizes <- 10
-    size.levels <- seq(sqrt(min.size), sqrt(max.size), length.out = num.sizes)^2
-    rr <- range(ss)
-    function(z) { size.levels[round(num.sizes * (z - rr[1]) / (rr[2] - rr[1]))] }
-  }          
-}
-
-### GEOMS ###
-geoms.list <- c("hline",
-                "vline",
-                "abline",
-                "point",
-                "line",
-                "text",
-                "bar",
-                "box")
-
-is.geom <- function(layer.call) {
-  return(is.call(layer.call) && as.character(layer.call[[1]]) %in% geoms.list)
-}
-
-jjplot.line <- function(data,
-                        x.expr, y.expr,
-                        lty = "solid", col = NULL,
-                        lwd = 1.5, ordered = TRUE) {
-  if (ordered) {
-    oo <- order(data$x)
-  } else {
-    oo <- 1:nrow(data)
-  }
-  if (!is.null(data$color) && is.null(col))  {
-    by(data[oo,], data$color[oo],
-       function(zz)
-       grid.lines(x = zz$x, y = zz$y,
-                  default.units = "native",
-                  gp = gpar(col = match.scale(col, zz$color, scales),
-                    lwd = lwd,
-                    lty = lty)))
-  } else {
-    grid.lines(x = data$x[oo], y = data$y[oo],
-               default.units = "native",
-               gp = gpar(col = match.scale(col, data$color[oo], scales),
-                 lwd = lwd,
-                 lty = lty))
-  }
-}
-
-jjplot.bar <- function(data, x.expr, y.expr,
-                       col = NULL, fill = NULL, width = 1) {
-  grid.rect(data$x,
-            0,
-            width,
-            data$y,
-            just = c("center", "bottom"),
-            default.units = "native",
-            gp = gpar(fill = match.scale(fill, data$fill, type = "fill"), 
-              col = match.scale(col, data$color, scales)))
-}
-
-### STATS ###
-stats.list <- c("fun.x",
-                "fun.y",
-                "fit",
-                "jitter",
-                "identity",
-                "quantile",
-                "table",
-                "ccdf",
-                "cumsum",
-                "hist",
-                "group")
-
-is.stat <- function(layer.call) {
-  return(is.call(layer.call) && as.character(layer.call[[1]]) %in% stats.list)
-}
-
-jjplot.table <- function(data, x.expr, y.expr, log.y = FALSE) {
-  ## FIXME: log.y?
-  tt <- table(data$x)
-  df <- data.frame(x = names(tt), y = as.numeric(tt))
-  if (log.y) {
-    df$y <- log10(df$y)
-  }
-  list(data=df, x.expr=substitute(Count(x), list(x=x.expr)), y.expr=y.expr)
-}
-
-jjplot.hist <- function(data, x.expr, y.expr,
-                        align = c("left", "right", "middle"),
-                        breaks = 20,
-                        density = TRUE,
-                        log.y = FALSE) {
-  align <- match.arg(align)
-
-  h <- hist(data$x, breaks = breaks, plot = FALSE)
-  if (align == "left") {
-    hx <- h$breaks[-length(h$breaks)]
-  } else if (align == "right") {
-    hx <- h$breaks[-1]
-  } else {
-    hx <- h$mids
-  }
-  
-  cs <- h$density
-  if (!density) {
-    cs <- cs * length(facet.data$x)
-  }
-  ## FIXME: log.y
-  if (log.y) {
-    dens <- log10(cs)
-  } else {
-    dens <- cs
-  }
-  
-  list(data = data.frame(x = hx, y = dens),
-       x.expr = x.expr,
-       y.expr = substitute(Count(x), list(x = x.expr)))
-}
-
-jjplot.jitter <- function(data, x.expr, y.expr,
-                          xfactor = 0, yfactor = 0) {
-  list(data = transform(data,
-         x = jitter(as.numeric(data$x), xfactor),
-         y = jitter(as.numeric(data$y), yfactor)),
-       x.expr = if (xfactor != 0) substitute(jitter(x), list(x=x.expr)) else x.expr,
-       y.expr = if (yfactor != 0) substitute(jitter(x), list(x=y.expr)) else y.expr)
-}
-    
+source("scales.R")
+source("stats.R")
+source("geoms.R")
 
 ### UTILITY FUNCTIONS ###
-call.with.data <- function(cc, state) {
+call.with.data <- function(cc, state, ...) {
   do.call(paste("jjplot", as.character(cc[[1]]), sep = "."),
           c(as.list(cc)[-1],
             list(data = state$data),
             x.expr = quote(state$x.expr),
-            y.expr = quote(state$y.expr)))
+            y.expr = quote(state$y.expr),
+            ...))
 }
+
 ## Memoization can take one of two values:
 ## * NULL - no memoization.  All stats should be computed and stored in memoization
 ## * list - memoization has already happened.  Stats should *not* be computed.
@@ -226,7 +55,8 @@ formula.apply <- function(f,
                           stat.function,
                           geom.function,
                           data,
-                          memoization = NULL) {
+                          memoization = NULL,
+                          color = NULL, fill = NULL, size = NULL) {
   y.expr <- f[[2]]
   rhs <- f[[3]]
   stopifnot(rhs[[1]] == "+")
@@ -236,6 +66,15 @@ formula.apply <- function(f,
                     y = eval(y.expr, data)),
                   x.expr = x.expr,
                   y.expr = y.expr)
+    if (!is.null(color)) {
+      state$data$color <- color
+    }
+    if (!is.null(fill)) {
+      state$data$fill <- fill
+    }
+    if (!is.null(size)) {
+      state$data$size <- size
+    }
   } else {
     state <- memoization[[1]]
   }
@@ -375,6 +214,7 @@ formula.apply <- function(f,
 ## Goes through the formula tree ONCE.
 ## Data can be subsetted by .subset.
 .subplot <- function(f, stats, plot.params,
+                     scales,
                      .subset = NULL,
                      draw.x.axis = TRUE,
                      draw.y.axis = TRUE,
@@ -410,8 +250,11 @@ formula.apply <- function(f,
 
   ## Do the actual plotting!
   formula.apply(f, function(...) NULL,
-                call.with.data,
-                data, stats)
+                function(cc, state) {
+                  call.with.data(cc,
+                                 state,
+                                 scales = list(scales))
+                }, data, stats)
 
   ## FIXME: Squash unused.
   ## Axes and labels.
@@ -419,7 +262,6 @@ formula.apply <- function(f,
     grid.xaxis(at = plot.params$pretty.x,
                label = plot.params$labels.x,
                gp = gpar(col = "grey50", cex = 0.8))
-    print(plot.params$xlab)
     grid.text(plot.params$xlab,
               y = unit(-plot.params$label.x.height + 0.5, "lines"),
               gp = gpar(col = "grey20", cex= 0.9))
@@ -428,7 +270,6 @@ formula.apply <- function(f,
     grid.yaxis(at = plot.params$pretty.y,
                label = plot.params$labels.y,
                gp = gpar(col = "grey50", cex = 0.8))
-    print(plot.params$ylab)
     grid.text(plot.params$ylab,
               x = unit(-plot.params$label.y.width - 1.5, "lines"), rot = 90,
               gp = gpar(col = "grey20", cex= 0.9))
@@ -479,14 +320,15 @@ jjplot <- function(f, data = NULL, color = NULL,
   scales$size <- make.size.scale(eval.size)    
 
   ## Compute stats.
-  stats <- formula.apply(f, call.with.data, function(...) NULL, data)
+  stats <- formula.apply(f, call.with.data, function(...) NULL, data,
+                         color = eval.color, fill = eval.fill, size = eval.size)
 
   ## Compute plotting parameters.
   plot.params <- .get.plot.params(f, stats, log.x, log.y, expand)
 
   grid.newpage()
   ## Do the plot.
-  .subplot(f, stats, plot.params)
+  .subplot(f, stats, plot.params, scales)
 }
 
 ### DEPRECATED ###
@@ -540,22 +382,7 @@ jjplot.old <-
       do.call(rbind, faceted.df)
     }
 
-    ## Stats
-    
-    jjplot.fun.x <- function(f) {
-      data.frame(x = f(facet.data$x))
-    }
-
-    jjplot.fun.y <- function(f) {
-      data.frame(y = f(facet.data$y))
-    }
-
-    jjplot.fit <- function() {
-      model <- lm(facet.data$y ~ facet.data$x)
-      data.frame(b = coef(model)[1],
-                 a = coef(model)[2])
-    }
-
+    ## Stats    
     jjplot.quantile <- function() {
       stopifnot(all(facet.data$x == facet.data$x[1]))
       result <- data.frame(facet.data$x[1], t(quantile(facet.data$y)))
@@ -596,73 +423,6 @@ jjplot.old <-
     }
     
     ## Geoms    
-    jjplot.hline <- function(lwd = 1.5, col = NULL, lty = "solid") {
-      grid.lines(y = layer.data$y,
-                 default.units = "native",
-                 gp = gpar(col = match.colors(col, layer.data$color),
-                   lwd = lwd,
-                   lty = lty))
-    }    
-    
-    jjplot.vline <- function(manual.x = NULL, lwd = 1.5, col = NULL, lty = "solid") {
-      grid.lines(x = if (is.null(manual.x)) layer.data$x else manual.x,
-                 default.units = "native",
-                 gp = gpar(col = match.colors(col, layer.data$color),
-                   lwd = lwd,
-                   lty = lty))
-    }
-
-    jjplot.abline <- function(lwd = 1.5, col = NULL, lty = "solid") {
-      ## Find limits
-      xlim <- convertX(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)
-      ylim <- convertY(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)      
-
-      ystart <- xlim[1] * layer.data$a + layer.data$b
-      yend <- xlim[2] * layer.data$a + layer.data$b
-
-      xstart <- ifelse(layer.data$a < 0,
-                       (ylim[2] - layer.data$b) / layer.data$a,
-                       (ylim[1] - layer.data$b) / layer.data$a)
-      xend <- ifelse(layer.data$a < 0,
-                     (ylim[1] - layer.data$b) / layer.data$a,
-                     (ylim[2] - layer.data$b) / layer.data$a)
-
-      ## Invariant: xstart <= xend,
-      ## So that left hand coordinate should be xtart or xlim[1]
-      ## and right hand should be xend or xlim[2].      
-
-      ystart <- ifelse(xstart < xlim[1],
-                       ystart,
-                       ifelse(layer.data$a < 0,
-                              ylim[2],
-                              ylim[1]))
-
-      yend <- ifelse(xend > xlim[2],
-                     yend,
-                     ifelse(layer.data$a < 0,
-                            ylim[1],
-                            ylim[2]))
-
-      xstart <- pmax(xstart, xlim[1])
-      xend <- pmin(xend, xlim[2])
-      
-      grid.segments(xstart, ystart, xend, yend,
-                    default.units = "native",
-                    gp = gpar(lwd = lwd,
-                      lty = lty,
-                      col = match.colors(col, layer.data$color)))
-    }
-    
-    jjplot.point <- function(pch = 16, col = NULL, size = NULL) {
-      grid.points(layer.data$x,
-                  layer.data$y,
-                  pch = pch,
-                  size = unit(0.5 * match.sizes(size, layer.data$size), "char"),
-                  gp = gpar(alpha = eval.alpha,
-                    col = match.colors(col, layer.data$color),
-                    fill = match.colors(col, layer.data$fill, use.fill = TRUE)))
-    }
-
     jjplot.text <- function(col = NULL, label = NULL,
                             x = NULL, y = NULL, hjust = 0.5,
                             vjust = 0.5) {
