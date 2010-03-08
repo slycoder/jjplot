@@ -1,3 +1,11 @@
+quartz()
+
+data <- data.frame(x = rnorm(100), y = rnorm(100),
+                   f = factor(c('A', 'B', 'C', 'D')))
+
+source("jjplot.R")
+jjplot(y ~ bar(width=0.1) : hist() : jitter(xfactor = 1) + x, data = data)
+
 df <- data.frame(x = sample(factor(LETTERS[1:10]), 100, replace=TRUE))
 
 jjplot(x, data = df,
