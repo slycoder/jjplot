@@ -68,7 +68,7 @@ jjplot.jitter <- function(data, x.expr, y.expr,
     
 jjplot.fit <- function(data, x.expr, y.expr) {
   model <- lm(data$y ~ data$x)
-  list(data.frame(b = coef(model)[1],
+  list(data = data.frame(b = coef(model)[1],
                   a = coef(model)[2]),
        x.expr = x.expr, y.expr = y.expr)
 }
@@ -131,4 +131,29 @@ jjplot.cumsum <- function(data, x.expr, y.expr,
        x.expr = x.expr,
        y.expr = substitute(cumsum(x), list(x = y.expr)))
 }
-    
+
+jjplot.group <- function(data, x.expr, y.expr,
+                         fun, by) {
+  eval.by <- eval(match.call()$by, data)  
+  ##  facet.call <- match.call()$by
+  fun.call <- match.call()$fun
+  
+  faceted.df <- base:::by(cbind(data, .by = eval.by),
+                          eval.by,
+                          function(df) {
+                            state <- data.frame(data = data,
+                                                x.expr = x.expr,
+                                                y.expr = y.expr)
+                            result <- call.with.data(fun.call, state)
+##                             if (!is.null(fill.expr) && facet.call == fill.expr)
+##                               result$fill <- df$.facet[1]
+##                             if (!is.null(color.expr) && facet.call == color.expr)
+##                               result$color <- df$.facet[1]
+##                             if (!is.null(size.expr) && facet.call == size.expr)
+##                               result$size <- df$.facet[1]
+#                            result$.facet <- df$.facet[1]
+#                            result
+                          })
+  list(data = do.call(rbind, faceted.df), x.expr = x.expr, y.expr = y.expr)
+}
+
