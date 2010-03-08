@@ -7,8 +7,8 @@ source("stats.R")
 source("geoms.R")
 
 ### UTILITY FUNCTIONS ###
-call.with.data <- function(cc, state, ...) {
-  do.call(paste("jjplot", as.character(cc[[1]]), sep = "."),
+call.with.data <- function(cc, state, prefix = "jjplot", ...) {
+  do.call(paste(prefix, as.character(cc[[1]]), sep = "."),
           c(as.list(cc)[-1],
             list(data = state$data),
             x.expr = quote(state$x.expr),
@@ -96,10 +96,14 @@ formula.apply <- function(f,
   stopifnot(rhs[[1]] == "+")
   x.expr <- rhs[[3]]
   if (is.null(memoization)) {
-    state <- list(data = data.frame(x = eval(x.expr, data)),
+    eval.x <- eval(x.expr, data)
+    eval.y <- eval(y.expr, data)
+    data$x <- eval.x
+
+    state <- list(data = data,
                   x.expr = x.expr,
                   y.expr = y.expr)
-    eval.y <- eval(y.expr, data)
+    
     if (!is.null(eval.y)) {
       state$data$y <- eval.y
     }
@@ -151,10 +155,14 @@ formula.apply <- function(f,
   }
 
   update.range <- function(expr, state) {
-    ## FIXME: geom.expansion
-    ##    extra.data <- geom.expansion(layer.call)      
-    xrange <<- expand.range(xrange, state$data$x)
-    yrange <<- expand.range(yrange, state$data$y)
+    if (exists(paste("jjplot.expand", as.character(expr[[1]]), sep="."))) {
+      expansion <- call.with.data(expr, state, prefix = "jjplot.expand")
+    } else {
+      expansion <- NULL
+    }
+    
+    xrange <<- expand.range(xrange, c(state$data$x, expansion$x))
+    yrange <<- expand.range(yrange, c(state$data$y, expansion$y))
 
     if (is.null(xlab)) {
       xlab <<- state$x.expr
@@ -227,7 +235,7 @@ formula.apply <- function(f,
                        simplify=FALSE)
     labels.y <- do.call(expression, labels.y)
   }
-  
+
   label.y.width <- convertWidth(unit(1, "strwidth",
                                      labels.y[which.max(nchar(labels.y))]),
                                 "lines", valueOnly = TRUE)
@@ -388,36 +396,8 @@ jjplot.old <-
       eval.x <- log10(eval.x)
     }
 
-    color.expr <- match.call()$color
-    fill.expr <- match.call()$fill
-    size.expr <- match.call()$size
-
-    facet.data <- NULL
-    layer.data <- NULL
-
     squash.unused <- if (is.null(match.call()$squash.unused)) FALSE else eval(match.call()$squash.unused)
     
-    geom.expansion <- function(.call) {
-      if (is.call(.call) && as.character(.call[[1]]) == "jjplot.bar") {
-        width <- 1.0
-        if (!is.null(.call$width)) {
-          width <- .call$width
-        }
-        xlim <- range(as.numeric(layer.data$x))
-        x.padding <- (xlim[2] - xlim[1]) * eval.expand[1]
-        if (x.padding >= width / 2) {
-          list(x = c(xlim[1] - width / 2 + x.padding,
-                     xlim[2] + width / 2 - x.padding), y = 0)
-        } else {
-          list(y = 0)          
-        }
-      } else if (is.call(.call) && as.character(.call[[1]]) == "jjplot.box") {
-        list(y = c(layer.data$quantile.0, layer.data$quantile.100))
-      } else {
-        list()
-      }
-    }
-        
     eval.grid.x <- eval(match.call()$facet.x, data)
     eval.grid.y <- eval(match.call()$facet.y, data)
     stopifnot(is.null(eval.grid.x))
