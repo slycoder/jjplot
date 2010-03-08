@@ -109,7 +109,7 @@ jjplot.quantile <- function(data, x.expr, y.expr) {
 }
 
 jjplot.ccdf <- function(data, x.expr, y.expr,
-                        density = FALSE, maxpoints = FALSE,
+                        density = FALSE, maxpoints = FALSE,log.x=FALSE,
                         log.y = FALSE) {
   freqs <- table(data$x)
   df <- data.frame(x=as.numeric(rev(names(freqs))),
