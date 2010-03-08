@@ -16,6 +16,9 @@ call.with.data <- function(cc, state, ...) {
             ...))
 }
 
+## Memoize:
+## * if True, memoization will take place.
+## * if False, memoization will be used.
 ## Memoization can take one of two values:
 ## * NULL - no memoization.  All stats should be computed and stored in memoization
 ## * list - memoization has already happened.  Stats should *not* be computed.
@@ -23,32 +26,55 @@ call.with.data <- function(cc, state, ...) {
                                   stat.function,
                                   geom.function,
                                   state,
+                                  memoize = TRUE,
                                   memoization = NULL) {
+  if (!memoize) {
+    stopifnot(!is.null(memoization))
+  }
   operator <- expr[[1]]
   ret.memoization <- list()
   if (operator == ":") {
     stopifnot(is.stat(expr[[3]]))
-    if (is.null(memoization)) {
+    if (memoize) {
       state <- stat.function(expr[[3]], state)
       ret.memoization <- c(ret.memoization, list(state))
     } else {
       state <- memoization[[1]]
     }
-    ret <- .formula.apply.helper(expr[[2]], stat.function, geom.function, state, memoization[-1])
-    ret.memoization <- c(ret.memoization, ret)
+    ret <- .formula.apply.helper(expr[[2]], stat.function, geom.function, state, memoize, memoization[-1])
+    if (memoize) {
+      ret.memoization <- c(ret.memoization, ret)
+    } else {
+      memoization <- ret
+    }
   } else if (operator == "+") {
-    ret1 <- .formula.apply.helper(expr[[3]], stat.function, geom.function, state, memoization)
-    ret2 <- .formula.apply.helper(expr[[2]], stat.function, geom.function, state, memoization)
-    ret.memoization <- c(ret.memoization, ret1, ret2)
+    ret1 <- .formula.apply.helper(expr[[3]], stat.function, geom.function, state, memoize, memoization)
+    if (!memoize) {
+      memoization <- ret1
+    }
+    ret2 <- .formula.apply.helper(expr[[2]], stat.function, geom.function, state, memoize, memoization)
+    if (memoize) {
+      ret.memoization <- c(ret.memoization, ret1, ret2)      
+    } else {
+      memoization <- ret2
+    }
   } else if (operator == "(") {
-    ret <- .formula.apply.helper(expr[[2]], stat.function, geom.function, state, memoization)
-    ret.memoization <- c(ret.memoization, ret)
+    ret <- .formula.apply.helper(expr[[2]], stat.function, geom.function, state, memoize, memoization)
+    if (memoize) {
+      ret.memoization <- c(ret.memoization, ret)
+    } else {
+      memoization <- ret
+    }
   } else if (is.geom(expr)) {
     geom.function(expr, state)
   } else {
     stop(paste("Invalid operator", operator))
   }
-  return(ret.memoization)
+  if (memoize) {
+    return(ret.memoization)
+  } else {
+    return(memoization)
+  }
 }
 
 formula.apply <- function(f,
@@ -90,7 +116,7 @@ formula.apply <- function(f,
     state <- memoization[[1]]
   }
   
-  ret <- .formula.apply.helper(rhs[[2]], stat.function, geom.function, state, memoization[-1])
+  ret <- .formula.apply.helper(rhs[[2]], stat.function, geom.function, state, is.null(memoization), memoization[-1])
   if (is.null(memoization)) {
     c(list(state), ret)
   } else {
@@ -144,7 +170,6 @@ formula.apply <- function(f,
       }
     }
     if (is.null(y.is.factor)) {
-      print(state$data$y)
       if (is.factor(state$data$y)) {        
         y.is.factor <<- levels(state$data$y)
       } else {
@@ -371,29 +396,6 @@ jjplot.old <-
 
     squash.unused <- if (is.null(match.call()$squash.unused)) FALSE else eval(match.call()$squash.unused)
     
-    jjplot.group <- function(f, by = NULL) {
-      eval.facet <- eval(match.call()$by, data)
-      stopifnot(!is.null(eval.facet))
-
-      facet.call <- match.call()$by
-      f.call <- match.call()$f
-      
-      faceted.df <- base:::by(cbind(facet.data, .facet = eval.facet),
-                       eval.facet,
-                       function(df) { facet.data <<- df
-                                      result <- eval(f.call)
-                                      if (!is.null(fill.expr) && facet.call == fill.expr)
-                                        result$fill <- df$.facet[1]
-                                      if (!is.null(color.expr) && facet.call == color.expr)
-                                        result$color <- df$.facet[1]
-                                      if (!is.null(size.expr) && facet.call == size.expr)
-                                        result$size <- df$.facet[1]
-                                      result$.facet <- df$.facet[1]
-                                      result
-                                    })
-      do.call(rbind, faceted.df)
-    }
-
     geom.expansion <- function(.call) {
       if (is.call(.call) && as.character(.call[[1]]) == "jjplot.bar") {
         width <- 1.0

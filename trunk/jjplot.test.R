@@ -5,7 +5,7 @@ data <- data.frame(x = rnorm(100), y = rnorm(100),
 
 source("jjplot.R")
 jjplot(y ~ hline(lty = "dashed") : fun.y(mean) +
-           abline() : fit() | f +
+           abline() : group(fit(), by = f) +
            point(alpha = 0.2) : jitter(xfactor = 1) +
            x, data = data, color = f)
 
