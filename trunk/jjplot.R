@@ -7,7 +7,7 @@ source("stats.R")
 source("geoms.R")
 
 ### UTILITY FUNCTIONS ###
-call.with.data <- function(cc, state, prefix = "jjplot", ...) {
+.call.with.data <- function(cc, state, prefix = ".jjplot", ...) {
   do.call(paste(prefix, as.character(cc[[1]]), sep = "."),
           c(as.list(cc)[-1],
             list(data = state$data),
@@ -34,7 +34,7 @@ call.with.data <- function(cc, state, prefix = "jjplot", ...) {
   operator <- expr[[1]]
   ret.memoization <- list()
   if (operator == ":") {
-    stopifnot(is.stat(expr[[3]]))
+    stopifnot(.is.stat(expr[[3]]))
     if (memoize) {
       state <- stat.function(expr[[3]], state)
       ret.memoization <- c(ret.memoization, list(state))
@@ -59,13 +59,14 @@ call.with.data <- function(cc, state, prefix = "jjplot", ...) {
       memoization <- ret2
     }
   } else if (operator == "(") {
-    ret <- .formula.apply.helper(expr[[2]], stat.function, geom.function, state, memoize, memoization)
+    ret <- .formula.apply.helper(expr[[2]], stat.function,
+                                 geom.function, state, memoize, memoization)
     if (memoize) {
       ret.memoization <- c(ret.memoization, ret)
     } else {
       memoization <- ret
     }
-  } else if (is.geom(expr)) {
+  } else if (.is.geom(expr)) {
     geom.function(expr, state)
   } else {
     stop(paste("Invalid operator", operator))
@@ -77,7 +78,7 @@ call.with.data <- function(cc, state, prefix = "jjplot", ...) {
   }
 }
 
-formula.apply <- function(f,
+.formula.apply <- function(f,
                           stat.function,
                           geom.function,
                           data,
@@ -129,6 +130,7 @@ formula.apply <- function(f,
 }
 
 .get.plot.params <- function(f, stats, log.x, log.y, expand,
+                             xlab = NULL, ylab = NULL,
                              .subset = NULL, squash.unused = FALSE) {
   ## Length-2 numerics.
   xrange <- NULL
@@ -138,10 +140,6 @@ formula.apply <- function(f,
   x.is.factor <- NULL
   y.is.factor <- NULL
 
-  ## Expressions.
-  xlab <- NULL
-  ylab <- NULL
-  
   ## Expands a range to incorporate new.data.
   expand.range <- function(old.range, new.data) {
     if (is.null(old.range) && is.null(new.data)) {
@@ -155,8 +153,8 @@ formula.apply <- function(f,
   }
 
   update.range <- function(expr, state) {
-    if (exists(paste("jjplot.expand", as.character(expr[[1]]), sep="."))) {
-      expansion <- call.with.data(expr, state, prefix = "jjplot.expand")
+    if (exists(paste(".jjplot.expand", as.character(expr[[1]]), sep="."))) {
+      expansion <- .call.with.data(expr, state, prefix = ".jjplot.expand")
     } else {
       expansion <- NULL
     }
@@ -187,9 +185,9 @@ formula.apply <- function(f,
     }
   }
   
-  formula.apply(f, function(...) NULL,
-                update.range,
-                data, stats)
+  .formula.apply(f, function(...) NULL,
+                 update.range,
+                 data, stats)
   
   if (is.character(x.is.factor)) {
     pretty.x <- 1:length(x.is.factor)
@@ -295,13 +293,13 @@ formula.apply <- function(f,
              default.units = "native")
 
   ## Do the actual plotting!
-  formula.apply(f, function(...) NULL,
-                function(cc, state) {
-                  call.with.data(cc,
-                                 state,
-                                 scales = list(scales))
-                }, data, stats)
-
+  .formula.apply(f, function(...) NULL,
+                 function(cc, state) {
+                   .call.with.data(cc,
+                                   state,
+                                   scales = list(scales))
+                 }, data, stats)
+  
   ## FIXME: Squash unused.
   ## Axes and labels.
   if (draw.x.axis) {
@@ -335,9 +333,11 @@ formula.apply <- function(f,
               gp = gpar(fill = "grey70"))
     
     subset.label <- .subset
-    if (!is.null(calls$grid.y.labeler)) {
-      subset.label <- eval(calls$grid.y.labeler)(.subset)
-    }
+
+    ## FIXME!
+    ##    if (!is.null(calls$grid.y.labeler)) {
+    ##      subset.label <- eval(calls$grid.y.labeler)(.subset)
+    ##    }
     
     grid.text(x = x.left, y = (y.lim[2] + y.lim[1]) / 2,
               vjust = -0.5,
@@ -352,25 +352,25 @@ formula.apply <- function(f,
 jjplot <- function(f, data = NULL, color = NULL,
                    fill = NULL, size = NULL, alpha = 1.0,
                    log.x = FALSE, log.y = FALSE,
+                   xlab = NULL, ylab = NULL,
                    expand = c(0.04, 0.04),
-                   ...) {
-
-  ## Create the scales.
+                   color.scale = NULL) {
   eval.color <- eval(match.call()$color, data)
   eval.fill <- eval(match.call()$fill, data)
   eval.size <- eval(match.call()$size, data)
 
   scales <- list()
-  scales$color <- make.color.scale(eval.color, alpha)
-  scales$fill <- make.color.scale(eval.fill, alpha)
-  scales$size <- make.size.scale(eval.size)    
+  scales$color <- .make.color.scale(eval.color, alpha, manual = color.scale)
+  scales$fill <- .make.color.scale(eval.fill, alpha)
+  scales$size <- .make.size.scale(eval.size)    
 
   ## Compute stats.
-  stats <- formula.apply(f, call.with.data, function(...) NULL, data,
-                         color = eval.color, fill = eval.fill, size = eval.size)
+  stats <- .formula.apply(f, .call.with.data, function(...) NULL, data,
+                          color = eval.color, fill = eval.fill, size = eval.size)
 
   ## Compute plotting parameters.
-  plot.params <- .get.plot.params(f, stats, log.x, log.y, expand)
+  plot.params <- .get.plot.params(f, stats, log.x, log.y, expand,
+                                  xlab = xlab, ylab = ylab)
 
   grid.newpage()
   ## Do the plot.
@@ -378,7 +378,7 @@ jjplot <- function(f, data = NULL, color = NULL,
 }
 
 ### DEPRECATED ###
-jjplot.old <-
+.jjplot.old <-
   function(x,
            y = NULL,
            data,
@@ -404,11 +404,11 @@ jjplot.old <-
     
 
     if (is.null(eval.grid.y)) {
-      ..subplot(match.call(), .get.plot.range(match.call()))
+      .subplot(match.call(), .get.plot.params(match.call()))
     } else {
       calls <- match.call()
       plot.params <- lapply(1:nlevels(eval.grid.y), function(ll)
-                            .get.plot.range(calls, .subset = levels(eval.grid.y)[ll]))
+                            .get.plot.params(calls, .subset = levels(eval.grid.y)[ll]))
       heights <- sapply(plot.params, function(pp) pp$yrange[2] - pp$yrange[1])
       top.vp <- viewport(layout = grid.layout(nlevels(eval.grid.y) + 1, 1,
                          heights = unit.c(unit(heights, "null"),
@@ -427,9 +427,9 @@ jjplot.old <-
         seekViewport(paste(".subplot", ll, sep = "."))
         cat("Doing facet ")
         print(ll)
-        ..subplot(match.call(),
-                  plot.params[[ll]],
-                  .subset = levels(eval.grid.y)[ll],
+        .subplot(match.call(),
+                 plot.params[[ll]],
+                 .subset = levels(eval.grid.y)[ll],
                  draw.x.axis = ll == nlevels(eval.grid.y), allocate.x.axis.space = FALSE)
       }
       popViewport()

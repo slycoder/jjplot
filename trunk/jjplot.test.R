@@ -1,10 +1,26 @@
 quartz()
 
+source("jjplot.R")
+
+
+jjplot(Sepal.Length ~ abline() : group(fit(), by = Species) + point() + Petal.Length,
+       data = iris, color = Species)
+
+jjplot(Sepal.Length ~ (point(col = "blue", size=3) +
+                       line(col = "red", lty="dashed") +
+                       bar(width=0.25)) : hist() : jitter(xfactor = 1) +
+       Petal.Length, data = iris)
+
 
 ### EXAMPLES THAT WORK ###
 data <- data.frame(x = rnorm(100), y = rnorm(100),
                    f = factor(c('A', 'B', 'C', 'D')))
-jjplot( ~ bar(width=0.1) : hist() : jitter(xfactor = 1) + x, data = data)
+
+jjplot(y ~ line(col = "red", lty = "dashed") + bar(width=0.1) : hist() : jitter(xfactor = 1) + x, data = data)
+
+jjplot(y ~ vline(lty = "dashed", col = "red") : fun.x(mean) +
+           point() + line() + x, data = data)
+
 
 df <- data.frame(x = 1:50, y = rnorm(50))
 jjplot(y ~ bar(col = "black") + x, data = df, fill = y)
