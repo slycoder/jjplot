@@ -1,21 +1,21 @@
 ### STATS ###
-stats.list <- c("fun.x",
-                "fun.y",
-                "fit",
-                "jitter",
-                "identity",
-                "quantile",
-                "table",
-                "ccdf",
-                "cumsum",
-                "hist",
-                "group")
+.stats.list <- c("fun.x",
+                 "fun.y",
+                 "fit",
+                 "jitter",
+                 "identity",
+                 "quantile",
+                 "table",
+                 "ccdf",
+                 "cumsum",
+                 "hist",
+                 "group")
 
-is.stat <- function(layer.call) {
-  return(is.call(layer.call) && as.character(layer.call[[1]]) %in% stats.list)
+.is.stat <- function(layer.call) {
+  return(is.call(layer.call) && as.character(layer.call[[1]]) %in% .stats.list)
 }
 
-jjplot.table <- function(data, x.expr, y.expr, log.y = FALSE) {
+.jjplot.table <- function(data, x.expr, y.expr, log.y = FALSE) {
   ## FIXME: log.y?
   tt <- table(data$x)
   df <- data.frame(x = names(tt), y = as.numeric(tt))
@@ -25,11 +25,11 @@ jjplot.table <- function(data, x.expr, y.expr, log.y = FALSE) {
   list(data=df, x.expr=x.expr, y.expr = substitute(Count(x), list(x=x.expr)))
 }
 
-jjplot.hist <- function(data, x.expr, y.expr,
-                        align = c("left", "right", "middle"),
-                        breaks = 20,
-                        density = TRUE,
-                        log.y = FALSE) {
+.jjplot.hist <- function(data, x.expr, y.expr,
+                         align = c("left", "right", "middle"),
+                         breaks = 20,
+                         density = TRUE,
+                         log.y = FALSE) {
   align <- match.arg(align)
 
   h <- hist(data$x, breaks = breaks, plot = FALSE)
@@ -43,7 +43,7 @@ jjplot.hist <- function(data, x.expr, y.expr,
   
   cs <- h$density
   if (!density) {
-    cs <- cs * length(facet.data$x)
+    cs <- cs * length(data$x)
   }
   ## FIXME: log.y
   if (log.y) {
@@ -57,18 +57,18 @@ jjplot.hist <- function(data, x.expr, y.expr,
        y.expr = substitute(Count(x), list(x = x.expr)))
 }
 
-jjplot.jitter <- function(data, x.expr, y.expr,
-                          xfactor = 0, yfactor = 0) {
-  data <- transform(data, x = jitter(as.numeric(x), xfactor))
+.jjplot.jitter <- function(data, x.expr, y.expr,
+                           xfactor = 0, yfactor = 0) {
+  data <- transform(data, x = jitter(as.numeric(data$x), xfactor))
   if (!is.null(data$y)) {
-    data <- transform(data, y = jitter(as.numeric(y), yfactor))    
+    data <- transform(data, y = jitter(as.numeric(data$y), yfactor))    
   }
   list(data = data,
        x.expr = if (xfactor != 0) substitute(jitter(x), list(x=x.expr)) else x.expr,
        y.expr = if (yfactor != 0) substitute(jitter(x), list(x=y.expr)) else y.expr)
 }
     
-jjplot.fit <- function(data, x.expr, y.expr) {
+.jjplot.fit <- function(data, x.expr, y.expr) {
   model <- lm(data$y ~ data$x)
   result <- data.frame(b = coef(model)[1],
                        a = coef(model)[2])
@@ -81,17 +81,17 @@ jjplot.fit <- function(data, x.expr, y.expr) {
        x.expr = x.expr, y.expr = y.expr)
 }
 
-jjplot.fun.x <- function(data, x.expr, y.expr, fun) {
+.jjplot.fun.x <- function(data, x.expr, y.expr, fun) {
   list(data = data.frame(x = fun(data$x)),
        x.expr = x.expr, y.expr = y.expr)
 }
 
-jjplot.fun.y <- function(data, x.expr, y.expr, fun) {
+.jjplot.fun.y <- function(data, x.expr, y.expr, fun) {
   list(data = data.frame(y = fun(data$y)),
        x.expr = x.expr, y.expr = y.expr)
 }
 
-jjplot.quantile <- function(data, x.expr, y.expr) {
+.jjplot.quantile <- function(data, x.expr, y.expr) {
   stopifnot(all(data$x == data$x[1]))
   result <- data.frame(data$x[1], t(quantile(data$y)))
   colnames(result) <- c("x", "quantile.0", "quantile.25", "quantile.50", "quantile.75", "quantile.100")
@@ -108,9 +108,9 @@ jjplot.quantile <- function(data, x.expr, y.expr) {
        y.expr = y.expr)
 }
 
-jjplot.ccdf <- function(data, x.expr, y.expr,
-                        density = FALSE, maxpoints = FALSE,log.x=FALSE,
-                        log.y = FALSE) {
+.jjplot.ccdf <- function(data, x.expr, y.expr,
+                         density = FALSE, maxpoints = FALSE,
+                         log.y = FALSE, log.x = FALSE) {
   freqs <- table(data$x)
   df <- data.frame(x=as.numeric(rev(names(freqs))),
                    y=cumsum(rev(freqs)))
@@ -134,9 +134,9 @@ jjplot.ccdf <- function(data, x.expr, y.expr,
        })
 }
 
-jjplot.cumsum <- function(data, x.expr, y.expr,
-                          decreasing=TRUE,
-                          log.y = FALSE) {
+.jjplot.cumsum <- function(data, x.expr, y.expr,
+                           decreasing=TRUE,
+                           log.y = FALSE) {
   oo <- order(data$x, decreasing=decreasing)
   cs <- cumsum(data$y[oo])
   if (log.y) {
@@ -147,8 +147,8 @@ jjplot.cumsum <- function(data, x.expr, y.expr,
        y.expr = substitute(cumsum(x), list(x = y.expr)))
 }
 
-jjplot.group <- function(data, x.expr, y.expr,
-                         fun, by) {
+.jjplot.group <- function(data, x.expr, y.expr,
+                          fun, by) {
   eval.by <- eval(match.call()$by, data)  
   fun.call <- match.call()$fun
 
@@ -158,7 +158,7 @@ jjplot.group <- function(data, x.expr, y.expr,
                             state <- list(data = df,
                                           x.expr = x.expr,
                                           y.expr = y.expr)
-                            result <- call.with.data(fun.call, state)$data
+                            result <- .call.with.data(fun.call, state)$data
                           })
   list(data = do.call(rbind, faceted.df), x.expr = x.expr, y.expr = y.expr)
 }

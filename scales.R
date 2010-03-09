@@ -1,5 +1,5 @@
 ### SCALES ###
-match.scale <- function(override, group, scales,
+.match.scale <- function(override, group, scales,
                         defaults = list(color = "black",
                                         size = 1.0,
                                         fill = "black"),
@@ -18,7 +18,7 @@ match.scale <- function(override, group, scales,
   }
 }
 
-make.color.scale <- function(cc, alpha) {
+.make.color.scale <- function(cc, alpha, manual = NULL) {
   if (is.null(cc)) {
     function(z) { rgb(0, 0, 0, alpha) }
   } else if (is.factor(cc)) {
@@ -29,7 +29,11 @@ make.color.scale <- function(cc, alpha) {
     colors <- colors[-length(colors)]
     function(z) { colors[z] }
   } else {
-    cr <- colorRamp(c('red', 'white', 'blue'))
+    if (is.null(manual)) {
+      cr <- colorRamp(c('red', 'white', 'blue'))
+    } else {
+      cr <- manual
+    }
     rr <- range(cc)
     function(z) {
       z[z > rr[2]] <- rr[2]
@@ -41,7 +45,7 @@ make.color.scale <- function(cc, alpha) {
   }
 }
 
-make.size.scale <- function(ss) {
+.make.size.scale <- function(ss) {
   if (is.null(ss)) {
     function(z) { 1.0 }
   } else {

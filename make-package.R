@@ -4,7 +4,6 @@ source("jjplot.R")
 
 .make.package <- function() {  
   package.skeleton("jjplot",
-                   c("jjplot"),
                    force = TRUE)
   
   sapply(c("jjplot/demo"), dir.create, showWarnings=FALSE)
