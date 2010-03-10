@@ -1,55 +1,34 @@
 #summary changes to jjplot functions and semantics
 
-= Introduction =
-we hope to address a number of difficulties encountered with ggplot2, such as ordering a geom by a stat (e.g. ethnicity breakdowns sorted by frequency in country panel <stick in extra stuff here>
+= Features for future releases =
 
 
-= One approach =
- Adding a special sort statistic.   In this framework, you could do:
+== Ordering Stats ==
+Here we propose a few ways that we might allow for the ordering of stats.  This feature is not present in ggplot2 but would be quite convenient to have.  Example applications would be generating facets of ethnicity breakdowns sorted by frequency.
 
-jjplot( ~ bar() : sort(by = y) : table() + x)
+=== A simple solution ===
 
-  In effect, the sort statistic would be an identity statistic but it would add a special attr to the data frame.   This is convenient because right now scales are constructed when the first geom is encountered --- the input data frame is used to create the scale.  This routine would just have to look for this attr and do the sort then.
+Adding a special sort statistic.   In this framework, you could do:
 
-= Details =
+  {{{jjplot( ~ bar() : sort(by = y) : table() + x)}}}
 
-Some of my treatise from previous emails to clean up
-----
-So i was thinking about ways we might be able to add ordering by
-stats.  One solution might be to have y.order, x.order, grid.x.order,
-grid.y.order parameters to the jjplot function.  you could either use
-a factor, or if you want to use a stat to order, you can name the stat
-/ geom.  here is one example.
-spose we have our dataframe, which has a factor called country, which
-we want to facet by, and then we want to order the bars by their
-lengths. we might say something like:
+In effect, the sort statistic would be an identity statistic but it would add a special attr to the data frame.   This is convenient because right now scales are constructed when the first geom is encountered --- the input data frame is used to create the scale.  This routine would just have to look for this attr and do the sort then.
 
-  jjplot( ~ bar(width = 0.5) : ethnicCount(table()) + x,
-facet.y=country, x.order.by=ethnicCount, data = df)
+== Named Stats ==
+This idea was originally conceived so that one could refer to the results of a stat or stack of stats in options or special functions that are not the geom that the stats are bound to.  The original motivation is to provide a way to sort by stats, but Jon's solution for sorting is quite elegant and I think we should go with that.  Another reason I had proposed stat names is that it makes it easier to add support for things like pre-compiled stats.
+ 
+Adding named statistics and an additional jjplot parameter.  In this framework, you could do:
+  {{{jjplot( ~ bar(width = 0.5) : .ethnicCount(table()) + x,, data = df)}}}
+or
+  {{{jjplot( ~ bar(width = 0.5) : table(name='ethnicCount') + x, data = df)}}}
 
-now if we have a more complex datatype that is returned by our stat
-(e.g. quantile), we make choose to make the design decision that the
-stat returns an indexable data structure (or perhaps just a
-dataframe), and then in our stat naming, we can specify the column
-returned by the stat to order by:
+In the first proposed syntax, we wrap a stat (or stacked stats) in a function name.  In Eytan's opinion, this improves readability.  In the second syntax, we specify a name parameter to the stat we would like to name.  Since stats are applied from left to right, the rightmost name would refer to the top of the stats stack, so that `jitter():table(name='ethnicCount')` is equivalent to `ethnicCount(jitter():table())`.
 
-  jjplot(Income ~ box() : regionGroup(group(quantile(), by = region),
-ordering=x) + region, data = df,
-   fill = region, order.x.by=regionGroup)
+=== Pre-compiled Stats ===
+Pre-compiling stats to save on time when you are trying to tweak the aesthetics of a plot involving a computationally expensive stat.  It might work something like this:
+{{{
+  dc = jjcompile(y, ethnicCount(table()), data = df)
+  jjplot( ~ bar(width = 0.5) : ethnicCount + x, data = dc)
+}}}
 
-
-the conflict semantics would be as such: named stats can't
-have the same name as functions that are already defined in the
-environment.  we do a hadley type thing, like use .'s to specify
-special names, so in the examples below you would write .regionGroup
-and .ethnicCount.  Whether or not this is mandatory or optional ( /
-strongly suggested in the documentation) is a design choice.
-----
-
-Jon suggested that instead off adding extra syntax, add a 'name' filed to the stats instead of using them like functions.  
-  
-===notes===
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+Of course, table() is quite cheap, but if we add support for clustering, 2d kernel density estimates, etc, this might come in handy.
