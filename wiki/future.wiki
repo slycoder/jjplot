@@ -33,3 +33,5 @@ This idea was originally conceived so that one could refer to the results of a s
 }}}
 
  Of course, table() is quite cheap, but if we add support for clustering, 2d kernel density estimates, etc, this might come in handy.
+----
+  I like the idea of having a special geom called 'save' which would dump it into a structure future jjplots can use.  It might be also awesome to have an xtable geom.
