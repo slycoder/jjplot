@@ -1,0 +1,51 @@
+#summary changes to jjplot functions and semantics
+
+= Introduction =
+we hope to address a number of difficulties encountered with ggplot2, such as ordering a geom by a stat (e.g. ethnicity breakdowns sorted by frequency in country panel <stick in extra stuff here>
+
+
+Add your content here.
+
+
+= Details =
+
+Some of my treatise from previous emails to clean up
+----
+So i was thinking about ways we might be able to add ordering by
+stats.  One solution might be to have y.order, x.order, grid.x.order,
+grid.y.order parameters to the jjplot function.  you could either use
+a factor, or if you want to use a stat to order, you can name the stat
+/ geom.  here is one example.
+spose we have our dataframe, which has a factor called country, which
+we want to facet by, and then we want to order the bars by their
+lengths. we might say something like:
+
+  jjplot( ~ bar(width = 0.5) : ethnicCount(table()) + x,
+facet.y=country, x.order.by=ethnicCount, data = df)
+
+now if we have a more complex datatype that is returned by our stat
+(e.g. quantile), we make choose to make the design decision that the
+stat returns an indexable data structure (or perhaps just a
+dataframe), and then in our stat naming, we can specify the column
+returned by the stat to order by:
+
+  jjplot(Income ~ box() : regionGroup(group(quantile(), by = region),
+ordering=x) + region, data = df,
+   fill = region, order.x.by=regionGroup)
+
+
+the conflict semantics would be as such: named stats can't
+have the same name as functions that are already defined in the
+environment.  we do a hadley type thing, like use .'s to specify
+special names, so in the examples below you would write .regionGroup
+and .ethnicCount.  Whether or not this is mandatory or optional ( /
+strongly suggested in the documentation) is a design choice.
+----
+
+Jon suggested that instead off adding extra syntax, add a 'name' filed to the stats instead of using them like functions.  
+  
+===notes===
+Add your content here.  Format your content with:
+  * Text in *bold* or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages
