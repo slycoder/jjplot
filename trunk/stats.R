@@ -9,10 +9,35 @@
                  "ccdf",
                  "cumsum",
                  "hist",
-                 "group")
+                 "group",
+                 "sort")
 
 .is.stat <- function(layer.call) {
   return(is.call(layer.call) && as.character(layer.call[[1]]) %in% .stats.list)
+}
+
+.bind.attr.columns <- function(result, data) {
+  if (!is.null(data$color)) {
+    if (all(data$color == data$color[1])) {
+      result$color <- data$color[1]
+    } 
+  }
+  if (!is.null(data$fill)) {
+    if (all(data$fill == data$fill[1])) {
+      result$fill <- data$fill[1]
+    } 
+  }
+  if (!is.null(data$size)) {
+    if (all(data$size == data$size[1])) {
+      result$size <- data$size[1]
+    } 
+  }
+  if (!is.null(data$.facet)) {
+    if (all(data$.facet == data$.facet[1])) {
+      result$.facet <- data$.facet[1]
+    } 
+  }
+  result
 }
 
 .jjplot.table <- function(data, x.expr, y.expr, log.y = FALSE) {
@@ -67,17 +92,12 @@
        x.expr = if (xfactor != 0) substitute(jitter(x), list(x=x.expr)) else x.expr,
        y.expr = if (yfactor != 0) substitute(jitter(x), list(x=y.expr)) else y.expr)
 }
-    
+
 .jjplot.fit <- function(data, x.expr, y.expr) {
   model <- lm(data$y ~ data$x)
   result <- data.frame(b = coef(model)[1],
                        a = coef(model)[2])
-  if (!is.null(data$color)) {
-    if (all(data$color == data$color[1])) {
-      result$color <- data$color[1]
-    } 
-  }
-  list(data = result, 
+  list(data = .bind.attr.columns(result, data), 
        x.expr = x.expr, y.expr = y.expr)
 }
 
@@ -97,13 +117,7 @@
   colnames(result) <- c("x", "quantile.0", "quantile.25", "quantile.50", "quantile.75", "quantile.100")
   rownames(result) <- NULL
 
-  if (!is.null(data$fill)) {
-    if (all(data$fill == data$fill[1])) {
-      result$fill <- data$fill[1]
-    }
-  }
-  
-  list(data = result,
+  list(data = .bind.attr.columns(result, data),
        x.expr = x.expr,
        y.expr = y.expr)
 }
@@ -161,4 +175,11 @@
                             result <- .call.with.data(fun.call, state)$data
                           })
   list(data = do.call(rbind, faceted.df), x.expr = x.expr, y.expr = y.expr)
+}
+
+
+.jjplot.sort <- function(data, x.expr, y.expr,
+                         x = NULL, y = NULL, fun = mean) {
+  stopifnot(is.null(x) ^ is.null(y))
+  list(data = data, x.expr = x.expr, y.expr = y.expr)
 }
