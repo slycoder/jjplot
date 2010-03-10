@@ -79,11 +79,14 @@ source("geoms.R")
 }
 
 .formula.apply <- function(f,
-                          stat.function,
-                          geom.function,
-                          data,
-                          memoization = NULL,
-                          color = NULL, fill = NULL, size = NULL) {
+                           stat.function,
+                           geom.function,
+                           data,
+                           memoization = NULL,
+                           facet = NULL,
+                           color = NULL,
+                           fill = NULL,
+                           size = NULL) {
   if (length(f) == 3) {
     y.expr <- f[[2]]
     rhs <- f[[3]]
@@ -116,6 +119,9 @@ source("geoms.R")
     }
     if (!is.null(size)) {
       state$data$size <- size
+    }
+    if (!is.null(facet)) {
+      state$data$.facet <- facet
     }
   } else {
     state <- memoization[[1]]
@@ -295,6 +301,11 @@ source("geoms.R")
   ## Do the actual plotting!
   .formula.apply(f, function(...) NULL,
                  function(cc, state) {
+                   if (!is.null(.subset) && !is.null(state$data$.facet)) {
+                     ## Note that if .facet is not a part of the state,
+                     ## the entire frame will be used
+                     state$data <- subset(state$data, .facet == .subset)
+                   }
                    .call.with.data(cc,
                                    state,
                                    scales = list(scales))
@@ -348,17 +359,58 @@ source("geoms.R")
   popViewport(2)
 }
 
+.faceted.plot <- function(f, stats, facet, scales, ...) {
+  facet.levels <- levels(facet)
+  M <- nlevels(facet)
+
+  plot.params <- lapply(1:M,
+                        function(ll) {
+                          .get.plot.params(f, stats, ...,
+                                           .subset = facet.levels[ll])
+                        })
+
+  heights <- sapply(plot.params, function(pp) pp$yrange[2] - pp$yrange[1])
+
+  top.vp <- viewport(layout = grid.layout(M + 1, 1,
+                       heights = unit.c(unit(heights, "null"),
+                         unit(plot.params[[1]]$label.x.height, "lines"))))
+  
+  subplots <- list()
+  for (ll in 1:M) {
+    subplots[[ll]] <- viewport(name = paste(".subplot", ll, sep = "."),
+                               layout.pos.row = ll, layout.pos.col = 1)
+  }
+  subplots[[M + 1]] <- viewport(name = "xaxis",
+                                layout.pos.row = M + 1,
+                                layout.pos.col = 1)
+  pushViewport(vpTree(top.vp, do.call(vpList, subplots)))
+  for (ll in 1:M) {
+    seekViewport(paste(".subplot", ll, sep = "."))
+    cat("Doing facet ")
+    print(ll)
+    .subplot(f, stats,
+             plot.params = plot.params[[ll]],
+             scales = scales,
+             .subset = facet.levels[ll],
+             draw.x.axis = ll == M,
+             allocate.x.axis.space = FALSE)
+  }
+  popViewport()
+}
+
 ### ENTRY POINT ###
 jjplot <- function(f, data = NULL, color = NULL,
                    fill = NULL, size = NULL, alpha = 1.0,
                    log.x = FALSE, log.y = FALSE,
                    xlab = NULL, ylab = NULL,
+                   facet = NULL,
                    expand = c(0.04, 0.04),
                    color.scale = NULL) {
   eval.color <- eval(match.call()$color, data)
   eval.fill <- eval(match.call()$fill, data)
   eval.size <- eval(match.call()$size, data)
-
+  eval.facet <- eval(match.call()$facet, data)
+  
   scales <- list()
   scales$color <- .make.color.scale(eval.color, alpha, manual = color.scale)
   scales$fill <- .make.color.scale(eval.fill, alpha)
@@ -366,73 +418,22 @@ jjplot <- function(f, data = NULL, color = NULL,
 
   ## Compute stats.
   stats <- .formula.apply(f, .call.with.data, function(...) NULL, data,
-                          color = eval.color, fill = eval.fill, size = eval.size)
-
-  ## Compute plotting parameters.
-  plot.params <- .get.plot.params(f, stats, log.x, log.y, expand,
-                                  xlab = xlab, ylab = ylab)
-
+                          facet = eval.facet,
+                          color = eval.color,
+                          fill = eval.fill,
+                          size = eval.size)
+  
   grid.newpage()
-  ## Do the plot.
-  .subplot(f, stats, plot.params, scales)
+  if (is.null(eval.facet)) {
+    ## Compute plotting parameters.
+    plot.params <- .get.plot.params(f, stats, log.x, log.y, expand,
+                                    xlab = xlab, ylab = ylab)
+    
+    ## Do the plot.
+    .subplot(f, stats, plot.params, scales)
+  } else {
+    .faceted.plot(f, stats, eval.facet, scales,
+                  log.x, log.y, expand,
+                  xlab = xlab, ylab = ylab)
+  }
 }
-
-### DEPRECATED ###
-.jjplot.old <-
-  function(x,
-           y = NULL,
-           data,
-           ...) {
-    op <- par(no.readonly = TRUE)
-
-    # flag whether x or y axis is to be log-transformed
-    log.arg = match.call()$log
-    log.x <- (!is.null(log.arg) && (log.arg == 'x' || log.arg == 'xy'))
-    log.y <- (!is.null(log.arg) && (log.arg == 'y' || log.arg == 'xy'))
-    eval.x <- eval(match.call()[["x"]], data)
-    ylab.default <- NULL
-    
-    if(log.x && is.numeric(eval.x)) {
-      eval.x <- log10(eval.x)
-    }
-
-    squash.unused <- if (is.null(match.call()$squash.unused)) FALSE else eval(match.call()$squash.unused)
-    
-    eval.grid.x <- eval(match.call()$facet.x, data)
-    eval.grid.y <- eval(match.call()$facet.y, data)
-    stopifnot(is.null(eval.grid.x))
-    
-
-    if (is.null(eval.grid.y)) {
-      .subplot(match.call(), .get.plot.params(match.call()))
-    } else {
-      calls <- match.call()
-      plot.params <- lapply(1:nlevels(eval.grid.y), function(ll)
-                            .get.plot.params(calls, .subset = levels(eval.grid.y)[ll]))
-      heights <- sapply(plot.params, function(pp) pp$yrange[2] - pp$yrange[1])
-      top.vp <- viewport(layout = grid.layout(nlevels(eval.grid.y) + 1, 1,
-                         heights = unit.c(unit(heights, "null"),
-                                          unit(plot.params[[1]]$label.x.height, "lines"))))
-      
-      subplots <- list()
-      for (ll in 1:nlevels(eval.grid.y)) {
-        subplots[[ll]] <- viewport(name = paste(".subplot", ll, sep = "."),
-                                   layout.pos.row = ll, layout.pos.col = 1)
-      }
-      subplots[[nlevels(eval.grid.y) + 1]] <- viewport(name = "xaxis",
-                                                       layout.pos.row = nlevels(eval.grid.y) + 1,
-                                                       layout.pos.col = 1)
-      pushViewport(vpTree(top.vp, do.call(vpList, subplots)))
-      for (ll in 1:nlevels(eval.grid.y)) {
-        seekViewport(paste(".subplot", ll, sep = "."))
-        cat("Doing facet ")
-        print(ll)
-        .subplot(match.call(),
-                 plot.params[[ll]],
-                 .subset = levels(eval.grid.y)[ll],
-                 draw.x.axis = ll == nlevels(eval.grid.y), allocate.x.axis.space = FALSE)
-      }
-      popViewport()
-    }
-}
-
