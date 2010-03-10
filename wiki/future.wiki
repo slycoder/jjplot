@@ -14,6 +14,7 @@ Adding a special sort statistic.   In this framework, you could do:
 
 In effect, the sort statistic would be an identity statistic but it would add a special attr to the data frame.   This is convenient because right now scales are constructed when the first geom is encountered --- the input data frame is used to create the scale.  This routine would just have to look for this attr and do the sort then.
 
+
 == Named Stats ==
 This idea was originally conceived so that one could refer to the results of a stat or stack of stats in options or special functions that are not the geom that the stats are bound to.  The original motivation is to provide a way to sort by stats, but Jon's solution for sorting is quite elegant and I think we should go with that.  Another reason I had proposed stat names is that it makes it easier to add support for things like pre-compiled stats.
  
