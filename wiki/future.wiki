@@ -4,8 +4,12 @@
 we hope to address a number of difficulties encountered with ggplot2, such as ordering a geom by a stat (e.g. ethnicity breakdowns sorted by frequency in country panel <stick in extra stuff here>
 
 
-Add your content here.
+= One approach =
+ Adding a special sort statistic.   In this framework, you could do:
 
+jjplot( ~ bar() : sort(by = y) : table() + x)
+
+  In effect, the sort statistic would be an identity statistic but it would add a special attr to the data frame.   This is convenient because right now scales are constructed when the first geom is encountered --- the input data frame is used to create the scale.  This routine would just have to look for this attr and do the sort then.
 
 = Details =
 
