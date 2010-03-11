@@ -183,8 +183,16 @@ source("geoms.R")
       }
     }
     if (is.null(y.is.factor)) {
-      if (is.factor(state$data$y)) {        
-        y.is.factor <<- levels(state$data$y)
+      if (is.factor(state$data$y)) {
+        sort.y <- attr(state$data, "sort.y", exact = TRUE)
+        if (!is.null(sort.y)) {
+          y.is.factor <<- sort.y
+          if (class(sort.y) == "list" && !is.null(.subset)) {
+            y.is.factor <<- sort.y[[.subset]]
+          }
+        } else {
+          y.is.factor <<- levels(state$data$y)
+        }
       } else {
         y.is.factor <<- FALSE
       }
@@ -301,10 +309,19 @@ source("geoms.R")
   ## Do the actual plotting!
   .formula.apply(f, function(...) NULL,
                  function(cc, state) {
+                   sort.y <- attr(state$data, "sort.y", exact = TRUE)
                    if (!is.null(.subset) && !is.null(state$data$.facet)) {
                      ## Note that if .facet is not a part of the state,
                      ## the entire frame will be used
                      state$data <- subset(state$data, .facet == .subset)
+
+                     if (class(sort.y) == "list") {
+                       sort.y <- sort.y[[.subset]]
+                     }
+                   }
+                   if (!is.null(sort.y)) {
+                     state$data$y <- factor(state$data$y,
+                                            levels = sort.y)
                    }
                    .call.with.data(cc,
                                    state,

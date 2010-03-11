@@ -174,12 +174,30 @@
                                           y.expr = y.expr)
                             result <- .call.with.data(fun.call, state)$data
                           })
-  list(data = do.call(rbind, faceted.df), x.expr = x.expr, y.expr = y.expr)
+
+  result <- do.call(rbind, faceted.df)
+  attr(result, "sort.x") <- lapply(faceted.df, function(ll) attr(ll, "sort.x"))
+  attr(result, "sort.y") <- lapply(faceted.df, function(ll) attr(ll, "sort.y"))       
+
+  list(data = result,
+       x.expr = x.expr,
+       y.expr = y.expr)
 }
 
 
 .jjplot.sort <- function(data, x.expr, y.expr,
-                         x = NULL, y = NULL, fun = mean) {
-  stopifnot(is.null(x) ^ is.null(y))
-  list(data = data, x.expr = x.expr, y.expr = y.expr)
+                         x = NULL, y = NULL,
+                         decreasing = FALSE,
+                         fun = mean) {
+  sort.x <- match.call()[["x"]]
+  sort.y <- match.call()[["y"]]
+  stopifnot(xor(is.null(sort.x), is.null(sort.y)))
+  result <- list(data = data, x.expr = x.expr, y.expr = y.expr)
+  if (!is.null(sort.y)) {
+    eval.y <- eval(sort.y, data)
+    stopifnot(is.factor(data$y))
+    oo <- order(tapply(eval.y, data$y, fun), decreasing = decreasing)
+    attr(result$data, "sort.y") <- levels(data$y)[oo]
+  }
+  result
 }
