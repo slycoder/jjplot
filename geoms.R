@@ -106,8 +106,9 @@
 }
     
 .jjplot.hline <- function(data, x.expr, y.expr, scales,
+                          manual.y = NULL,
                           lwd = 1.5, col = NULL, lty = "solid") {
-  grid.lines(y = data$y,
+  grid.lines(y = if (is.null(manual.y)) data$y else manual.y,
              default.units = "native",
              gp = gpar(col = .match.scale(col, data$color, scales),
                lwd = lwd,
