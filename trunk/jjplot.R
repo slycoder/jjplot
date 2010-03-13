@@ -107,7 +107,7 @@ source("geoms.R")
     state <- list(data = data,
                   x.expr = x.expr,
                   y.expr = y.expr)
-    
+
     if (!is.null(eval.y)) {
       state$data$y <- eval.y
     }
@@ -202,7 +202,7 @@ source("geoms.R")
   .formula.apply(f, function(...) NULL,
                  update.range,
                  data, stats)
-  
+
   if (is.character(x.is.factor)) {
     pretty.x <- 1:length(x.is.factor)
     labels.x <- x.is.factor
@@ -239,8 +239,7 @@ source("geoms.R")
   } else {
     pretty.y <- pretty(yrange)
     labels.y <- prettyNum(pretty.y)
-  }
-  
+  }  
   if (log.y) {
     labels.y <- sapply(pretty.y, function(x)
                        substitute(10^x, list(x = x)),
@@ -319,7 +318,9 @@ source("geoms.R")
                        sort.y <- sort.y[[.subset]]
                      }
                    }
-                   if (!is.null(sort.y) && !is.null(state$data$y)) {
+                   print(sort.y)
+                   if (!is.null(sort.y) && !is.null(state$data$y) &&
+                       class(sort.y) != "list") {
                      state$data$y <- factor(state$data$y,
                                             levels = sort.y)
                    }
