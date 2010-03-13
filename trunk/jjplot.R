@@ -319,7 +319,7 @@ source("geoms.R")
                        sort.y <- sort.y[[.subset]]
                      }
                    }
-                   if (!is.null(sort.y)) {
+                   if (!is.null(sort.y) && !is.null(state$data$y)) {
                      state$data$y <- factor(state$data$y,
                                             levels = sort.y)
                    }

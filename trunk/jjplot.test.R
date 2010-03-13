@@ -11,6 +11,21 @@ jjplot(Sepal.Length ~ (point(col = "blue", size=3) +
 
 
 ### EXAMPLES THAT WORK ###
+source("jjplot.R")
+df <- data.frame(name = factor(letters),
+                 value = rnorm(26 * 6),
+                 type = rep(factor(month.name[1:6]), each = 26))
+
+jjplot(name ~ point() + value,
+       data = df, color = type, facet = type)
+
+jjplot(name ~ point() : sort(y = value) + value,
+       data = df, color = type, facet = type)
+
+jjplot(name ~ point() : group(sort(y = value), by=type) + value,
+       data = df, color = type, facet = type)
+
+
 df <- data.frame(state = rownames(state.x77),
                  region = state.region,
                  state.x77)
@@ -48,6 +63,7 @@ jjplot(state ~ point(pch = 22, size = 2) + variable, data = melted,
 df <- data.frame(state = rownames(state.x77),
                  region = state.region,
                  state.x77)
+
 jjplot(Income ~ box() : group(quantile(), by = region) + region,
        data = df, fill = region)
 
@@ -64,16 +80,7 @@ jjplot(y ~ hline(lty = "dashed") : fun.y(mean) +
            x, data = df, color = f)
 
 ### EXAMPLES THAT DON'T WORK ###
-df <- data.frame(name = factor(letters),
-                 value = rnorm(26 * 6),
-                 type = rep(factor(month.name[1:6]), each = 26))
 
-source("jjplot.R")
-jjplot(name ~ point() : sort(y = value) + value,
-       data = df, color = type, facet = type)
-
-
-## Foo!
 df <- data.frame(x = rnorm(10000) + (1:4) * 1,
                  f = factor(c('A', 'B', 'C', 'D')))
 df$y <- 1:4 * df$x + rnorm(10000)
