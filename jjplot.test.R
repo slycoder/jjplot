@@ -1,20 +1,34 @@
 quartz()
 
+png("stacked_stats.png", width=640, height=480)
+
+jjplot( ~ line(lty="dashed", col = "red") : hist() + 
+              bar(width = 0.1) : hist() : jitter(xfactor = 1) + 
+              Sepal.Length, data = iris)
+
+dev.off()
 
 jjplot(Sepal.Length ~ abline() : group(fit(), by = Species) + point() + Petal.Length,
        data = iris, color = Species)
 
+png("stacked_geoms.png", width=640, height=480)
 jjplot(Sepal.Length ~ (point(col = "blue", size=3) +
                        line(col = "red", lty="dashed") +
-                       bar(width=0.25)) : hist() : jitter(xfactor = 1) +
+                       bar(width=0.25)) : hist() +
        Petal.Length, data = iris)
-
+dev.off()
 
 ### EXAMPLES THAT WORK ###
-source("jjplot.R")
 df <- data.frame(name = factor(letters),
                  value = rnorm(26 * 6),
                  type = rep(factor(month.name[1:6]), each = 26))
+
+source("jjplot.R")
+jjplot(~ area() : group(density(), by = type) +
+       area() : density() + value,
+       data = df, fill = type, alpha = 0.5, facet = type)
+
+png("sorted_stats%03d.png", width=480, height=480)
 
 jjplot(name ~ point() + value,
        data = df, color = type, facet = type)
@@ -25,6 +39,9 @@ jjplot(name ~ point() : sort(y = value) + value,
 jjplot(name ~ point() : group(sort(y = value), by=type) + value,
        data = df, color = type, facet = type)
 
+dev.off()
+
+png("faceted_stats.png", width=480, height=300)
 
 df <- data.frame(state = rownames(state.x77),
                  region = state.region,
@@ -33,6 +50,8 @@ jjplot(Murder ~ abline(lty = "dashed") : fit() +
        abline() : group(fit(), by = region) +
        point() + Income,
        data = df, color = region, facet = region)
+
+dev.off()
 
 data <- data.frame(x = rnorm(100), y = rnorm(100),
                    f = factor(c('A', 'B', 'C', 'D')))

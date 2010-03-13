@@ -6,7 +6,8 @@
                  "line",
                  "text",
                  "bar",
-                 "box")
+                 "box",
+                 "area")
 
 .is.geom <- function(layer.call) {
   return(is.call(layer.call) && as.character(layer.call[[1]]) %in% .geoms.list)
@@ -50,6 +51,24 @@
               col = .match.scale(col, data$color, scales)))
 }
 
+.jjplot.area <- function(data, x.expr, y.expr, scales,
+                         col = NULL, fill = NULL) {
+  if (is.null(data$fill) || !is.null(col)) {
+    grid.polygon(c(data$x[1], data$x, data$x[length(data$x)]),
+                 c(0, data$y, 0),
+                 default.units = "native",
+                 gp = gpar(fill = .match.scale(fill, data$fill, scales, type = "fill"), 
+                   col = .match.scale(col, data$color, scales)))
+  } else {
+    by(data, data$fill, function(xx)
+       grid.polygon(c(xx$x[1], xx$x, xx$x[length(xx$x)]),
+                 c(0, xx$y, 0),
+                 default.units = "native",
+                 gp = gpar(fill = .match.scale(fill, xx$fill, scales, type = "fill"), 
+                   col = .match.scale(col, xx$color, scales))))
+  }
+}
+  
 .jjplot.point <- function(data, x.expr, y.expr, scales,
                           alpha = 1.0,
                           pch = 16, col = NULL, size = NULL) {
@@ -184,3 +203,7 @@
   list(x = c(min(as.numeric(data$x)) - width / 2, max(as.numeric(data$x)) + width / 2),
        y = c(data$quantile.0, data$quantile.100))
 }        
+
+.jjplot.expand.area <- function(data, x.expr, y.expr) {
+  list(y = 0)
+}

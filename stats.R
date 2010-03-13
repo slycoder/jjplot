@@ -10,7 +10,8 @@
                  "cumsum",
                  "hist",
                  "group",
-                 "sort")
+                 "sort",
+                 "density")
 
 .is.stat <- function(layer.call) {
   return(is.call(layer.call) && as.character(layer.call[[1]]) %in% .stats.list)
@@ -172,16 +173,16 @@
                             state <- list(data = df,
                                           x.expr = x.expr,
                                           y.expr = y.expr)
-                            result <- .call.with.data(fun.call, state)$data
+                            result <- .call.with.data(fun.call, state)
                           })
 
-  result <- do.call(rbind, faceted.df)
-  attr(result, "sort.x") <- lapply(faceted.df, function(ll) attr(ll, "sort.x"))
-  attr(result, "sort.y") <- lapply(faceted.df, function(ll) attr(ll, "sort.y"))       
+  result <- do.call(rbind, lapply(faceted.df, function(a) a$data))
+  attr(result, "sort.x") <- lapply(faceted.df, function(ll) attr(ll$data, "sort.x"))
+  attr(result, "sort.y") <- lapply(faceted.df, function(ll) attr(ll$data, "sort.y"))
 
   list(data = result,
-       x.expr = x.expr,
-       y.expr = y.expr)
+       x.expr = faceted.df[[1]]$x.expr,
+       y.expr = faceted.df[[1]]$y.expr)
 }
 
 
@@ -200,4 +201,12 @@
     attr(result$data, "sort.y") <- levels(data$y)[oo]
   }
   result
+}
+
+.jjplot.density <- function(data, x.expr, y.expr) {
+  dd <- density(data$x)
+  result <- data.frame(x = dd$x, y = dd$y)
+  list(data = .bind.attr.columns(result, data),
+       x.expr = x.expr,
+       y.expr = substitute(Density(x), list(x = x.expr)))
 }
