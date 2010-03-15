@@ -1,6 +1,7 @@
 #!Rscript
 
 require("grid")
+require("reshape")
 
 source("scales.R")
 source("stats.R")
@@ -139,6 +140,21 @@ source("geoms.R")
   }
 }
 
+.try.subset <- function(df, ff) {
+  if (is.null(ff) || is.null(df) || ncol(df) == 1) {
+    return(df)
+  }
+  
+  for (ii in 2:ncol(df)) {
+    if (ff %in% levels(df[,ii])) {
+      return(subset(df, df[,ii] == ff))
+    }
+  }
+  warning("It looks like sorting was grouped, but none of the groups correspond to a facet!")
+  return(df)
+}
+                   
+
 .get.plot.params <- function(f, stats, log.x, log.y, expand,
                              xlab = NULL, ylab = NULL,
                              .subset = NULL, squash.unused = FALSE) {
@@ -181,7 +197,15 @@ source("geoms.R")
     
     if (is.null(x.is.factor)) {
       if (is.factor(state$data$x)) {        
-        x.is.factor <<- levels(state$data$x)
+        sort.x <- attr(state$data, "sort.x", exact = TRUE)
+        sort.x <- .try.subset(sort.x, .subset$facet.x)
+        sort.x <- .try.subset(sort.x, .subset$facet.y)
+        
+        if (!is.null(sort.x)) {
+          x.is.factor <<- as.character(sort.x[,1])
+        } else {
+          x.is.factor <<- levels(state$data$x)
+        }
       } else {
         x.is.factor <<- FALSE
       }
@@ -189,11 +213,11 @@ source("geoms.R")
     if (is.null(y.is.factor)) {
       if (is.factor(state$data$y)) {
         sort.y <- attr(state$data, "sort.y", exact = TRUE)
+        sort.y <- .try.subset(sort.y, .subset$facet.x)
+        sort.y <- .try.subset(sort.y, .subset$facet.y)
+        
         if (!is.null(sort.y)) {
-          y.is.factor <<- sort.y
-          if (class(sort.y) == "list" && !is.null(.subset)) {
-            y.is.factor <<- sort.y[[.subset]]
-          }
+          y.is.factor <<- as.character(sort.y[,1])
         } else {
           y.is.factor <<- levels(state$data$y)
         }
@@ -325,6 +349,7 @@ source("geoms.R")
   ## Do the actual plotting!
   .formula.apply(f, function(...) NULL,
                  function(cc, state) {
+                   sort.x <- attr(state$data, "sort.x", exact = TRUE)
                    sort.y <- attr(state$data, "sort.y", exact = TRUE)
 
                    condition <- TRUE
@@ -339,15 +364,22 @@ source("geoms.R")
                    }
                    state$data <- subset(state$data, condition)
 
-                   ## FIXME: fix sorting
-##                    if (class(sort.y) == "list") {
-##                      sort.y <- sort.y[[.subset]]
-##                    }
-##                    if (!is.null(sort.y) && !is.null(state$data$y) &&
-##                        class(sort.y) != "list") {
-##                      state$data$y <- factor(state$data$y,
-##                                             levels = sort.y)
-##                    }                   
+                   sort.y <- .try.subset(sort.y, .subset$facet.x)
+                   sort.y <- .try.subset(sort.y, .subset$facet.y)
+
+                   sort.x <- .try.subset(sort.x, .subset$facet.x)
+                   sort.x <- .try.subset(sort.x, .subset$facet.y)
+
+                   if (!is.null(sort.y) && !is.null(state$data$y)) {
+                     state$data$y <- factor(state$data$y,
+                                            levels = sort.y[,1])
+                   }
+
+                   if (!is.null(sort.x) && !is.null(state$data$x)) {
+                     state$data$x <- factor(state$data$x,
+                                            levels = sort.x[,1])
+                   }
+
                    .call.with.data(cc,
                                    state,
                                    scales = list(scales))

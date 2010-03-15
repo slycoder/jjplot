@@ -182,8 +182,30 @@
                           })
 
   result <- do.call(rbind, lapply(faceted.df, function(a) a$data))
-  attr(result, "sort.x") <- lapply(faceted.df, function(ll) attr(ll$data, "sort.x"))
-  attr(result, "sort.y") <- lapply(faceted.df, function(ll) attr(ll$data, "sort.y"))
+
+  attr(result, "sort.x") <- do.call(rbind,
+                                    lapply(faceted.df,
+                                           function(ll) attr(ll$data, "sort.x")))
+  if (!is.null(attr(result, "sort.x"))) {
+    attr(result, "sort.x") <- cbind(attr(result, "sort.x"),
+                                    .by = rep(names(faceted.df),
+                                        times = lapply(faceted.df, function(ll) {
+                                          nrow(attr(ll$data, "sort.x"))
+                                        })))
+    rownames(attr(result, "sort.x")) <- NULL
+  }
+
+  attr(result, "sort.y") <- do.call(rbind,
+                                    lapply(faceted.df,
+                                           function(ll) attr(ll$data, "sort.y")))
+  if (!is.null(attr(result, "sort.y"))) {
+    attr(result, "sort.y") <- cbind(attr(result, "sort.y"),
+                                    .by = rep(names(faceted.df),
+                                        times = lapply(faceted.df, function(ll) {
+                                          nrow(attr(ll$data, "sort.y"))
+                                        })))
+    rownames(attr(result, "sort.y")) <- NULL
+  }
 
   list(data = result,
        x.expr = faceted.df[[1]]$x.expr,
@@ -199,11 +221,17 @@
   sort.y <- match.call()[["y"]]
   stopifnot(xor(is.null(sort.x), is.null(sort.y)))
   result <- list(data = data, x.expr = x.expr, y.expr = y.expr)
+  if (!is.null(sort.x)) {
+    eval.x <- eval(sort.x, data)
+    stopifnot(is.factor(data$x))
+    oo <- order(tapply(eval.x, data$x, fun), decreasing = decreasing)
+    attr(result$data, "sort.x") <- data.frame(value = levels(data$x)[oo])
+  }
   if (!is.null(sort.y)) {
     eval.y <- eval(sort.y, data)
     stopifnot(is.factor(data$y))
     oo <- order(tapply(eval.y, data$y, fun), decreasing = decreasing)
-    attr(result$data, "sort.y") <- levels(data$y)[oo]
+    attr(result$data, "sort.y") <- data.frame(value = levels(data$y)[oo])
   }
   result
 }
