@@ -21,22 +21,21 @@ dev.off()
 
 ### EXAMPLES THAT WORK ###
 df <- data.frame(name = factor(letters[1:6]),
-                 value = rnorm(6 * 36),
-                 foo = rnorm(6 * 36),
-                 type = rep(factor(month.name[1:6]), each = 36))
+                 value = rnorm(6 * 6),
+                 foo = rnorm(6 * 6),
+                 type = rep(factor(month.name[1:6]), each = 6))
 
 
 png('density.png', width=480, height=900)
 
-source("jjplot.R")
 jjplot(sqrt(foo^2) ~ point() + value,
        data = df, color = type, 
-       facet.x = name, facet.ncol = 2)
+       facet.y = name, facet.nrow = 4)
 
-jjplot(~ area() : group(group(density(), by = type), by = name) +
+jjplot(~ area() : group(density(), by = type) +
        area() : density() + value,
        data = df, fill = type, alpha = 0.5,
-       facet.y = type, facet.x = name)
+       facet.x = type, facet.nrow = 3)
 
 
 dev.off()
@@ -49,8 +48,9 @@ jjplot(name ~ point() + value,
 jjplot(name ~ point() : sort(y = value) + value,
        data = df, color = type, facet.y = type, facet.nrow = 2)
 
-jjplot(name ~ point() : group(sort(y = value), by=type) + value,
-       data = df, color = type, facet.y = type, facet.nrow = 2)
+source("jjplot.R")
+jjplot(value ~ point() : group(sort(x = value), by=type) + name,
+       data = df, color = type, facet.y = type)
 
 dev.off()
 
@@ -62,7 +62,8 @@ df <- data.frame(state = rownames(state.x77),
 jjplot(Murder ~ abline(lty = "dashed") : fit() +
        abline() : group(fit(), by = region) +
        point() + Income,
-       data = df, color = region, facet = region)
+       data = df, color = region, facet.x = region,
+       facet.nrow = 2)
 
 dev.off()
 

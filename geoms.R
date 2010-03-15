@@ -83,7 +83,6 @@
 
 .jjplot.abline <- function(data, x.expr, y.expr, scales,
                            lwd = 1.5, col = NULL, lty = "solid") {
-  print(data)
   ## Find limits
   xlim <- convertX(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)
   ylim <- convertY(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)      
