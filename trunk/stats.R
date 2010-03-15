@@ -33,9 +33,14 @@
       result$size <- data$size[1]
     } 
   }
-  if (!is.null(data$.facet)) {
-    if (all(data$.facet == data$.facet[1])) {
-      result$.facet <- data$.facet[1]
+  if (!is.null(data$.facet.x)) {
+    if (all(data$.facet.x == data$.facet.x[1])) {
+      result$.facet.x <- data$.facet.x[1]
+    } 
+  }
+  if (!is.null(data$.facet.y)) {
+    if (all(data$.facet.y == data$.facet.y[1])) {
+      result$.facet.y <- data$.facet.y[1]
     } 
   }
   result

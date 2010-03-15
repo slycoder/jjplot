@@ -83,7 +83,8 @@ source("geoms.R")
                            geom.function,
                            data,
                            memoization = NULL,
-                           facet = NULL,
+                           facet.x = NULL,
+                           facet.y = NULL,
                            color = NULL,
                            fill = NULL,
                            size = NULL) {
@@ -120,8 +121,11 @@ source("geoms.R")
     if (!is.null(size)) {
       state$data$size <- size
     }
-    if (!is.null(facet)) {
-      state$data$.facet <- facet
+    if (!is.null(facet.x)) {
+      state$data$.facet.x <- facet.x
+    }
+    if (!is.null(facet.y)) {
+      state$data$.facet.y <- facet.y
     }
   } else {
     state <- memoization[[1]]
@@ -249,7 +253,7 @@ source("geoms.R")
 
   label.y.width <- convertWidth(unit(1, "strwidth",
                                      labels.y[which.max(nchar(labels.y))]),
-                                "lines", valueOnly = TRUE)
+                                "lines", valueOnly = TRUE) + 2
 
   xrange <- range(c(xrange, pretty.x))    
   yrange <- range(c(yrange, pretty.y))
@@ -275,21 +279,34 @@ source("geoms.R")
                      .subset = NULL,
                      draw.x.axis = TRUE,
                      draw.y.axis = TRUE,
-                     allocate.x.axis.space = TRUE) {
+                     draw.top.strip = NULL,
+                     draw.right.strip = NULL,
+                     allocate.x.axis.space = TRUE,
+                     allocate.y.axis.space = TRUE) {  
+
   if (draw.x.axis && allocate.x.axis.space) {
     xmargin <- plot.params$label.x.height
   } else {
     xmargin <- 0
   }
-  
-  if (!is.null(plot.params$title)) {
-    titlemargin <- 2.1
-  } else {
-    titlemargin <- 0.4
-  }
 
+  if (draw.y.axis && allocate.y.axis.space) {
+    ymargin <- plot.params$label.y.width
+  } else {
+    ymargin <- 0
+  }
+  
+#  if (!is.null(plot.params$title) || !is.null(draw.top.strip)) {
+  if (!is.null(plot.params$title)) { 
+    titlemargin <- 1.7
+  } else {
+    titlemargin <- 0.0
+  }
+  
   ## Set up viewport and draw grill.
-  pushViewport(plotViewport(c(xmargin, plot.params$label.y.width + 1.5, titlemargin, 1.1)))
+  pushViewport(plotViewport(c(xmargin,
+                              ymargin,
+                              titlemargin + 1.1, 1.1)))
   pushViewport(dataViewport(xscale = plot.params$xrange,
                             yscale = plot.params$yrange))
   grid.rect(gp = gpar(fill = "grey90", col = "white"))
@@ -309,21 +326,28 @@ source("geoms.R")
   .formula.apply(f, function(...) NULL,
                  function(cc, state) {
                    sort.y <- attr(state$data, "sort.y", exact = TRUE)
-                   if (!is.null(.subset) && !is.null(state$data$.facet)) {
-                     ## Note that if .facet is not a part of the state,
-                     ## the entire frame will be used
-                     state$data <- subset(state$data, .facet == .subset)
 
-                     if (class(sort.y) == "list") {
-                       sort.y <- sort.y[[.subset]]
-                     }
+                   condition <- TRUE
+                   if (!is.null(.subset) && !is.null(.subset$facet.x) &&
+                       !is.null(state$data$.facet.x)) {
+                     condition <- condition & (state$data$.facet.x == .subset$facet.x)
                    }
-                   print(sort.y)
-                   if (!is.null(sort.y) && !is.null(state$data$y) &&
-                       class(sort.y) != "list") {
-                     state$data$y <- factor(state$data$y,
-                                            levels = sort.y)
+
+                   if (!is.null(.subset) && !is.null(.subset$facet.y) &&
+                       !is.null(state$data$.facet.y)) {
+                     condition <- condition & (state$data$.facet.y == .subset$facet.y) 
                    }
+                   state$data <- subset(state$data, condition)
+
+                   ## FIXME: fix sorting
+##                    if (class(sort.y) == "list") {
+##                      sort.y <- sort.y[[.subset]]
+##                    }
+##                    if (!is.null(sort.y) && !is.null(state$data$y) &&
+##                        class(sort.y) != "list") {
+##                      state$data$y <- factor(state$data$y,
+##                                             levels = sort.y)
+##                    }                   
                    .call.with.data(cc,
                                    state,
                                    scales = list(scales))
@@ -344,14 +368,14 @@ source("geoms.R")
                label = plot.params$labels.y,
                gp = gpar(col = "grey50", cex = 0.8))
     grid.text(plot.params$ylab,
-              x = unit(-plot.params$label.y.width - 1.5, "lines"), rot = 90,
+              x = unit(-plot.params$label.y.width + .25, "lines"), rot = 90,
               gp = gpar(col = "grey20", cex= 0.9))
   }
 
   grid.text(plot.params$title, y = unit(2, "lines"))
 
   ## Draw a right-hand strip.
-  if (!is.null(.subset)) {
+  if (!is.null(draw.right.strip)) {
     x.left <- convertX(unit(1.0, "npc"), "native", valueOnly=TRUE)
     y.lim <- convertY(unit(c(0, 1), "npc"), "native", valueOnly=TRUE)
     
@@ -361,56 +385,144 @@ source("geoms.R")
               default.units = "native",
               gp = gpar(fill = "grey70"))
     
-    subset.label <- .subset
-
-    ## FIXME!
-    ##    if (!is.null(calls$grid.y.labeler)) {
-    ##      subset.label <- eval(calls$grid.y.labeler)(.subset)
-    ##    }
-    
     grid.text(x = x.left, y = (y.lim[2] + y.lim[1]) / 2,
               vjust = -0.5,
-              label = subset.label, rot = 270,
+              label = draw.right.strip, rot = 270,
+              default.units = "native", gp = gpar(cex = 0.8))
+  }
+
+  if (!is.null(draw.top.strip)) {
+    y.bottom <- convertY(unit(1.0, "npc"), "native", valueOnly=TRUE)
+    x.lim <- convertX(unit(c(0, 1), "npc"), "native", valueOnly=TRUE)
+
+    grid.rect((x.lim[2] + x.lim[1]) / 2, y.bottom,
+              x.lim[2] - x.lim[1], unit(.9, "lines"), 
+              vjust = 0,
+              default.units = "native",
+              gp = gpar(fill = "grey70"))
+    
+    grid.text(x = (x.lim[2] + x.lim[1]) / 2,
+              y = y.bottom,
+              vjust = -0.5,
+              label = draw.top.strip, 
               default.units = "native", gp = gpar(cex = 0.8))
   }
 
   popViewport(2)
 }
 
-.faceted.plot <- function(f, stats, facet, scales, ...) {
-  facet.levels <- levels(facet)
-  M <- nlevels(facet)
+.faceted.plot <- function(f, stats, facet.x, facet.y,
+                          facet.nrow, facet.ncol, scales, ...) {
 
-  plot.params <- lapply(1:M,
+  if (!is.null(facet.x) && !is.null(facet.y)) {
+    stopifnot(is.na(facet.nrow) && is.na(facet.ncol))
+    width <- nlevels(facet.x)
+    height <- nlevels(facet.y)
+    num.facets <- width * height
+  } else {
+    if (!is.null(facet.x)) {
+      facet <- facet.x
+      height <- 1
+      width <- nlevels(facet)
+    } else {
+      facet <- facet.y
+      width <- 1
+      height <- nlevels(facet)
+    }
+    stopifnot(is.na(facet.nrow) || is.na(facet.ncol))
+    if (!is.na(facet.nrow)) {
+      height <- facet.nrow
+      width <- ceiling(nlevels(facet) / height)
+    } else if (!is.na(facet.ncol)) {
+      width <- facet.ncol
+      height <- ceiling(nlevels(facet) / width)
+    }
+    num.facets <- nlevels(facet)
+  }
+
+  get.facet.info <- function(index) {
+    if (!is.null(facet.x) && !is.null(facet.y)) {
+      x.index <- (index - 1) %% width + 1
+      y.index <- (index - 1) %/% width + 1
+      return(list(facet.x = levels(facet.x)[x.index],
+                  facet.y = levels(facet.y)[y.index],
+                  x = x.index, y = y.index,
+                  top.strip = if (y.index == 1) levels(facet.x)[x.index] else NULL,
+                  right.strip = if (x.index == width) levels(facet.y)[y.index] else NULL))
+    } else if (!is.null(facet.x)) {
+      x.index <- (index - 1) %% width + 1
+      y.index <- (index - 1) %/% width + 1
+      return(list(facet.x = levels(facet.x)[index],
+                  facet.y = NULL,
+                  top.strip = levels(facet.x)[index],
+                  right.strip = NULL,
+                  x = x.index, y = y.index))
+    } else {
+      y.index <- (index - 1) %% height + 1
+      x.index <- (index - 1) %/% height + 1
+      return(list(facet.y = levels(facet.y)[index],
+                  facet.x = NULL,
+                  right.strip = levels(facet.y)[index],
+                  top.strip = NULL,
+                  x = x.index, y = y.index))
+    }
+  }
+  
+  cat("Facet dimensions: ")
+  print(c(width, height))
+
+  plot.params <- lapply(1:num.facets,
                         function(ll) {
                           .get.plot.params(f, stats, ...,
-                                           .subset = facet.levels[ll])
+                                           .subset = get.facet.info(ll))
                         })
 
-  heights <- sapply(plot.params, function(pp) pp$yrange[2] - pp$yrange[1])
+#  heights <- sapply(plot.params, function(pp) pp$yrange[2] - pp$yrange[1])
+#  widths <- sapply(plot.params, function(pp) pp$xrange[2] - pp$xrange[1])
+  heights <- rep(1, height)
+  widths <- rep(1, width)
 
-  top.vp <- viewport(layout = grid.layout(M + 1, 1,
-                       heights = unit.c(unit(heights, "null"),
-                         unit(plot.params[[1]]$label.x.height, "lines"))))
+  top.vp <- viewport(layout = grid.layout(height + 1, width + 1,
+                       heights = unit.c(
+#                         unit(0.8, "lines"),
+                         unit(heights, "null"),
+                         unit(plot.params[[1]]$label.x.height, "lines")),
+                       widths = unit.c(unit(plot.params[[1]]$label.y.width, "lines"),
+                         unit(widths, "null"))))
   
   subplots <- list()
-  for (ll in 1:M) {
+  for (ll in 1:num.facets) {
+    facet.info <- get.facet.info(ll)
     subplots[[ll]] <- viewport(name = paste(".subplot", ll, sep = "."),
-                               layout.pos.row = ll, layout.pos.col = 1)
+                               layout.pos.col = facet.info$x + 1,
+                               layout.pos.row = facet.info$y)
   }
-  subplots[[M + 1]] <- viewport(name = "xaxis",
-                                layout.pos.row = M + 1,
-                                layout.pos.col = 1)
+##   for (jj in 1:width) {
+##     subplots[[num.facets + jj]] <- viewport(name = paste("xaxis", jj, sep="."),
+##                                             layout.pos.row = height + 1,
+##                                             layout.pos.col = jj + 1)
+##   }
+##   for (jj in 1:(height + 1)) {
+##     subplots[[num.facets + jj + width]] <- viewport(name = paste("yaxis", jj, sep="."),
+##                                                     layout.pos.col = 1,
+##                                                     layout.pos.row = jj)
+##   }
+  
   pushViewport(vpTree(top.vp, do.call(vpList, subplots)))
-  for (ll in 1:M) {
+  for (ll in 1:num.facets) {
     seekViewport(paste(".subplot", ll, sep = "."))
     cat("Doing facet ")
     print(ll)
+    facet.info <- get.facet.info(ll)
     .subplot(f, stats,
              plot.params = plot.params[[ll]],
              scales = scales,
-             .subset = facet.levels[ll],
-             draw.x.axis = ll == M,
+             .subset = facet.info,
+             draw.top.strip = facet.info$top.strip,
+             draw.right.strip = facet.info$right.strip,
+             draw.y.axis = facet.info$x == 1,
+             draw.x.axis = facet.info$y == height,
+             allocate.y.axis.space = FALSE,
              allocate.x.axis.space = FALSE)
   }
   popViewport()
@@ -421,13 +533,15 @@ jjplot <- function(f, data = NULL, color = NULL,
                    fill = NULL, size = NULL, alpha = 1.0,
                    log.x = FALSE, log.y = FALSE,
                    xlab = NULL, ylab = NULL,
-                   facet = NULL,
+                   facet.x = NULL, facet.y = NULL,
+                   facet.nrow = NA, facet.ncol = NA,
                    expand = c(0.04, 0.04),
                    color.scale = NULL) {
   eval.color <- eval(match.call()$color, data)
   eval.fill <- eval(match.call()$fill, data)
   eval.size <- eval(match.call()$size, data)
-  eval.facet <- eval(match.call()$facet, data)
+  eval.facet.x <- eval(match.call()$facet.x, data)
+  eval.facet.y <- eval(match.call()$facet.y, data)  
   
   scales <- list()
   scales$color <- .make.color.scale(eval.color, alpha, manual = color.scale)
@@ -436,13 +550,14 @@ jjplot <- function(f, data = NULL, color = NULL,
 
   ## Compute stats.
   stats <- .formula.apply(f, .call.with.data, function(...) NULL, data,
-                          facet = eval.facet,
+                          facet.x = eval.facet.x,
+                          facet.y = eval.facet.y,
                           color = eval.color,
                           fill = eval.fill,
                           size = eval.size)
   
   grid.newpage()
-  if (is.null(eval.facet)) {
+  if (is.null(eval.facet.x) && is.null(eval.facet.y)) {
     ## Compute plotting parameters.
     plot.params <- .get.plot.params(f, stats, log.x, log.y, expand,
                                     xlab = xlab, ylab = ylab)
@@ -450,7 +565,10 @@ jjplot <- function(f, data = NULL, color = NULL,
     ## Do the plot.
     .subplot(f, stats, plot.params, scales)
   } else {
-    .faceted.plot(f, stats, eval.facet, scales,
+    .faceted.plot(f, stats,
+                  eval.facet.x, eval.facet.y,
+                  facet.nrow, facet.ncol,
+                  scales,
                   log.x, log.y, expand,
                   xlab = xlab, ylab = ylab)
   }
