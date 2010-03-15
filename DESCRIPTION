@@ -1,8 +1,8 @@
 Package: jjplot
 Type: Package
 Title: The jjplot plotting library for making beautiful plots fast and simple.
-Version: 1.0
-Date: 2010-02-24
+Version: 0.2
+Date: 2010-03-13
 Author: Jonathan Chang, Eytan Bakshy
 Maintainer: Jonathan Chang <jcone@princeton.edu>
             Eytan Bakshy <ebakshy@gmail.com>

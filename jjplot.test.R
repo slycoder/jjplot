@@ -8,7 +8,8 @@ jjplot( ~ line(lty="dashed", col = "red") : hist() +
 
 dev.off()
 
-jjplot(Sepal.Length ~ abline() : group(fit(), by = Species) + point() + Petal.Length,
+jjplot(Sepal.Length ~ abline() : group(fit(), by = Species) +
+                      point() + Petal.Length,
        data = iris, color = Species)
 
 png("stacked_geoms.png", width=640, height=480)
@@ -19,25 +20,37 @@ jjplot(Sepal.Length ~ (point(col = "blue", size=3) +
 dev.off()
 
 ### EXAMPLES THAT WORK ###
-df <- data.frame(name = factor(letters),
-                 value = rnorm(26 * 6),
-                 type = rep(factor(month.name[1:6]), each = 26))
+df <- data.frame(name = factor(letters[1:6]),
+                 value = rnorm(6 * 36),
+                 foo = rnorm(6 * 36),
+                 type = rep(factor(month.name[1:6]), each = 36))
+
+
+png('density.png', width=480, height=900)
 
 source("jjplot.R")
-jjplot(~ area() : group(density(), by = type) +
+jjplot(sqrt(foo^2) ~ point() + value,
+       data = df, color = type, 
+       facet.x = name, facet.ncol = 2)
+
+jjplot(~ area() : group(group(density(), by = type), by = name) +
        area() : density() + value,
-       data = df, fill = type, alpha = 0.5, facet = type)
+       data = df, fill = type, alpha = 0.5,
+       facet.y = type, facet.x = name)
+
+
+dev.off()
 
 png("sorted_stats%03d.png", width=480, height=480)
 
 jjplot(name ~ point() + value,
-       data = df, color = type, facet = type)
+       data = df, color = type, facet.y = type, facet.nrow = 2)
 
 jjplot(name ~ point() : sort(y = value) + value,
-       data = df, color = type, facet = type)
+       data = df, color = type, facet.y = type, facet.nrow = 2)
 
 jjplot(name ~ point() : group(sort(y = value), by=type) + value,
-       data = df, color = type, facet = type)
+       data = df, color = type, facet.y = type, facet.nrow = 2)
 
 dev.off()
 
