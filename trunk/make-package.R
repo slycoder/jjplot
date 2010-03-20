@@ -3,6 +3,7 @@
 source("jjplot.R")
 
 .make.package <- function() {  
+
   package.skeleton("jjplot",
                    force = TRUE)
   

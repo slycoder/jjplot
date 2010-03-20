@@ -237,7 +237,7 @@
 }
 
 .jjplot.density <- function(data, x.expr, y.expr) {
-  dd <- density(data$x)
+  dd <- density(as.numeric(data$x))
   result <- data.frame(x = dd$x, y = dd$y)
   list(data = .bind.attr.columns(result, data),
        x.expr = x.expr,

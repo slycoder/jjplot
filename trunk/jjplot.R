@@ -479,7 +479,7 @@ source("geoms.R")
       return(list(facet.x = levels(facet.x)[x.index],
                   facet.y = levels(facet.y)[y.index],
                   x = x.index, y = y.index,
-                  top.strip = if (y.index == 1) levels(facet.x)[x.index] else NULL,
+                  top.strip = if (y.index == height) levels(facet.x)[x.index] else NULL,
                   right.strip = if (x.index == width) levels(facet.y)[y.index] else NULL))
     } else if (!is.null(facet.x)) {
       x.index <- (index - 1) %% width + 1
@@ -527,7 +527,7 @@ source("geoms.R")
     facet.info <- get.facet.info(ll)
     subplots[[ll]] <- viewport(name = paste(".subplot", ll, sep = "."),
                                layout.pos.col = facet.info$x + 1,
-                               layout.pos.row = facet.info$y)
+                               layout.pos.row = height - facet.info$y + 1)
   }
 ##   for (jj in 1:width) {
 ##     subplots[[num.facets + jj]] <- viewport(name = paste("xaxis", jj, sep="."),
@@ -553,11 +553,32 @@ source("geoms.R")
              draw.top.strip = facet.info$top.strip,
              draw.right.strip = facet.info$right.strip,
              draw.y.axis = facet.info$x == 1,
-             draw.x.axis = facet.info$y == height,
+             draw.x.axis = facet.info$y == 1,
              allocate.y.axis.space = FALSE,
              allocate.x.axis.space = FALSE)
   }
   popViewport()
+}
+
+
+.collapse.scales <- function(color.expr,
+                             fill.expr,
+                             size.expr,
+                             scales) {
+  if (!is.null(color.expr)) {
+  }
+
+  if (!is.null(fill.expr)) {
+  }
+
+  if (!is.null(size.expr)) {
+  }
+
+  eval.color == eval.color
+}
+
+.draw.legend <- function(scale) {
+  
 }
 
 ### ENTRY POINT ###
