@@ -1,5 +1,3 @@
-quartz()
-
 png("stacked_stats.png", width=640, height=480)
 
 jjplot( ~ line(lty="dashed", col = "red") : hist() + 
@@ -13,10 +11,12 @@ jjplot(Sepal.Length ~ abline() : group(fit(), by = Species) +
        data = iris, color = Species)
 
 png("stacked_geoms.png", width=640, height=480)
+
 jjplot(Sepal.Length ~ (point(col = "blue", size=3) +
                        line(col = "red", lty="dashed") +
                        bar(width=0.25)) : hist() +
        Petal.Length, data = iris)
+
 dev.off()
 
 ### EXAMPLES THAT WORK ###
@@ -28,15 +28,49 @@ df <- data.frame(name = factor(letters[1:6]),
 
 png('density.png', width=480, height=900)
 
-jjplot(sqrt(foo^2) ~ point() + value,
+quartz()
+
+source("jjplot.R")
+
+
+data <- read.csv("~/Downloads/tmp_hipal_jonchang_104098.csv")
+
+data <- rbind(data,
+              transform(data[data$count_1 == 2,], count_1 = 1),
+              transform(data[data$count_1 == 3,], count_1 = 1))
+
+jjplot(~ vline(as.POSIXct("2010-01-12 21:53:09 UTC"), lty="dashed") +
+       area() : density() +
+       as.POSIXct(time, origin='1970-01-01'),
+       data = data)
+
+jjplot(sqrt(foo^2) ~ point() + value,       
        data = df, color = type, 
-       facet.y = name, facet.nrow = 4)
+       facet.x = name, facet.nrow = 2)
 
 jjplot(~ area() : group(density(), by = type) +
        area() : density() + value,
        data = df, fill = type, alpha = 0.5,
        facet.x = type, facet.nrow = 3)
 
+jjplot(~ area() : group(density(), by = Species) +
+       area() : density() + Sepal.Length,
+       data = iris, fill = Species, alpha = 0.5,
+       facet.y = Species, facet.nrow = 3)
+
+## jjplot(~ area() : group(group(density(), by = day), by = sex) +
+jjplot(~ area() : group(density(), by = day:sex) +       
+       area() : group(density(), by = sex) +
+       I(tip / total_bill),
+       data = tips, fill = day, alpha = 0.5,
+       facet.y = day, facet.x = sex,
+       ylab = "")
+
+jjplot(tip ~ abline() : group(group(fit(), by = day), by = sex) +
+       abline(lty = "dashed") : fit() + 
+       point() + total_bill,
+       data = tips, color = day, alpha = 0.5,
+       facet.y = day, facet.x = sex)
 
 dev.off()
 
@@ -49,6 +83,7 @@ jjplot(name ~ point() : sort(y = value) + value,
        data = df, color = type, facet.y = type, facet.nrow = 2)
 
 source("jjplot.R")
+
 jjplot(value ~ point() : group(sort(x = value), by=type) + name,
        data = df, color = type, facet.y = type)
 
