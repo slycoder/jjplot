@@ -589,7 +589,7 @@ jjplot <- function(f, data = NULL, color = NULL,
                    facet.x = NULL, facet.y = NULL,
                    facet.nrow = NA, facet.ncol = NA,
                    expand = c(0.04, 0.04),
-                   color.scale = NULL) {
+                   color.scale = NULL, fill.scale = NULL) {
   eval.color <- eval(match.call()$color, data)
   eval.fill <- eval(match.call()$fill, data)
   eval.size <- eval(match.call()$size, data)
@@ -598,7 +598,7 @@ jjplot <- function(f, data = NULL, color = NULL,
   
   scales <- list()
   scales$color <- .make.color.scale(eval.color, alpha, manual = color.scale)
-  scales$fill <- .make.color.scale(eval.fill, alpha)
+  scales$fill <- .make.color.scale(eval.fill, alpha, manual = fill.scale)
   scales$size <- .make.size.scale(eval.size)    
 
   ## Compute stats.
