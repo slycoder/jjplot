@@ -7,7 +7,8 @@
                  "text",
                  "bar",
                  "box",
-                 "area")
+                 "area",
+                 "fill")
 
 .is.geom <- function(layer.call) {
   return(is.call(layer.call) && as.character(layer.call[[1]]) %in% .geoms.list)
@@ -50,6 +51,19 @@
             gp = gpar(fill = .match.scale(fill, data$fill, scales, type = "fill"), 
               col = .match.scale(col, data$color, scales)))
 }
+
+.jjplot.fill <- function(data, x.expr, y.expr,
+                         scales, col = NULL, fill = NULL) {
+  grid.rect(data$x,
+            data$y,
+            1,
+            1,
+            just = c("center", "center"),
+            default.units = "native",
+            gp = gpar(fill = .match.scale(fill, data$fill, scales, type = "fill"), 
+              col = .match.scale(col, data$color, scales)))         
+}
+
 
 .jjplot.area <- function(data, x.expr, y.expr, scales,
                          col = NULL, fill = NULL) {
@@ -161,6 +175,7 @@
             gp = gpar(col = .match.scale(col, data$color, scales)))
 }
 
+
 .jjplot.box <- function(data, x.expr, y.expr, scales,
                         col = NULL, fill = NULL, width = 0.5,
                         lwd = 1.5, lty = "solid") {
@@ -206,3 +221,9 @@
 .jjplot.expand.area <- function(data, x.expr, y.expr) {
   list(y = 0)
 }
+
+.jjplot.expand.fill <- function(data, x.expr, y.expr) {
+  list(y = c(0.5, nlevels(data$y) + 0.5),
+       x = c(0.5, nlevels(data$x) + 0.5))       
+}
+
