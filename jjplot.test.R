@@ -33,6 +33,7 @@ quartz()
 source("jjplot.R")
 
 
+
 data <- read.csv("~/Downloads/tmp_hipal_jonchang_104098.csv")
 
 data <- rbind(data,
@@ -74,6 +75,14 @@ jjplot(tip ~ abline() : group(group(fit(), by = day), by = sex) +
 
 dev.off()
 
+source("jjplot.R")
+
+jjplot(~ bar(width = .1) : group(hist(), by = sex) +
+       bar(width = .1) : hist() +
+       tip,
+       data = tips, facet.x = sex, fill = sex, alpha = 0.1)
+
+
 png("sorted_stats%03d.png", width=480, height=480)
 
 jjplot(name ~ point() + value,
@@ -83,6 +92,8 @@ jjplot(name ~ point() : sort(y = value) + value,
        data = df, color = type, facet.y = type, facet.nrow = 2)
 
 source("jjplot.R")
+
+
 
 jjplot(value ~ point() : group(sort(x = value), by=type) + name,
        data = df, color = type, facet.y = type)
