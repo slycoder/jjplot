@@ -53,7 +53,8 @@
   if (log.y) {
     df$y <- log10(df$y)
   }
-  list(data=df, x.expr=x.expr, y.expr = substitute(Count(x), list(x=x.expr)))
+  list(data=.bind.attr.columns(df, data),
+       x.expr=x.expr, y.expr = substitute(Count(x), list(x=x.expr)))
 }
 
 .jjplot.hist <- function(data, x.expr, y.expr,
@@ -83,7 +84,7 @@
     dens <- cs
   }
   
-  list(data = data.frame(x = hx, y = dens),
+  list(data = .bind.attr.columns(data.frame(x = hx, y = dens), data),
        x.expr = x.expr,
        y.expr = substitute(Count(x), list(x = x.expr)))
 }
