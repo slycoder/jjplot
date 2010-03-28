@@ -8,7 +8,7 @@ source("stats.R")
 source("geoms.R")
 
 ### UTILITY FUNCTIONS ###
-.call.with.data <- function(cc, state, prefix = ".jjplot", ...) {
+.call.with.data <- function(cc, state, prefix = "jjplot.stat", ...) {
   do.call(paste(prefix, as.character(cc[[1]]), sep = "."),
           c(as.list(cc)[-1],
             list(data = state$data),
@@ -382,7 +382,8 @@ source("geoms.R")
 
                    .call.with.data(cc,
                                    state,
-                                   scales = list(scales))
+                                   scales = list(scales),
+                                   prefix = 'jjplot.geom')
                  }, data, stats)
   
   ## FIXME: Squash unused.
