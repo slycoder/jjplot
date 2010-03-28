@@ -1,20 +1,6 @@
 ### STATS ###
-.stats.list <- c("fun.x",
-                 "fun.y",
-                 "fit",
-                 "jitter",
-                 "identity",
-                 "quantile",
-                 "table",
-                 "ccdf",
-                 "cumsum",
-                 "hist",
-                 "group",
-                 "sort",
-                 "density")
-
 .is.stat <- function(layer.call) {
-  return(is.call(layer.call) && as.character(layer.call[[1]]) %in% .stats.list)
+  return(is.call(layer.call) && exists(eval(paste('jjplot.stat',as.character(layer.call[[1]]),sep='.'))))
 }
 
 .bind.attr.columns <- function(result, data) {
@@ -46,7 +32,7 @@
   result
 }
 
-.jjplot.table <- function(data, x.expr, y.expr, log.y = FALSE) {
+jjplot.stat.table <- function(data, x.expr, y.expr, log.y = FALSE) {
   ## FIXME: log.y?
   tt <- table(data$x)
   df <- data.frame(x = names(tt), y = as.numeric(tt))
@@ -57,7 +43,7 @@
        x.expr=x.expr, y.expr = substitute(Count(x), list(x=x.expr)))
 }
 
-.jjplot.hist <- function(data, x.expr, y.expr,
+jjplot.stat.hist <- function(data, x.expr, y.expr,
                          align = c("left", "right", "middle"),
                          breaks = 20,
                          density = TRUE,
@@ -89,7 +75,7 @@
        y.expr = substitute(Count(x), list(x = x.expr)))
 }
 
-.jjplot.jitter <- function(data, x.expr, y.expr,
+jjplot.stat.jitter <- function(data, x.expr, y.expr,
                            xfactor = 0, yfactor = 0) {
   data <- transform(data, x = jitter(as.numeric(data$x), xfactor))
   if (!is.null(data$y)) {
@@ -100,7 +86,7 @@
        y.expr = if (yfactor != 0) substitute(jitter(x), list(x=y.expr)) else y.expr)
 }
 
-.jjplot.fit <- function(data, x.expr, y.expr) {
+jjplot.stat.fit <- function(data, x.expr, y.expr) {
   model <- lm(data$y ~ data$x)
   result <- data.frame(b = coef(model)[1],
                        a = coef(model)[2])
@@ -108,17 +94,17 @@
        x.expr = x.expr, y.expr = y.expr)
 }
 
-.jjplot.fun.x <- function(data, x.expr, y.expr, fun) {
+jjplot.stat.fun.x <- function(data, x.expr, y.expr, fun) {
   list(data = data.frame(x = fun(data$x)),
        x.expr = x.expr, y.expr = y.expr)
 }
 
-.jjplot.fun.y <- function(data, x.expr, y.expr, fun) {
+jjplot.stat.fun.y <- function(data, x.expr, y.expr, fun) {
   list(data = data.frame(y = fun(data$y)),
        x.expr = x.expr, y.expr = y.expr)
 }
 
-.jjplot.quantile <- function(data, x.expr, y.expr) {
+jjplot.stat.quantile <- function(data, x.expr, y.expr) {
   stopifnot(all(data$x == data$x[1]))
   result <- data.frame(data$x[1], t(quantile(data$y)))
   colnames(result) <- c("x", "quantile.0", "quantile.25", "quantile.50", "quantile.75", "quantile.100")
@@ -129,7 +115,7 @@
        y.expr = y.expr)
 }
 
-.jjplot.ccdf <- function(data, x.expr, y.expr,
+jjplot.stat.ccdf <- function(data, x.expr, y.expr,
                          density = FALSE, maxpoints = FALSE,
                          log.y = FALSE, log.x = FALSE) {
   freqs <- table(data$x)
@@ -155,7 +141,7 @@
        })
 }
 
-.jjplot.cumsum <- function(data, x.expr, y.expr,
+jjplot.stat.cumsum <- function(data, x.expr, y.expr,
                            decreasing=TRUE,
                            log.y = FALSE) {
   oo <- order(data$x, decreasing=decreasing)
@@ -168,7 +154,7 @@
        y.expr = substitute(cumsum(x), list(x = y.expr)))
 }
 
-.jjplot.group <- function(data, x.expr, y.expr,
+jjplot.stat.group <- function(data, x.expr, y.expr,
                           fun, by) {
   eval.by <- eval(match.call()$by, data)  
   fun.call <- match.call()$fun
@@ -214,7 +200,7 @@
 }
 
 
-.jjplot.sort <- function(data, x.expr, y.expr,
+jjplot.stat.sort <- function(data, x.expr, y.expr,
                          x = NULL, y = NULL,
                          decreasing = FALSE,
                          fun = mean) {
@@ -237,7 +223,7 @@
   result
 }
 
-.jjplot.density <- function(data, x.expr, y.expr) {
+jjplot.stat.density <- function(data, x.expr, y.expr) {
   dd <- density(as.numeric(data$x))
   result <- data.frame(x = dd$x, y = dd$y)
   list(data = .bind.attr.columns(result, data),

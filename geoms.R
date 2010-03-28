@@ -1,20 +1,9 @@
 ### GEOMS ###
-.geoms.list <- c("hline",
-                 "vline",
-                 "abline",
-                 "point",
-                 "line",
-                 "text",
-                 "bar",
-                 "box",
-                 "area",
-                 "fill")
-
 .is.geom <- function(layer.call) {
-  return(is.call(layer.call) && as.character(layer.call[[1]]) %in% .geoms.list)
+  return(is.call(layer.call) && exists(eval(paste('jjplot.geom',as.character(layer.call[[1]]),sep='.'))))
 }
 
-.jjplot.line <- function(data, 
+jjplot.geom.line <- function(data, 
                          x.expr, y.expr, scales,
                          lty = "solid", col = NULL,
                          lwd = 1.5, ordered = TRUE) {
@@ -40,7 +29,7 @@
   }
 }
 
-.jjplot.bar <- function(data, x.expr, y.expr, scales,
+jjplot.geom.bar <- function(data, x.expr, y.expr, scales,
                         col = NULL, fill = NULL, width = 1) {
   grid.rect(data$x,
             0,
@@ -52,7 +41,7 @@
               col = .match.scale(col, data$color, scales)))
 }
 
-.jjplot.fill <- function(data, x.expr, y.expr,
+jjplot.geom.fill <- function(data, x.expr, y.expr,
                          scales, col = NULL, fill = NULL) {
   grid.rect(data$x,
             data$y,
@@ -65,7 +54,7 @@
 }
 
 
-.jjplot.area <- function(data, x.expr, y.expr, scales,
+jjplot.geom.area <- function(data, x.expr, y.expr, scales,
                          col = NULL, fill = NULL) {
   if (is.null(data$fill) || !is.null(col)) {
     grid.polygon(c(data$x[1], data$x, data$x[length(data$x)]),
@@ -83,7 +72,7 @@
   }
 }
   
-.jjplot.point <- function(data, x.expr, y.expr, scales,
+jjplot.geom.point <- function(data, x.expr, y.expr, scales,
                           alpha = 1.0,
                           pch = 16, col = NULL, size = NULL) {
   grid.points(data$x,
@@ -95,7 +84,7 @@
                 fill = .match.scale(col, data$fill, scales, type="fill")))
 }
 
-.jjplot.abline <- function(data, x.expr, y.expr, scales,
+jjplot.geom.abline <- function(data, x.expr, y.expr, scales,
                            lwd = 1.5, col = NULL, lty = "solid") {
   ## Find limits
   xlim <- convertX(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)
@@ -137,7 +126,7 @@
                   col = .match.scale(col, data$color, scales)))
 }
     
-.jjplot.hline <- function(data, x.expr, y.expr, scales,
+jjplot.geom.hline <- function(data, x.expr, y.expr, scales,
                           manual.y = NULL,
                           lwd = 1.5, col = NULL, lty = "solid") {
   grid.lines(y = if (is.null(manual.y)) data$y else manual.y,
@@ -147,7 +136,7 @@
                lty = lty))
 }    
 
-.jjplot.vline <- function(data, x.expr, y.expr, scales,
+jjplot.geom.vline <- function(data, x.expr, y.expr, scales,
                           manual.x = NULL, lwd = 1.5, col = NULL, lty = "solid") {
   grid.lines(x = if (is.null(manual.x)) data$x else manual.x,
              default.units = "native",
@@ -156,7 +145,7 @@
                lty = lty))
 }
 
-.jjplot.text <- function(data, x.expr, y.expr, scales,
+jjplot.geom.text <- function(data, x.expr, y.expr, scales,
                          col = NULL, label = NULL,
                          x = NULL, y = NULL, hjust = 0.5,
                          vjust = 0.5) {
@@ -176,7 +165,7 @@
 }
 
 
-.jjplot.box <- function(data, x.expr, y.expr, scales,
+jjplot.geom.box <- function(data, x.expr, y.expr, scales,
                         col = NULL, fill = NULL, width = 0.5,
                         lwd = 1.5, lty = "solid") {
   grid.rect(as.numeric(data$x),
