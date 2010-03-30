@@ -19,7 +19,7 @@
 }
 
 .make.color.scale <- function(cc, alpha, manual = NULL) {
-  if (is.null(cc)) {
+  if (is.null(cc) || length(cc) <= 1) {
     function(z) { rgb(0, 0, 0, alpha) }
   } else if (is.factor(cc)) {
     colors <- hcl(h = seq(0, 360, length.out = nlevels(cc) + 1),
@@ -28,7 +28,7 @@
                   alpha = alpha)
     colors <- colors[-length(colors)]
     function(z) { colors[z] }
-  } else {
+  } else {    
     if (is.null(manual)) {
       if (range(cc)[1] >= 0) {
         cr <- colorRamp(c('white', 'blue'))
