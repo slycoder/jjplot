@@ -32,15 +32,16 @@
   result
 }
 
-jjplot.stat.table <- function(data, x.expr, y.expr, log.y = FALSE) {
+jjplot.stat.table <- function(state, log.y = FALSE) {
   ## FIXME: log.y?
-  tt <- table(data$x)
+  tt <- table(state$data$x)
   df <- data.frame(x = names(tt), y = as.numeric(tt))
   if (log.y) {
     df$y <- log10(df$y)
   }
-  list(data=.bind.attr.columns(df, data),
-       x.expr=x.expr, y.expr = substitute(Count(x), list(x=x.expr)))
+  state$data <- .bind.attr.columns(df, state$data)
+  state$y.expr <- substitute(Count(x), list(x=state$x.expr))
+  state
 }
 
 jjplot.stat.hist <- function(state,
@@ -109,20 +110,19 @@ jjplot.stat.fun.y <- function(state, fun) {
   state
 }
 
-jjplot.stat.quantile <- function(data, x.expr, y.expr) {
-  stopifnot(all(data$x == data$x[1]))
-  result <- data.frame(data$x[1], t(quantile(data$y)))
+jjplot.stat.quantile <- function(state) {
+  stopifnot(all(state$data$x == state$data$x[1]))
+  result <- data.frame(state$data$x[1], t(quantile(state$data$y)))
   colnames(result) <- c("x", "quantile.0", "quantile.25", "quantile.50", "quantile.75", "quantile.100")
   rownames(result) <- NULL
 
-  list(data = .bind.attr.columns(result, data),
-       x.expr = x.expr,
-       y.expr = y.expr)
+  state$data <- .bind.attr.columns(result, state$data)
+  state
 }
 
 jjplot.stat.ccdf <- function(data, x.expr, y.expr,
-                         density = FALSE, maxpoints = FALSE,
-                         log.y = FALSE, log.x = FALSE) {
+                             density = FALSE, maxpoints = FALSE,
+                             log.y = FALSE, log.x = FALSE) {
   freqs <- table(data$x)
   df <- data.frame(x=as.numeric(rev(names(freqs))),
                    y=cumsum(rev(freqs)))
@@ -208,27 +208,26 @@ jjplot.stat.group <- function(state,
 }
 
 
-jjplot.stat.sort <- function(data, x.expr, y.expr,
+jjplot.stat.sort <- function(state,
                              x = NULL, y = NULL,
                              decreasing = FALSE,
                              fun = mean) {
   sort.x <- match.call()[["x"]]
   sort.y <- match.call()[["y"]]
   stopifnot(xor(is.null(sort.x), is.null(sort.y)))
-  result <- list(data = data, x.expr = x.expr, y.expr = y.expr)
   if (!is.null(sort.x)) {
-    eval.x <- eval(sort.x, data)
-    stopifnot(is.factor(data$x))
-    oo <- order(tapply(eval.x, data$x, fun), decreasing = decreasing)
-    attr(result$data, "sort.x") <- data.frame(value = levels(data$x)[oo])
+    eval.x <- eval(sort.x, state$data)
+    stopifnot(is.factor(state$data$x))
+    oo <- order(tapply(eval.x, state$data$x, fun), decreasing = decreasing)
+    state$sort.x <- data.frame(value = levels(state$data$x)[oo])
   }
   if (!is.null(sort.y)) {
-    eval.y <- eval(sort.y, data)
-    stopifnot(is.factor(data$y))
-    oo <- order(tapply(eval.y, data$y, fun), decreasing = decreasing)
-    attr(result$data, "sort.y") <- data.frame(value = levels(data$y)[oo])
+    eval.y <- eval(sort.y, state$data)
+    stopifnot(is.factor(state$data$y))
+    oo <- order(tapply(eval.y, state$data$y, fun), decreasing = decreasing)
+    state$sort.y <- data.frame(value = levels(state$data$y)[oo])
   }
-  result
+  state
 }
 
 jjplot.stat.color <- function(state,

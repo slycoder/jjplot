@@ -42,16 +42,16 @@ jjplot.geom.bar <- function(state,
               col = .match.scale(border, state$data$border, state$scales, type = "border")))
 }
 
-jjplot.geom.fill <- function(data, x.expr, y.expr,
-                         scales, col = NULL, fill = NULL) {
-  grid.rect(data$x,
-            data$y,
+jjplot.geom.tile <- function(state,
+                             color = NULL, border = NULL) {
+  grid.rect(state$data$x,
+            state$data$y,
             1,
             1,
             just = c("center", "center"),
             default.units = "native",
-            gp = gpar(fill = .match.scale(fill, data$fill, scales, type = "fill"), 
-              col = .match.scale(col, data$color, scales)))         
+            gp = gpar(color = .match.scale(color, state$data$color, state$scales), 
+              border = .match.scale(border, state$data$border, state$scales, type="border")))         
 }
 
 
@@ -224,8 +224,8 @@ jjplot.geom.box <- function(data, x.expr, y.expr, scales,
   list(y = 0)
 }
 
-.jjplot.expand.fill <- function(data, x.expr, y.expr) {
-  list(y = c(0.5, nlevels(data$y) + 0.5),
-       x = c(0.5, nlevels(data$x) + 0.5))       
+.jjplot.expand.tile <- function(state) {
+  list(y = c(0.5, nlevels(state$data$y) + 0.5),
+       x = c(0.5, nlevels(state$data$x) + 0.5))       
 }
 
