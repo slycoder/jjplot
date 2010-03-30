@@ -48,6 +48,24 @@ jjplot(~ area() : group(density(), by = day:sex) +
 quartz()
 
 source("jjplot.R")
+jjplot(tip ~ (abline() : group(fit(), by = day: sex) +
+point(alpha = 0.5)) : color(day) +
+abline(lty = "dashed") : color(a): fit() + total_bill,
+data = tips,
+facet.y = day, facet.x = sex)
+
+## coloring by special data attached by a stat (here, coloring by the slope)
+jjplot(tip ~ (abline() : color(a) : group(fit(), by = day: sex) +
+point(alpha = 0.5)) +
+abline(lty = "dashed") : fit() + total_bill,
+data = tips,
+facet.y = day, facet.x = sex)
+
+
+# this is broken. not really sure what the correct behavior ought to be though.
+jjplot( ~ line(lty="dashed", ordered=F) : color(y) : hist() + 
+bar(width = 0.1) :color(y):hist() : jitter(xfactor = 1) + 
+Sepal.Length, data = iris)
 
 jjplot(~ area() : group(density(), by = day:sex) : color(day, alpha = 0.5) + 
        area() : group(density(), by = day) +
