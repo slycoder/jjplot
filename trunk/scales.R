@@ -1,9 +1,9 @@
 ### SCALES ###
 .match.scale <- function(override, group, scales,
-                        defaults = list(color = "black",
-                                        size = 1.0,
-                                        fill = "black"),
-                        type = c("color", "size", "fill")) {
+                         defaults = list(color = "black",
+                           size = 1.0,
+                           fill = "black"),
+                         type = c("color", "size", "border")) {
   type <- match.arg(type)
   if (!is.null(override)) {
     if (is.factor(override)) {
@@ -30,7 +30,11 @@
     function(z) { colors[z] }
   } else {
     if (is.null(manual)) {
-      cr <- colorRamp(c('red', 'white', 'blue'))
+      if (range(cc)[1] >= 0) {
+        cr <- colorRamp(c('white', 'blue'))
+      } else {
+        cr <- colorRamp(c('red', 'white', 'blue'))        
+      }
     } else {
       cr <- manual
     }
