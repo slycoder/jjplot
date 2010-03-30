@@ -47,7 +47,23 @@ jjplot(~ area() : group(density(), by = day:sex) +
 
 quartz()
 
+## Extra stats
+jjplot.stat.kmeans <- function(state, K, ...) {
+  km <- kmeans(cbind(state$data$x, state$data$y), K)
+  state$data$cluster <- factor(km$cluster)
+  state
+}
+
 source("jjplot.R")
+jjplot(Petal.Length ~ (point() +
+                       vline():group(fun.x(mean), by=cluster) + 
+                       hline():group(fun.y(mean), by=cluster)):
+       color(cluster):kmeans(5) + Sepal.Length,
+       data = iris)
+
+
+
+
 jjplot(tip ~ (abline() : group(fit(), by = day: sex) +
 point(alpha = 0.5)) : color(day) +
 abline(lty = "dashed") : color(a): fit() + total_bill,

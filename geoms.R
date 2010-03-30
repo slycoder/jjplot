@@ -131,23 +131,30 @@ jjplot.geom.abline <- function(state,
                   col = .match.scale(col, state$data$color, state$scales)))
 }
     
-jjplot.geom.hline <- function(data, x.expr, y.expr, scales,
-                          manual.y = NULL,
-                          lwd = 1.5, col = NULL, lty = "solid") {
-  grid.lines(y = if (is.null(manual.y)) data$y else manual.y,
-             default.units = "native",
-             gp = gpar(col = .match.scale(col, data$color, scales),
-               lwd = lwd,
-               lty = lty))
+jjplot.geom.hline <- function(state,
+                              manual.y = NULL,
+                              lwd = 1.5, color = NULL, lty = "solid") {
+  y <- if (is.null(manual.y)) state$data$y else manual.y
+  for (ii in 1:length(y)) {
+    grid.lines(y = y[ii],
+               default.units = "native",
+               gp = gpar(col = .match.scale(color[ii], state$data$color[ii], state$scales),
+                 lwd = lwd,
+                 lty = lty))
+  }
 }    
 
-jjplot.geom.vline <- function(data, x.expr, y.expr, scales,
-                          manual.x = NULL, lwd = 1.5, col = NULL, lty = "solid") {
-  grid.lines(x = if (is.null(manual.x)) data$x else manual.x,
-             default.units = "native",
-             gp = gpar(col = .match.scale(col, data$color, scales),
-               lwd = lwd,
-               lty = lty))
+jjplot.geom.vline <- function(state,
+                              manual.x = NULL,
+                              lwd = 1.5, color = NULL, lty = "solid") {
+  x <- if (is.null(manual.x)) state$data$x else manual.x
+  for (ii in 1:length(x)) {
+    grid.lines(x = x[ii],
+               default.units = "native",
+               gp = gpar(col = .match.scale(color[ii], state$data$color[ii], state$scales),
+                 lwd = lwd,
+                 lty = lty))
+  }
 }
 
 jjplot.geom.text <- function(data, x.expr, y.expr, scales,
