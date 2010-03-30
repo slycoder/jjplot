@@ -11,10 +11,7 @@ source("geoms.R")
 .call.with.data <- function(cc, state, prefix = "jjplot.stat", ...) {
   do.call(paste(prefix, as.character(cc[[1]]), sep = "."),
           c(as.list(cc)[-1],
-            list(data = state$data),
-            x.expr = quote(state$x.expr),
-            y.expr = quote(state$y.expr),
-            ...))
+            list(state = state), quote(...)))
 }
 
 ## Memoize:
@@ -86,7 +83,6 @@ source("geoms.R")
                            memoization = NULL,
                            facet.x = NULL,
                            facet.y = NULL,
-                           color = NULL,
                            fill = NULL,
                            size = NULL) {
   if (length(f) == 3) {
@@ -98,7 +94,7 @@ source("geoms.R")
   } else {
     stop("Malformed formula.")
   }
-  
+
   stopifnot(rhs[[1]] == "+")
   x.expr <- rhs[[3]]
   if (is.null(memoization)) {
@@ -108,13 +104,15 @@ source("geoms.R")
 
     state <- list(data = data,
                   x.expr = x.expr,
-                  y.expr = y.expr)
+                  y.expr = y.expr,
+                  scales = list())
 
+    state$scales$fill <- .make.color.scale(NULL, 1.0)
+    state$scales$color <- .make.color.scale(NULL, 1.0)
+    state$scales$size <- .make.size.scale(NULL)
+    
     if (!is.null(eval.y)) {
       state$data$y <- eval.y
-    }
-    if (!is.null(color)) {
-      state$data$color <- color
     }
     if (!is.null(fill)) {
       state$data$fill <- fill
@@ -382,7 +380,6 @@ source("geoms.R")
 
                    .call.with.data(cc,
                                    state,
-                                   scales = list(scales),
                                    prefix = 'jjplot.geom')
                  }, data, stats)
   
@@ -583,30 +580,28 @@ source("geoms.R")
 }
 
 ### ENTRY POINT ###
-jjplot <- function(f, data = NULL, color = NULL,
-                   fill = NULL, size = NULL, alpha = 1.0,
+jjplot <- function(f, data = NULL, fill = NULL,
+                   size = NULL,
                    log.x = FALSE, log.y = FALSE,
                    xlab = NULL, ylab = NULL,
                    facet.x = NULL, facet.y = NULL,
                    facet.nrow = NA, facet.ncol = NA,
                    expand = c(0.04, 0.04),
-                   color.scale = NULL, fill.scale = NULL) {
-  eval.color <- eval(match.call()$color, data)
-  eval.fill <- eval(match.call()$fill, data)
-  eval.size <- eval(match.call()$size, data)
+                   fill.scale = NULL) {
   eval.facet.x <- eval(match.call()$facet.x, data)
   eval.facet.y <- eval(match.call()$facet.y, data)  
-  
-  scales <- list()
-  scales$color <- .make.color.scale(eval.color, alpha, manual = color.scale)
-  scales$fill <- .make.color.scale(eval.fill, alpha, manual = fill.scale)
-  scales$size <- .make.size.scale(eval.size)    
 
+  ## FIXME: deprecated
+  eval.fill <- eval(match.call()$fill, data)
+  eval.size <- eval(match.call()$size, data)
+#  scales$fill <- .make.color.scale(eval.fill, alpha, manual = fill.scale)
+#  scales$size <- .make.size.scale(eval.size)    
+  
+  
   ## Compute stats.
   stats <- .formula.apply(f, .call.with.data, function(...) NULL, data,
                           facet.x = eval.facet.x,
                           facet.y = eval.facet.y,
-                          color = eval.color,
                           fill = eval.fill,
                           size = eval.size)
   

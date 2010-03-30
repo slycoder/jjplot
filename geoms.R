@@ -3,42 +3,43 @@
   return(is.call(layer.call) && exists(eval(paste('jjplot.geom',as.character(layer.call[[1]]),sep='.'))))
 }
 
-jjplot.geom.line <- function(data, 
-                         x.expr, y.expr, scales,
-                         lty = "solid", col = NULL,
-                         lwd = 1.5, ordered = TRUE) {
+jjplot.geom.line <- function(state,
+                             lty = "solid",
+                             color = NULL,
+                             lwd = 1.5, ordered = TRUE) {
   if (ordered) {
-    oo <- order(data$x)
+    oo <- order(state$data$x)
   } else {
-    oo <- 1:nrow(data)
+    oo <- 1:nrow(state$data)
   }
-  if (!is.null(data$color) && is.null(col))  {
-    by(data[oo,], data$color[oo],
+  if (!is.null(state$data$color) && is.null(color))  {
+    by(state$data[oo,], state$data$color[oo],
        function(zz)
        grid.lines(x = zz$x, y = zz$y,
                   default.units = "native",
-                  gp = gpar(col = .match.scale(col, zz$color, scales),
+                  gp = gpar(col = .match.scale(color, zz$color, state$scales),
                     lwd = lwd,
                     lty = lty)))
   } else {
-    grid.lines(x = data$x[oo], y = data$y[oo],
+    grid.lines(x = state$data$x[oo], y = state$data$y[oo],
                default.units = "native",
-               gp = gpar(col = .match.scale(col, data$color[oo], scales),
+               gp = gpar(col = .match.scale(color, state$data$color[oo], state$scales),
                  lwd = lwd,
                  lty = lty))
   }
 }
 
-jjplot.geom.bar <- function(data, x.expr, y.expr, scales,
-                        col = NULL, fill = NULL, width = 1) {
-  grid.rect(data$x,
+jjplot.geom.bar <- function(state,
+                            color = NULL,
+                            border = NULL, width = 1) {
+  grid.rect(state$data$x,
             0,
             width,
-            data$y,
+            state$data$y,
             just = c("center", "bottom"),
             default.units = "native",
-            gp = gpar(fill = .match.scale(fill, data$fill, scales, type = "fill"), 
-              col = .match.scale(col, data$color, scales)))
+            gp = gpar(fill = .match.scale(color, state$data$color, state$scales), 
+              col = .match.scale(border, state$data$border, state$scales, type = "border")))
 }
 
 jjplot.geom.fill <- function(data, x.expr, y.expr,
@@ -54,51 +55,55 @@ jjplot.geom.fill <- function(data, x.expr, y.expr,
 }
 
 
-jjplot.geom.area <- function(data, x.expr, y.expr, scales,
-                         col = NULL, fill = NULL) {
-  if (is.null(data$fill) || !is.null(col)) {
-    grid.polygon(c(data$x[1], data$x, data$x[length(data$x)]),
-                 c(0, data$y, 0),
+jjplot.geom.area <- function(state,
+                             color = NULL,
+                             border = NULL) {
+  if (is.null(state$data$color) || !is.null(color)) {
+    grid.polygon(c(state$data$x[1], state$data$x, state$data$x[length(state$data$x)]),
+                 c(0, state$data$y, 0),
                  default.units = "native",
-                 gp = gpar(fill = .match.scale(fill, data$fill, scales, type = "fill"), 
-                   col = .match.scale(col, data$color, scales)))
+                 gp = gpar(fill = .match.scale(color, state$data$color, scales), 
+                   col = .match.scale(border, state$data$border, scales, type = "border")))
   } else {
-    by(data, data$fill, function(xx)
+    by(state$data, state$data$color, function(xx)
        grid.polygon(c(xx$x[1], xx$x, xx$x[length(xx$x)]),
                  c(0, xx$y, 0),
                  default.units = "native",
-                 gp = gpar(fill = .match.scale(fill, xx$fill, scales, type = "fill"), 
-                   col = .match.scale(col, xx$color, scales))))
+                 gp = gpar(fill = .match.scale(color, xx$color, state$scales), 
+                   col = .match.scale(border, xx$border, state$scales, type = "border"))))
   }
 }
   
-jjplot.geom.point <- function(data, x.expr, y.expr, scales,
-                          alpha = 1.0,
-                          pch = 16, col = NULL, size = NULL) {
-  grid.points(data$x,
-              data$y,
+jjplot.geom.point <- function(state,
+                              alpha = 1.0,
+                              pch = 16,
+                              color = NULL,
+                              border = NULL,
+                              size = NULL) {
+  grid.points(state$data$x,
+              state$data$y,
               pch = pch,
-              size = unit(0.5 * .match.scale(size, data$size, scales, type="size"), "char"),
+              size = unit(0.5 * .match.scale(size, state$data$size, state$scales, type="size"), "char"),
               gp = gpar(alpha = alpha,
-                col = .match.scale(col, data$color, scales),
-                fill = .match.scale(col, data$fill, scales, type="fill")))
+                col = .match.scale(color, state$data$color, state$scales)))
+##                fill = .match.scale(border, state$data$border, state$scales, type="border")))
 }
 
-jjplot.geom.abline <- function(data, x.expr, y.expr, scales,
-                           lwd = 1.5, col = NULL, lty = "solid") {
+jjplot.geom.abline <- function(state,
+                               lwd = 1.5, col = NULL, lty = "solid") {
   ## Find limits
   xlim <- convertX(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)
   ylim <- convertY(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)      
   
-  ystart <- xlim[1] * data$a + data$b
-  yend <- xlim[2] * data$a + data$b
+  ystart <- xlim[1] * state$data$a + state$data$b
+  yend <- xlim[2] * state$data$a + state$data$b
   
-  xstart <- ifelse(data$a < 0,
-                   (ylim[2] - data$b) / data$a,
-                   (ylim[1] - data$b) / data$a)
-  xend <- ifelse(data$a < 0,
-                 (ylim[1] - data$b) / data$a,
-                 (ylim[2] - data$b) / data$a)
+  xstart <- ifelse(state$data$a < 0,
+                   (ylim[2] - state$data$b) / state$data$a,
+                   (ylim[1] - state$data$b) / state$data$a)
+  xend <- ifelse(state$data$a < 0,
+                 (ylim[1] - state$data$b) / state$data$a,
+                 (ylim[2] - state$data$b) / state$data$a)
   
   ## Invariant: xstart <= xend,
   ## So that left hand coordinate should be xtart or xlim[1]
@@ -106,13 +111,13 @@ jjplot.geom.abline <- function(data, x.expr, y.expr, scales,
   
   ystart <- ifelse(xstart < xlim[1],
                    ystart,
-                   ifelse(data$a < 0,
+                   ifelse(state$data$a < 0,
                           ylim[2],
                           ylim[1]))
   
   yend <- ifelse(xend > xlim[2],
                  yend,
-                 ifelse(data$a < 0,
+                 ifelse(state$data$a < 0,
                         ylim[1],
                         ylim[2]))
   
@@ -123,7 +128,7 @@ jjplot.geom.abline <- function(data, x.expr, y.expr, scales,
                 default.units = "native",
                 gp = gpar(lwd = lwd,
                   lty = lty,
-                  col = .match.scale(col, data$color, scales)))
+                  col = .match.scale(col, state$data$color, state$scales)))
 }
     
 jjplot.geom.hline <- function(data, x.expr, y.expr, scales,
@@ -189,8 +194,9 @@ jjplot.geom.box <- function(data, x.expr, y.expr, scales,
                   col = .match.scale(col, data$color, scales)))
 }
 
-.jjplot.expand.bar <- function(data, x.expr, y.expr, width = 1.0,
-                               col = NULL) {
+.jjplot.expand.bar <- function(state,
+                               width = 1.0,
+                               color = NULL) {
   ## FIXME
   ##  xlim <- range(as.numeric(layer.data$x))
   ##  x.padding <- (xlim[2] - xlim[1]) * eval.expand[1]
@@ -207,7 +213,7 @@ jjplot.geom.box <- function(data, x.expr, y.expr, scales,
        y = c(data$quantile.0, data$quantile.100))
 }        
 
-.jjplot.expand.area <- function(data, x.expr, y.expr) {
+.jjplot.expand.area <- function(state) {
   list(y = 0)
 }
 

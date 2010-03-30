@@ -43,14 +43,14 @@ jjplot.stat.table <- function(data, x.expr, y.expr, log.y = FALSE) {
        x.expr=x.expr, y.expr = substitute(Count(x), list(x=x.expr)))
 }
 
-jjplot.stat.hist <- function(data, x.expr, y.expr,
-                         align = c("left", "right", "middle"),
-                         breaks = 20,
-                         density = TRUE,
-                         log.y = FALSE) {
+jjplot.stat.hist <- function(state,
+                             align = c("left", "right", "middle"),
+                             breaks = 20,
+                             density = TRUE,
+                             log.y = FALSE) {
   align <- match.arg(align)
 
-  h <- hist(data$x, breaks = breaks, plot = FALSE)
+  h <- hist(state$data$x, breaks = breaks, plot = FALSE)
   if (align == "left") {
     hx <- h$breaks[-length(h$breaks)]
   } else if (align == "right") {
@@ -61,7 +61,7 @@ jjplot.stat.hist <- function(data, x.expr, y.expr,
   
   cs <- h$density
   if (!density) {
-    cs <- cs * length(data$x)
+    cs <- cs * length(state$data$x)
   }
   ## FIXME: log.y
   if (log.y) {
@@ -69,29 +69,34 @@ jjplot.stat.hist <- function(data, x.expr, y.expr,
   } else {
     dens <- cs
   }
-  
-  list(data = .bind.attr.columns(data.frame(x = hx, y = dens), data),
-       x.expr = x.expr,
-       y.expr = substitute(Count(x), list(x = x.expr)))
+  state$data <- .bind.attr.columns(data.frame(x = hx, y = dens), state$data)
+  state$y.expr <- substitute(Count(x), list(x = state$x.expr))
+  state
 }
 
-jjplot.stat.jitter <- function(data, x.expr, y.expr,
-                           xfactor = 0, yfactor = 0) {
-  data <- transform(data, x = jitter(as.numeric(data$x), xfactor))
-  if (!is.null(data$y)) {
-    data <- transform(data, y = jitter(as.numeric(data$y), yfactor))    
+jjplot.stat.jitter <- function(state,
+                               xfactor = 0, yfactor = 0) {
+  state$data <- transform(state$data,
+                    x = jitter(as.numeric(state$data$x), xfactor))
+  if (!is.null(state$data$y)) {
+    state$data <- transform(state$data,
+                      y = jitter(as.numeric(state$data$y), yfactor))    
   }
-  list(data = data,
-       x.expr = if (xfactor != 0) substitute(jitter(x), list(x=x.expr)) else x.expr,
-       y.expr = if (yfactor != 0) substitute(jitter(x), list(x=y.expr)) else y.expr)
+  if (xfactor != 0) {
+    state$x.expr <- substitute(jitter(x), list(x=state$x.expr))
+  }
+  if (yfactor != 0) {
+    state$y.expr <- substitute(jitter(x), list(x=state$y.expr))
+  }
+  state
 }
 
-jjplot.stat.fit <- function(data, x.expr, y.expr) {
-  model <- lm(data$y ~ data$x)
+jjplot.stat.fit <- function(state) {
+  model <- lm(state$data$y ~ state$data$x)
   result <- data.frame(b = coef(model)[1],
                        a = coef(model)[2])
-  list(data = .bind.attr.columns(result, data), 
-       x.expr = x.expr, y.expr = y.expr)
+  state$data <- .bind.attr.columns(result, state$data)
+  state
 }
 
 jjplot.stat.fun.x <- function(data, x.expr, y.expr, fun) {
@@ -154,56 +159,59 @@ jjplot.stat.cumsum <- function(data, x.expr, y.expr,
        y.expr = substitute(cumsum(x), list(x = y.expr)))
 }
 
-jjplot.stat.group <- function(data, x.expr, y.expr,
-                          fun, by) {
-  eval.by <- eval(match.call()$by, data)  
+jjplot.stat.group <- function(state,
+                              fun, by) {
+  eval.by <- eval(match.call()$by, state$data)  
   fun.call <- match.call()$fun
 
-  faceted.df <- base:::by(cbind(data, .by = eval.by),
+  faceted.df <- base:::by(cbind(state$data, .by = eval.by),
                           eval.by,
                           function(df) {
-                            state <- list(data = df,
-                                          x.expr = x.expr,
-                                          y.expr = y.expr)
-                            result <- .call.with.data(fun.call, state)
+                            local.state <- list(data = df,
+                                                x.expr = state$x.expr,
+                                                y.expr = state$y.expr)
+                            result <- .call.with.data(fun.call, local.state)
                           })
 
   result <- do.call(rbind, lapply(faceted.df, function(a) a$data))
 
-  attr(result, "sort.x") <- do.call(rbind,
-                                    lapply(faceted.df,
-                                           function(ll) attr(ll$data, "sort.x")))
-  if (!is.null(attr(result, "sort.x"))) {
-    attr(result, "sort.x") <- cbind(attr(result, "sort.x"),
-                                    .by = rep(names(faceted.df),
-                                        times = lapply(faceted.df, function(ll) {
-                                          nrow(attr(ll$data, "sort.x"))
-                                        })))
-    rownames(attr(result, "sort.x")) <- NULL
-  }
+  
 
-  attr(result, "sort.y") <- do.call(rbind,
-                                    lapply(faceted.df,
-                                           function(ll) attr(ll$data, "sort.y")))
-  if (!is.null(attr(result, "sort.y"))) {
-    attr(result, "sort.y") <- cbind(attr(result, "sort.y"),
-                                    .by = rep(names(faceted.df),
-                                        times = lapply(faceted.df, function(ll) {
-                                          nrow(attr(ll$data, "sort.y"))
-                                        })))
-    rownames(attr(result, "sort.y")) <- NULL
-  }
+##   attr(result, "sort.x") <- do.call(rbind,
+##                                     lapply(faceted.df,
+##                                            function(ll) attr(ll$data, "sort.x")))
+##   if (!is.null(attr(result, "sort.x"))) {
+##     attr(result, "sort.x") <- cbind(attr(result, "sort.x"),
+##                                     .by = rep(names(faceted.df),
+##                                         times = lapply(faceted.df, function(ll) {
+##                                           nrow(attr(ll$data, "sort.x"))
+##                                         })))
+##     rownames(attr(result, "sort.x")) <- NULL
+##   }
 
-  list(data = result,
-       x.expr = faceted.df[[1]]$x.expr,
-       y.expr = faceted.df[[1]]$y.expr)
+##   attr(result, "sort.y") <- do.call(rbind,
+##                                     lapply(faceted.df,
+##                                            function(ll) attr(ll$data, "sort.y")))
+##   if (!is.null(attr(result, "sort.y"))) {
+##     attr(result, "sort.y") <- cbind(attr(result, "sort.y"),
+##                                     .by = rep(names(faceted.df),
+##                                         times = lapply(faceted.df, function(ll) {
+##                                           nrow(attr(ll$data, "sort.y"))
+##                                         })))
+##     rownames(attr(result, "sort.y")) <- NULL
+##   }
+
+  state$data <- result
+  state$x.expr <- faceted.df[[1]]$x.expr
+  state$y.expr <- faceted.df[[1]]$y.expr
+  state
 }
 
 
 jjplot.stat.sort <- function(data, x.expr, y.expr,
-                         x = NULL, y = NULL,
-                         decreasing = FALSE,
-                         fun = mean) {
+                             x = NULL, y = NULL,
+                             decreasing = FALSE,
+                             fun = mean) {
   sort.x <- match.call()[["x"]]
   sort.y <- match.call()[["y"]]
   stopifnot(xor(is.null(sort.x), is.null(sort.y)))
@@ -223,10 +231,19 @@ jjplot.stat.sort <- function(data, x.expr, y.expr,
   result
 }
 
-jjplot.stat.density <- function(data, x.expr, y.expr) {
-  dd <- density(as.numeric(data$x))
+jjplot.stat.color <- function(state,
+                              color.expression,
+                              alpha = 1.0,
+                              manual = NULL) {
+  state$data$color <- eval(match.call()$color.expression, state$data)
+  state$scales$color <- .make.color.scale(state$data$color, alpha, manual)
+  state
+}
+
+jjplot.stat.density <- function(state) {
+  dd <- density(as.numeric(state$data$x))
   result <- data.frame(x = dd$x, y = dd$y)
-  list(data = .bind.attr.columns(result, data),
-       x.expr = x.expr,
-       y.expr = substitute(Density(x), list(x = x.expr)))
+  state$data <- .bind.attr.columns(result, state$data)
+  state$y.expr <- substitute(Density(x), list(x = state$x.expr))
+  state
 }

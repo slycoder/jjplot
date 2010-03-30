@@ -1,14 +1,16 @@
 png("stacked_stats.png", width=640, height=480)
 
+source("jjplot.R")
 jjplot( ~ line(lty="dashed", col = "red") : hist() + 
               bar(width = 0.1) : hist() : jitter(xfactor = 1) + 
               Sepal.Length, data = iris)
 
+
 dev.off()
 
-jjplot(Sepal.Length ~ abline() : group(fit(), by = Species) +
-                      point() + Petal.Length,
-       data = iris, color = Species)
+jjplot(Sepal.Length ~ (abline() : group(fit(), by = Species) +
+                       point()) : color(Species) + Petal.Length,
+       data = iris)
 
 png("stacked_geoms.png", width=640, height=480)
 
@@ -30,36 +32,12 @@ png('density.png', width=480, height=900)
 
 quartz()
 
-source("jjplot.R")
-
-
-
-data <- read.csv("~/Downloads/tmp_hipal_jonchang_104098.csv")
-
-data <- rbind(data,
-              transform(data[data$count_1 == 2,], count_1 = 1),
-              transform(data[data$count_1 == 3,], count_1 = 1))
-
-jjplot(~ vline(as.POSIXct("2010-01-12 21:53:09 UTC"), lty="dashed") +
-       area() : density() +
-       as.POSIXct(time, origin='1970-01-01'),
-       data = data)
-
-jjplot(sqrt(foo^2) ~ point() + value,       
-       data = df, color = type, 
-       facet.x = name, facet.nrow = 2)
-
-jjplot(~ area() : group(density(), by = type) +
-       area() : density() + value,
-       data = df, fill = type, alpha = 0.5,
-       facet.x = type, facet.nrow = 3)
 
 jjplot(~ area() : group(density(), by = Species) +
        area() : density() + Sepal.Length,
        data = iris, fill = Species, alpha = 0.5,
        facet.y = Species, facet.nrow = 3)
 
-## jjplot(~ area() : group(group(density(), by = day), by = sex) +
 jjplot(~ area() : group(density(), by = day:sex) +       
        area() : group(density(), by = sex) +
        I(tip / total_bill),
@@ -67,20 +45,43 @@ jjplot(~ area() : group(density(), by = day:sex) +
        facet.y = day, facet.x = sex,
        ylab = "")
 
-jjplot(tip ~ abline() : group(group(fit(), by = day), by = sex) +
+quartz()
+
+source("jjplot.R")
+
+jjplot(~ area() : group(density(), by = day:sex) : color(day, alpha = 0.5) + 
+       area() : group(density(), by = day) +
+       I(tip / total_bill),
+       data = tips, 
+       facet.y = day, facet.x = sex,
+       xlab = "tip fraction",
+       ylab = "")
+
+jjplot(tip ~ (abline() : group(fit(), by = day: sex) +
+              point(alpha = 0.5)) : color(day) +
+       abline(lty = "dashed") : fit() + total_bill,
+       data = tips,
+       facet.y = day, facet.x = sex)
+
+jjplot( ~ bar(width = 0.1) : color(y) : hist() : jitter(xfactor = 1) + 
+       Sepal.Length, data = iris)
+
+
+
+jjplot(tip ~ (abline() : group(group(fit(), by = day), by = sex) +
        abline(lty = "dashed") : fit() + 
-       point() + total_bill,
-       data = tips, color = day, alpha = 0.5,
+       point()) : color(day, alpha = 0.5) + total_bill,
+       data = tips,
        facet.y = day, facet.x = sex)
 
 dev.off()
 
-source("jjplot.R")
 
-jjplot(~ bar(width = .1) : group(hist(), by = sex) +
+
+jjplot(~ bar(width = .1) : group(hist(), by = sex) : color(sex, alpha = 0.75) +
        bar(width = .1) : hist() +
        tip,
-       data = tips, facet.x = sex, fill = sex, alpha = 0.1)
+       data = tips, facet.x = sex)
 
 
 png("sorted_stats%03d.png", width=480, height=480)
