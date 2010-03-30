@@ -195,7 +195,7 @@ source("geoms.R")
     
     if (is.null(x.is.factor)) {
       if (is.factor(state$data$x)) {        
-        sort.x <- attr(state$data, "sort.x", exact = TRUE)
+        sort.x <- state$data$sort.x
         sort.x <- .try.subset(sort.x, .subset$facet.x)
         sort.x <- .try.subset(sort.x, .subset$facet.y)
         
@@ -210,7 +210,7 @@ source("geoms.R")
     }
     if (is.null(y.is.factor)) {
       if (is.factor(state$data$y)) {
-        sort.y <- attr(state$data, "sort.y", exact = TRUE)
+        sort.y <- state$data$sort.y
         sort.y <- .try.subset(sort.y, .subset$facet.x)
         sort.y <- .try.subset(sort.y, .subset$facet.y)
         
@@ -347,8 +347,8 @@ source("geoms.R")
   ## Do the actual plotting!
   .formula.apply(f, function(...) NULL,
                  function(cc, state) {
-                   sort.x <- attr(state$data, "sort.x", exact = TRUE)
-                   sort.y <- attr(state$data, "sort.y", exact = TRUE)
+                   sort.x <- state$sort.x
+                   sort.y <- state$sort.y
 
                    condition <- TRUE
                    if (!is.null(.subset) && !is.null(.subset$facet.x) &&

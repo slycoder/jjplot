@@ -120,10 +120,10 @@ jjplot.stat.quantile <- function(state) {
   state
 }
 
-jjplot.stat.ccdf <- function(data, x.expr, y.expr,
+jjplot.stat.ccdf <- function(state,
                              density = FALSE, maxpoints = FALSE,
                              log.y = FALSE, log.x = FALSE) {
-  freqs <- table(data$x)
+  freqs <- table(state$data$x)
   df <- data.frame(x=as.numeric(rev(names(freqs))),
                    y=cumsum(rev(freqs)))
   if (density) {
@@ -137,26 +137,27 @@ jjplot.stat.ccdf <- function(data, x.expr, y.expr,
     df <- do.call(rbind, by(df, group,
                             function(X) X[order(X$x)[floor(length(X)/2)],]))
   }
-  
-  list(data = df, x.expr = x.expr,
-       y.expr = if (density) {
-         substitute(Pr(x>=X),list(x=x.expr,X=toupper(x.expr)))
-       } else {
-         substitute(Count(x>=X),list(x=x.expr,X=toupper(x.expr)))
-       })
+
+  state$data <- df
+  if (density) {
+    state$y.expr <- substitute(Pr(x>=X),list(x=state$x.expr,X=toupper(state$x.expr)))
+  } else {
+    state$y.expr <- substitute(Count(x>=X),list(x=state$x.expr,X=toupper(state$x.expr)))
+  }
+  state
 }
 
-jjplot.stat.cumsum <- function(data, x.expr, y.expr,
-                           decreasing=TRUE,
-                           log.y = FALSE) {
-  oo <- order(data$x, decreasing=decreasing)
-  cs <- cumsum(data$y[oo])
+jjplot.stat.cumsum <- function(state,
+                               decreasing=TRUE,
+                               log.y = FALSE) {
+  oo <- order(state$data$x, decreasing=decreasing)
+  cs <- cumsum(state$data$y[oo])
   if (log.y) {
     cs <- log10(cs)
-  }      
-  list(data = data.frame(x = data$x[oo], y = cs),
-       x.expr = x.expr,
-       y.expr = substitute(cumsum(x), list(x = y.expr)))
+  }
+  state$data <- data.frame(x = data$x[oo], y = cs)
+  state$y.expr <- substitute(cumsum(x), list(x = state$y.expr))
+  state
 }
 
 jjplot.stat.group <- function(state,
@@ -177,29 +178,29 @@ jjplot.stat.group <- function(state,
 
   
 
-##   attr(result, "sort.x") <- do.call(rbind,
-##                                     lapply(faceted.df,
-##                                            function(ll) attr(ll$data, "sort.x")))
-##   if (!is.null(attr(result, "sort.x"))) {
-##     attr(result, "sort.x") <- cbind(attr(result, "sort.x"),
-##                                     .by = rep(names(faceted.df),
-##                                         times = lapply(faceted.df, function(ll) {
-##                                           nrow(attr(ll$data, "sort.x"))
-##                                         })))
-##     rownames(attr(result, "sort.x")) <- NULL
-##   }
+  state$sort.x <- do.call(rbind,
+                          lapply(faceted.df,
+                                 function(ll) ll$sort.x))
+  if (!is.null(state$sort.x)) {
+    state$sort.y <- cbind(state$sort.x,
+                          .by = rep(names(faceted.df),
+                            times = lapply(faceted.df, function(ll) {
+                              nrow(ll$sort.x)
+                            })))
+    rownames(state$sort.x) <- NULL
+  }
 
-##   attr(result, "sort.y") <- do.call(rbind,
-##                                     lapply(faceted.df,
-##                                            function(ll) attr(ll$data, "sort.y")))
-##   if (!is.null(attr(result, "sort.y"))) {
-##     attr(result, "sort.y") <- cbind(attr(result, "sort.y"),
-##                                     .by = rep(names(faceted.df),
-##                                         times = lapply(faceted.df, function(ll) {
-##                                           nrow(attr(ll$data, "sort.y"))
-##                                         })))
-##     rownames(attr(result, "sort.y")) <- NULL
-##   }
+  state$sort.y <- do.call(rbind,
+                          lapply(faceted.df,
+                                 function(ll) ll$sort.y))
+  if (!is.null(state$sort.y)) {
+    state$sort.y <- cbind(state$sort.y,
+                          .by = rep(names(faceted.df),
+                            times = lapply(faceted.df, function(ll) {
+                              nrow(ll$sort.y)
+                            })))
+    rownames(state$sort.y) <- NULL
+  }
 
   state$data <- result
   state$x.expr <- faceted.df[[1]]$x.expr
