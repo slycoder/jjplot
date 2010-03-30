@@ -99,14 +99,14 @@ jjplot.stat.fit <- function(state) {
   state
 }
 
-jjplot.stat.fun.x <- function(data, x.expr, y.expr, fun) {
-  list(data = data.frame(x = fun(data$x)),
-       x.expr = x.expr, y.expr = y.expr)
+jjplot.stat.fun.x <- function(state, fun) {
+  state$data <- .bind.attr.columns(data.frame(x = fun(state$data$x)), state$data)
+  state
 }
 
-jjplot.stat.fun.y <- function(data, x.expr, y.expr, fun) {
-  list(data = data.frame(y = fun(data$y)),
-       x.expr = x.expr, y.expr = y.expr)
+jjplot.stat.fun.y <- function(state, fun) {
+  state$data <- .bind.attr.columns(data.frame(y = fun(state$data$y)), state$data)
+  state
 }
 
 jjplot.stat.quantile <- function(data, x.expr, y.expr) {
