@@ -2,8 +2,9 @@
 .match.scale <- function(override, group, scales,
                          defaults = list(color = "black",
                            size = 1.0,
-                           fill = "black"),
-                         type = c("color", "size", "border")) {
+                           border = "black",
+                           shape = 16),
+                         type = c("color", "size", "border", "shape")) {
   type <- match.arg(type)
   if (!is.null(override)) {
     if (is.factor(override)) {
@@ -46,6 +47,20 @@
           alpha = alpha * 255,
           maxColorValue = 255)
     }
+  }
+}
+
+.make.shape.scale <- function(cc) {
+  if (is.null(cc) || length(cc) <= 1) {
+    function(z) { 16 }
+  } else if (is.factor(cc)) {
+    shapes <- c(16, 15, 17, 18, 1, 0, 2, 3, 4, 5, 6)
+    if (nlevels(cc) > length(shapes)) {
+      stop("Too many levels for shape scale.")
+    }
+    function(z) { shapes[z] }
+  } else {    
+    stop("Shape scales can only be used with factors!")
   }
 }
 

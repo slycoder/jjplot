@@ -38,50 +38,31 @@ jjplot(~ area() : group(density(), by = Species) +
        data = iris, fill = Species, alpha = 0.5,
        facet.y = Species, facet.nrow = 3)
 
-jjplot(~ area() : group(density(), by = day:sex) +       
-       area() : group(density(), by = sex) +
-       I(tip / total_bill),
-       data = tips, fill = day, alpha = 0.5,
-       facet.y = day, facet.x = sex,
-       ylab = "")
-
 quartz()
 
 ## Extra stats
-jjplot.stat.kmeans <- function(state, K, ...) {
-  km <- kmeans(cbind(state$data$x, state$data$y), K)
+jjplot.stat.kmeans <- function(state, K, use.y = FALSE) {
+  if (use.y) {
+    km <- kmeans(cbind(state$data$x, state$data$y), K)
+  } else {
+    km <- kmeans(state$data$x, K)    
+  }
   state$data$cluster <- factor(km$cluster)
   state
 }
 
 source("jjplot.R")
-jjplot(Petal.Length ~ (point() +
-                       vline():group(fun.x(mean), by=cluster) + 
-                       hline():group(fun.y(mean), by=cluster)):
-       color(cluster):kmeans(5) + Sepal.Length,
+
+jjplot(Petal.Length ~ point(alpha=0.5) : 
+       color(cluster):kmeans(5, use.y = T) : shape(Species) : size(Petal.Width) + Sepal.Length,
        data = iris)
 
 
-
-
-jjplot(tip ~ (abline() : group(fit(), by = day: sex) +
+jjplot( ~ (abline() : group(fit(), by = day: sex) +
 point(alpha = 0.5)) : color(day) +
 abline(lty = "dashed") : color(a): fit() + total_bill,
 data = tips,
 facet.y = day, facet.x = sex)
-
-## coloring by special data attached by a stat (here, coloring by the slope)
-jjplot(tip ~ (abline() : color(a) : group(fit(), by = day: sex) +
-point(alpha = 0.5)) +
-abline(lty = "dashed") : fit() + total_bill,
-data = tips,
-facet.y = day, facet.x = sex)
-
-
-# this is broken. not really sure what the correct behavior ought to be though.
-jjplot( ~ line(lty="dashed", ordered=F) : color(y) : hist() + 
-bar(width = 0.1) :color(y):hist() : jitter(xfactor = 1) + 
-Sepal.Length, data = iris)
 
 jjplot(~ area() : group(density(), by = day:sex) : color(day, alpha = 0.5) + 
        area() : group(density(), by = day) +
@@ -90,6 +71,33 @@ jjplot(~ area() : group(density(), by = day:sex) : color(day, alpha = 0.5) +
        facet.y = day, facet.x = sex,
        xlab = "tip fraction",
        ylab = "")
+
+
+jjplot( ~ area() : group(density(), cluster) :
+          color(cluster, alpha = 0.5) : kmeans(3) +
+          total_bill,
+       data = tips)
+
+jjplot(tip ~ (point() +
+       abline() : group(fit(), cluster)) : color(cluster) : kmeans(3) +
+       total_bill,
+       data = tips)
+
+
+jjplot( ~ bar(width = 0.25) : table() + I(round((tip * 100) %% 10)),
+       data = tips)
+
+jjplot(tip ~ (abline() : color(a) : group(fit(), by = day: sex) +
+point(alpha = 0.5)) +
+abline(lty = "dashed") : fit() + total_bill,
+data = tips,
+facet.y = day, facet.x = sex)
+
+# this is broken. not really sure what the correct behavior ought to be though.
+jjplot( ~ line(lty="dashed", ordered=F) : color(y) : hist() + 
+bar(width = 0.1) :color(y):hist() : jitter(xfactor = 1) + 
+Sepal.Length, data = iris)
+
 
 jjplot(tip ~ (abline() : group(fit(), by = day: sex) +
               point(alpha = 0.5)) : color(day) +

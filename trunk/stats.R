@@ -9,14 +9,19 @@
       result$color <- data$color[1]
     } 
   }
-  if (!is.null(data$fill)) {
-    if (all(data$fill == data$fill[1])) {
-      result$fill <- data$fill[1]
+  if (!is.null(data$border)) {
+    if (all(data$border == data$border[1])) {
+      result$border <- data$border[1]
     } 
   }
   if (!is.null(data$size)) {
     if (all(data$size == data$size[1])) {
       result$size <- data$size[1]
+    } 
+  }
+  if (!is.null(data$shape)) {
+    if (all(data$shape == data$shape[1])) {
+      result$shape <- data$shape[1]
     } 
   }
   if (!is.null(data$.facet.x)) {
@@ -231,6 +236,14 @@ jjplot.stat.sort <- function(state,
   state
 }
 
+jjplot.stat.density <- function(state) {
+  dd <- density(as.numeric(state$data$x))
+  result <- data.frame(x = dd$x, y = dd$y)
+  state$data <- .bind.attr.columns(result, state$data)
+  state$y.expr <- substitute(Density(x), list(x = state$x.expr))
+  state
+}
+
 jjplot.stat.color <- function(state,
                               color.expression,
                               alpha = 1.0,
@@ -240,10 +253,31 @@ jjplot.stat.color <- function(state,
   state
 }
 
-jjplot.stat.density <- function(state) {
-  dd <- density(as.numeric(state$data$x))
-  result <- data.frame(x = dd$x, y = dd$y)
-  state$data <- .bind.attr.columns(result, state$data)
-  state$y.expr <- substitute(Density(x), list(x = state$x.expr))
+jjplot.stat.border <- function(state,
+                               color.expression,
+                               alpha = 1.0,
+                               manual = NULL) {
+  state$data$border <- eval(match.call()$color.expression, state$data)
+  state$scales$border <- .make.color.scale(state$data$border, alpha, manual)
   state
 }
+
+jjplot.stat.size <- function(state,
+                             size.expression,
+                             manual = NULL) {
+  stopifnot(is.null(manual))
+  state$data$size <- eval(match.call()$size.expression, state$data)
+  state$scales$size <- .make.size.scale(state$data$size)
+  state
+}
+
+jjplot.stat.shape <- function(state,
+                              shape.expression,
+                              manual = NULL) {
+  stopifnot(is.null(manual))  
+  state$data$shape <- eval(match.call()$shape.expression, state$data)
+  state$scales$shape <- .make.shape.scale(state$data$shape)
+  state
+}
+
+

@@ -110,15 +110,9 @@ source("geoms.R")
     state$scales$fill <- .make.color.scale(NULL, 1.0)
     state$scales$color <- .make.color.scale(NULL, 1.0)
     state$scales$size <- .make.size.scale(NULL)
-    
+
     if (!is.null(eval.y)) {
       state$data$y <- eval.y
-    }
-    if (!is.null(fill)) {
-      state$data$fill <- fill
-    }
-    if (!is.null(size)) {
-      state$data$size <- size
     }
     if (!is.null(facet.x)) {
       state$data$.facet.x <- facet.x
@@ -580,23 +574,14 @@ source("geoms.R")
 }
 
 ### ENTRY POINT ###
-jjplot <- function(f, data = NULL, fill = NULL,
-                   size = NULL,
+jjplot <- function(f, data = NULL, 
                    log.x = FALSE, log.y = FALSE,
                    xlab = NULL, ylab = NULL,
                    facet.x = NULL, facet.y = NULL,
                    facet.nrow = NA, facet.ncol = NA,
-                   expand = c(0.04, 0.04),
-                   fill.scale = NULL) {
+                   expand = c(0.04, 0.04)) {
   eval.facet.x <- eval(match.call()$facet.x, data)
   eval.facet.y <- eval(match.call()$facet.y, data)  
-
-  ## FIXME: deprecated
-  eval.fill <- eval(match.call()$fill, data)
-  eval.size <- eval(match.call()$size, data)
-#  scales$fill <- .make.color.scale(eval.fill, alpha, manual = fill.scale)
-#  scales$size <- .make.size.scale(eval.size)    
-  
   
   ## Compute stats.
   stats <- .formula.apply(f, .call.with.data, function(...) NULL, data,
