@@ -76,13 +76,13 @@ jjplot.geom.area <- function(state,
   
 jjplot.geom.point <- function(state,
                               alpha = 1.0,
-                              pch = 16,
+                              shape = NULL,
                               color = NULL,
                               border = NULL,
                               size = NULL) {
   grid.points(state$data$x,
               state$data$y,
-              pch = pch,
+              pch = .match.scale(shape, state$data$shape, state$scales, type="shape"),
               size = unit(0.5 * .match.scale(size, state$data$size, state$scales, type="size"), "char"),
               gp = gpar(alpha = alpha,
                 col = .match.scale(color, state$data$color, state$scales)))
@@ -177,7 +177,7 @@ jjplot.geom.text <- function(state,
 }
 
 
-jjplot.geom.box <- function(state
+jjplot.geom.box <- function(state,
                             color = NULL, border = NULL, width = 0.5,
                             lwd = 1.5, lty = "solid") {
   grid.rect(as.numeric(state$data$x),
