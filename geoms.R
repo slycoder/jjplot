@@ -176,6 +176,29 @@ jjplot.geom.text <- function(state,
             gp = gpar(col = .match.scale(color, state$data$color, state$scales)))
 }
 
+jjplot.geom.curve <- function(state,
+                              xend, yend,
+                              alpha = NULL,
+                              color = NULL,
+                              lty = "solid",
+                              lwd = NULL,
+                              curvature = 1,
+                              angle = 90) {
+  grid.curve(state$data$x,
+             state$data$y,
+             eval(match.call()$xend, state$data),
+             eval(match.call()$yend, state$data),
+             curvature = curvature,
+             angle = angle,
+             square = F,
+             default.unit = "native",
+             gp = gpar(lty = lty,
+               lwd = 2 * .match.scale(lwd, state$data$size, state$scales, type="size"),
+               alpha = .match.scale(alpha, state$data$alpha, state$scales, type="alpha"),
+               col = .match.scale(color, state$dat$color, state$scales)))
+}
+                         
+
 
 jjplot.geom.box <- function(state,
                             color = NULL, border = NULL, width = 0.5,

@@ -110,6 +110,7 @@ source("geoms.R")
     state$scales$fill <- .make.color.scale(NULL, 1.0)
     state$scales$color <- .make.color.scale(NULL, 1.0)
     state$scales$size <- .make.size.scale(NULL)
+    state$scales$alpha <- .make.alpha.scale(NULL)    
 
     if (!is.null(eval.y)) {
       state$data$y <- eval.y
@@ -233,12 +234,6 @@ source("geoms.R")
     pretty.x <- pretty(xrange)
     labels.x <- TRUE
     label.x.height <- 3.1
-    ## FIXME: manual labeling
-    ##    if (!is.null(calls$labels.x)) {
-    ##      labels.x <- eval(calls$labels.x, parent.frame(n = 4))
-    ##      label.x.height <- convertHeight(unit(1, "strheight", labels.x[which.max(nchar(labels.x))]),
-    ##                                      "lines", valueOnly = TRUE) + 2.1
-    ##    }
   }
 
   if (log.x) {
@@ -550,27 +545,6 @@ source("geoms.R")
              allocate.x.axis.space = FALSE)
   }
   popViewport()
-}
-
-
-.collapse.scales <- function(color.expr,
-                             fill.expr,
-                             size.expr,
-                             scales) {
-  if (!is.null(color.expr)) {
-  }
-
-  if (!is.null(fill.expr)) {
-  }
-
-  if (!is.null(size.expr)) {
-  }
-
-  eval.color == eval.color
-}
-
-.draw.legend <- function(scale) {
-  
 }
 
 ### ENTRY POINT ###

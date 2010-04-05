@@ -24,6 +24,11 @@
       result$shape <- data$shape[1]
     } 
   }
+  if (!is.null(data$alpha)) {
+    if (all(data$alpha == data$alpha[1])) {
+      result$alpha <- data$alpha[1]
+    } 
+  }
   if (!is.null(data$.facet.x)) {
     if (all(data$.facet.x == data$.facet.x[1])) {
       result$.facet.x <- data$.facet.x[1]
@@ -277,6 +282,15 @@ jjplot.stat.shape <- function(state,
   stopifnot(is.null(manual))  
   state$data$shape <- eval(match.call()$shape.expression, state$data)
   state$scales$shape <- .make.shape.scale(state$data$shape)
+  state
+}
+
+jjplot.stat.alpha <- function(state,
+                              alpha.expression,
+                              manual = NULL) {
+  stopifnot(is.null(manual))  
+  state$data$alpha <- eval(match.call()$alpha.expression, state$data)
+  state$scales$alpha <- .make.alpha.scale(state$data$alpha)
   state
 }
 

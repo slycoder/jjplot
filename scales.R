@@ -3,8 +3,9 @@
                          defaults = list(color = "black",
                            size = 1.0,
                            border = "black",
+                           alpha = 1.0,
                            shape = 16),
-                         type = c("color", "size", "border", "shape")) {
+                         type = c("color", "size", "border", "shape", "alpha")) {
   type <- match.arg(type)
   if (!is.null(override)) {
     if (is.factor(override)) {
@@ -74,5 +75,16 @@
     size.levels <- seq(sqrt(min.size), sqrt(max.size), length.out = num.sizes)^2
     rr <- range(ss)
     function(z) { size.levels[round(num.sizes * (z - rr[1]) / (rr[2] - rr[1]))] }
+  }          
+}
+
+.make.alpha.scale <- function(ss) {
+  if (is.null(ss)) {
+    function(z) { 1.0 }
+  } else {
+    num.alphas <- 10
+    size.levels <- sqrt(seq(0, 1, length.out = num.alphas))
+    rr <- range(ss)
+    function(z) { size.levels[round(num.alphas * (z - rr[1]) / (rr[2] - rr[1]))] }
   }          
 }

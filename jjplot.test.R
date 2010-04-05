@@ -1,6 +1,7 @@
 png("stacked_stats.png", width=640, height=480)
 
 source("jjplot.R")
+
 jjplot( ~ line(lty="dashed", col = "red") : hist() + 
               bar(width = 0.1) : hist() : jitter(xfactor = 1) + 
               Sepal.Length, data = iris)
