@@ -202,6 +202,25 @@ jjplot(y ~ hline(lty = "dashed") : fun.y(mean) +
            point(alpha = 0.1) : jitter(xfactor = 1) +
            x, data = df, color = f)
 
+# Test facets where one can reorder the facets
+df <- data.frame(t=rnorm(20),
+                 z=rnorm(20)^2,
+                 ylabel=rep(c("ya","yb"),each=10),
+                 xlabel=rep(rep(c("xa","xb"),each=5),2))
+jjplot(z ~ point() + t, data=df,
+       facet.x=factor(xlabel),facet.y=factor(ylabel),
+       facet.yorder="reverse")
+
+# Test if labels for Date objects shown as dates
+df <- data.frame(y=rnorm(20),
+                 label=rep(c("a","b"),each=10),
+                 x=as.Date(seq(15000,16000,length.out=20),
+                   origin="1970/01/01"))
+
+jjplot(y ~ point():color(label) + x,
+       data=df, facet.y=factor(label))
+
+
 ### EXAMPLES THAT DON'T WORK ###
 
 df <- data.frame(x = rnorm(10000) + (1:4) * 1,
