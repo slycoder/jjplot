@@ -186,7 +186,7 @@ source("geoms.R")
     }
     if (is.null(ylab)) {
       ylab <<- state$y.expr
-    }
+df    }
     
     if (is.null(x.is.factor)) {
       if (is.factor(state$data$x)) {        
@@ -223,10 +223,22 @@ source("geoms.R")
   .formula.apply(f, function(...) NULL,
                  update.range,
                  data, stats)
+    browser()
 
   if (is.character(x.is.factor)) {
     pretty.x <- 1:length(x.is.factor)
     labels.x <- x.is.factor
+    label.x.height <- convertHeight(unit(1, "strheight",
+                                         labels.x[which.max(nchar(labels.x))]),
+                                    "lines", valueOnly = TRUE) + 2.1
+  } else if (class(stats[[1]]$data$x)=="Date") {  # FIXME: grab first OK?
+    x <- stats[[1]]$data$x
+    # FIXME: Follow example of axis.Date() and nicely handle various
+    # xrange's (ie. only showing months, years if appropriately long)
+    pretty.x <- pretty(x)
+    format <- "%Y/%m/%d"  # FIXME: Allow for user-specified formats
+    z <- as.Date(pretty.x, origin="1970/01/01")
+    labels.x <- format.Date(z, format = format)
     label.x.height <- convertHeight(unit(1, "strheight",
                                          labels.x[which.max(nchar(labels.x))]),
                                     "lines", valueOnly = TRUE) + 2.1
@@ -235,7 +247,7 @@ source("geoms.R")
     labels.x <- TRUE
     label.x.height <- 3.1
   }
-
+  
   if (log.x) {
     labels.x <- sapply(pretty.x, function(x)
                        substitute(10^x, list(x = x)),
@@ -431,8 +443,20 @@ source("geoms.R")
 }
 
 .faceted.plot <- function(f, stats, facet.x, facet.y,
-                          facet.nrow, facet.ncol, scales, ...) {
-
+                          facet.nrow, facet.ncol,
+                          facet.xorder, facet.yorder,
+                          scales, ...) {
+  revlevel <- function(f) {  # return factor with level order reversed
+    o <- match(as.character(f),rev(levels(f)))
+    reorder(f,o)
+  }
+  if (!is.null(facet.xorder))
+    if (facet.xorder == "reverse")
+      facet.x <- revlevel(facet.x)
+  if (!is.null(facet.yorder))
+    if (facet.yorder == "reverse")
+      facet.y <- revlevel(facet.y)
+  
   if (!is.null(facet.x) && !is.null(facet.y)) {
     stopifnot(is.na(facet.nrow) && is.na(facet.ncol))
     width <- nlevels(facet.x)
@@ -553,6 +577,7 @@ jjplot <- function(f, data = NULL,
                    xlab = NULL, ylab = NULL,
                    facet.x = NULL, facet.y = NULL,
                    facet.nrow = NA, facet.ncol = NA,
+                   facet.xorder = NULL, facet.yorder = NULL,
                    expand = c(0.04, 0.04)) {
   eval.facet.x <- eval(match.call()$facet.x, data)
   eval.facet.y <- eval(match.call()$facet.y, data)  
@@ -576,8 +601,10 @@ jjplot <- function(f, data = NULL,
     .faceted.plot(f, stats,
                   eval.facet.x, eval.facet.y,
                   facet.nrow, facet.ncol,
+                  facet.xorder, facet.yorder,
                   scales,
                   log.x, log.y, expand,
                   xlab = xlab, ylab = ylab)
   }
 }
+debug
