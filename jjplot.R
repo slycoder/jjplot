@@ -223,7 +223,6 @@ df    }
   .formula.apply(f, function(...) NULL,
                  update.range,
                  data, stats)
-    browser()
 
   if (is.character(x.is.factor)) {
     pretty.x <- 1:length(x.is.factor)
