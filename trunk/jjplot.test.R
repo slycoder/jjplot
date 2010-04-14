@@ -150,9 +150,9 @@ df <- data.frame(state = rownames(state.x77),
                  region = state.region,
                  state.x77)
 jjplot(Murder ~ abline(lty = "dashed") : fit() +
-       abline() : group(fit(), by = region) +
+       abline() : group(fit(), by = region) : color(region) +
        point() + Income,
-       data = df, color = region, facet.x = region,
+       data = df, facet.x = region,
        facet.nrow = 2)
 
 dev.off()
