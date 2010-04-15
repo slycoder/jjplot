@@ -50,8 +50,8 @@ jjplot.geom.tile <- function(state,
             1,
             just = c("center", "center"),
             default.units = "native",
-            gp = gpar(color = .match.scale(color, state$data$color, state$scales), 
-              border = .match.scale(border, state$data$border, state$scales, type="border")))         
+            gp = gpar(fill = .match.scale(color, state$data$color, state$scales), 
+              col = .match.scale(border, state$data$border, state$scales, type="border")))         
 }
 
 
