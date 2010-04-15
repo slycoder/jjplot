@@ -198,9 +198,11 @@ df <- data.frame(x = rnorm(10000) + (1:4) * 1,
 df$y <- 1:4 * df$x + rnorm(10000)
 
 jjplot(y ~ hline(lty = "dashed") : fun.y(mean) +
-           abline() : group(fit(), by = f) +
+           abline() : group(fit(), by = f) : color(f) +
            point(alpha = 0.1) : jitter(xfactor = 1) +
-           x, data = df, color = f)
+           x, data = df)
+
+jjplot(~ (point(alpha=0.1) : jitter(xfactor=1) + box() : group(quantile(), by=f)) : color(f) + f, data = df)
 
 # Test facets where one can reorder the facets
 df <- data.frame(t=rnorm(20),
