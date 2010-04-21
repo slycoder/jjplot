@@ -6,7 +6,6 @@ jjplot( ~ line(lty="dashed", col = "red") : hist() +
               bar(width = 0.1) : hist() : jitter(xfactor = 1) + 
               Sepal.Length, data = iris)
 
-
 dev.off()
 
 jjplot(Sepal.Length ~ (abline() : group(fit(), by = Species) +
@@ -222,6 +221,11 @@ df <- data.frame(y=rnorm(20),
 jjplot(y ~ point():color(label) + x,
        data=df, facet.y=factor(label))
 
+# Test simple plot.
+x <- seq(0,1,by=.1)+1
+f <- function(x) x^2
+y <- f(x)
+jjplot(y ~ point() + x)
 
 ### EXAMPLES THAT DON'T WORK ###
 

@@ -54,6 +54,16 @@ jjplot.stat.table <- function(state, log.y = FALSE) {
   state
 }
 
+jjplot.stat.fun <- function(state,
+                            fun,
+                            stepsize=NULL,
+                            sequence=NULL) {
+  y <- sapply(sequence,fun)
+  state$data <- .bind.attr.columns(data.frame(x=seq,y=y),
+                                   state)
+  state
+}
+
 jjplot.stat.hist <- function(state,
                              align = c("left", "right", "middle"),
                              breaks = 20,
