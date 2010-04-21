@@ -133,6 +133,14 @@ source("geoms.R")
   }
 }
 
+.facet.subset <- function(df, ff) {
+  if (is.null(df$.facet) || is.null(ff)) {
+    df
+  } else {
+    subset(df, df$.facet == ff)
+  }
+}
+
 .try.subset <- function(df, ff) {
   if (is.null(ff) || is.null(df) || ncol(df) == 1) {
     return(df)
@@ -150,6 +158,7 @@ source("geoms.R")
 
 .get.plot.params <- function(f, stats, log.x, log.y, expand,
                              xlab = NULL, ylab = NULL,
+                             labels.x = NULL, labels.y = NULL,
                              .subset = NULL, squash.unused = FALSE) {
   ## Length-2 numerics.
   xrange <- NULL
@@ -212,7 +221,11 @@ df    }
         if (!is.null(sort.y)) {
           y.is.factor <<- as.character(sort.y[,1])
         } else {
-          y.is.factor <<- levels(state$data$y)
+          if (squash.unused) {
+            y.is.factor <<- levels(factor(.facet.subset(state$data, .subset$facet.y)$y))
+          } else {
+            y.is.factor <<- levels(state$data$y)            
+          }
         }
       } else {
         y.is.factor <<- FALSE
@@ -226,7 +239,9 @@ df    }
 
   if (is.character(x.is.factor)) {
     pretty.x <- 1:length(x.is.factor)
-    labels.x <- x.is.factor
+    if (is.null(labels.x)) {
+      labels.x <- x.is.factor
+    }
     label.x.height <- convertHeight(unit(1, "strheight",
                                          labels.x[which.max(nchar(labels.x))]),
                                     "lines", valueOnly = TRUE) + 2.1
@@ -253,13 +268,9 @@ df    }
                        simplify=FALSE)
     labels.x <- do.call(expression, labels.x)
   }
-
+  
   if (is.character(y.is.factor)) {
     ## Figure how wide the text is going to be:
-    if (squash.unused) {
-      y.is.factor <- factor(y.is.factor)
-      yrange <- c(1, length(y.is.factor))
-    }
     pretty.y <- 1:length(y.is.factor)
     labels.y <- y.is.factor
   } else {
@@ -272,13 +283,15 @@ df    }
                        simplify=FALSE)
     labels.y <- do.call(expression, labels.y)
   }
-
+  
   label.y.width <- convertWidth(unit(1, "strwidth",
                                      labels.y[which.max(nchar(labels.y))]),
                                 "lines", valueOnly = TRUE) + 2
 
-  xrange <- range(c(xrange, pretty.x))    
-  yrange <- range(c(yrange, pretty.y))
+#  xrange <- range(c(xrange, pretty.x))    
+#  yrange <- range(c(yrange, pretty.y))
+  xrange <- range(pretty.x)
+  yrange <- range(pretty.y)
   
   xrange[1] <- xrange[1] - (xrange[2] - xrange[1]) * expand[1]
   xrange[2] <- xrange[2] + (xrange[2] - xrange[1]) * expand[1]
@@ -294,6 +307,12 @@ df    }
 }
 
 
+jjplot.scale.numeric <- function(data, label) {
+  pretty.y <- pretty(yrange)
+  labels.y <- prettyNum(pretty.y)  
+}
+
+
 ## Goes through the formula tree ONCE.
 ## Data can be subsetted by .subset.
 .subplot <- function(f, stats, plot.params,
@@ -304,7 +323,8 @@ df    }
                      draw.top.strip = NULL,
                      draw.right.strip = NULL,
                      allocate.x.axis.space = TRUE,
-                     allocate.y.axis.space = TRUE) {  
+                     allocate.y.axis.space = TRUE,
+                     squash.unused = FALSE) {
 
   if (draw.x.axis && allocate.x.axis.space) {
     xmargin <- plot.params$label.x.height
@@ -372,7 +392,11 @@ df    }
                      state$data$y <- factor(state$data$y,
                                             levels = sort.y[,1])
                    }
+                   if (squash.unused) {
+                     state$data$y <- factor(state$data$y)
+                   }
 
+                   
                    if (!is.null(sort.x) && !is.null(state$data$x)) {
                      state$data$x <- factor(state$data$x,
                                             levels = sort.x[,1])
@@ -383,7 +407,6 @@ df    }
                                    prefix = 'jjplot.geom')
                  }, data, stats)
   
-  ## FIXME: Squash unused.
   ## Axes and labels.
   if (draw.x.axis) {
     grid.xaxis(at = plot.params$pretty.x,
@@ -444,7 +467,7 @@ df    }
 .faceted.plot <- function(f, stats, facet.x, facet.y,
                           facet.nrow, facet.ncol,
                           facet.xorder, facet.yorder,
-                          scales, ...) {
+                          scales, squash.unused, ...) {
   revlevel <- function(f) {  # return factor with level order reversed
     o <- match(as.character(f),rev(levels(f)))
     reorder(f,o)
@@ -516,12 +539,17 @@ df    }
   plot.params <- lapply(1:num.facets,
                         function(ll) {
                           .get.plot.params(f, stats, ...,
+                                           squash.unused = squash.unused,
                                            .subset = get.facet.info(ll))
                         })
 
 #  heights <- sapply(plot.params, function(pp) pp$yrange[2] - pp$yrange[1])
 #  widths <- sapply(plot.params, function(pp) pp$xrange[2] - pp$xrange[1])
-  heights <- rep(1, height)
+  if (width == 1 && squash.unused) {
+    heights <- rev(sapply(plot.params, function(pp) pp$yrange[2] - pp$yrange[1]))
+  } else {
+    heights <- rep(1, height)
+  }
   widths <- rep(1, width)
 
   top.vp <- viewport(layout = grid.layout(height + 1, width + 1,
@@ -565,7 +593,8 @@ df    }
              draw.y.axis = facet.info$x == 1,
              draw.x.axis = facet.info$y == 1,
              allocate.y.axis.space = FALSE,
-             allocate.x.axis.space = FALSE)
+             allocate.x.axis.space = FALSE,
+             squash.unused = squash.unused)
   }
   popViewport()
 }
@@ -577,6 +606,7 @@ jjplot <- function(f, data = NULL,
                    facet.x = NULL, facet.y = NULL,
                    facet.nrow = NA, facet.ncol = NA,
                    facet.xorder = NULL, facet.yorder = NULL,
+                   labels.x = NULL, labels.y = NULL, squash.unused = FALSE,
                    expand = c(0.04, 0.04)) {
   eval.facet.x <- eval(match.call()$facet.x, data)
   eval.facet.y <- eval(match.call()$facet.y, data)  
@@ -592,7 +622,9 @@ jjplot <- function(f, data = NULL,
   if (is.null(eval.facet.x) && is.null(eval.facet.y)) {
     ## Compute plotting parameters.
     plot.params <- .get.plot.params(f, stats, log.x, log.y, expand,
-                                    xlab = xlab, ylab = ylab)
+                                    xlab = xlab, ylab = ylab,
+                                    labels.x = labels.x,
+                                    labels.y = labels.y)
     
     ## Do the plot.
     .subplot(f, stats, plot.params, scales)
@@ -603,7 +635,9 @@ jjplot <- function(f, data = NULL,
                   facet.xorder, facet.yorder,
                   scales,
                   log.x, log.y, expand,
-                  xlab = xlab, ylab = ylab)
+                  xlab = xlab, ylab = ylab,
+                  labels.x = labels.x, labels.y = labels.y,
+                  squash.unused = squash.unused)
   }
 }
 debug
