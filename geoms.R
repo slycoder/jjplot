@@ -80,13 +80,21 @@ jjplot.geom.point <- function(state,
                               color = NULL,
                               border = NULL,
                               size = NULL) {
+
+  if (shape != 22) {
+    colors <- .match.scale(color, state$data$color, state$scales)
+    fills <- NA
+  } else {
+    colors <- .match.scale(border, state$data$border, state$scales, type="border")
+    fills <- .match.scale(color, state$data$color, state$scales)
+  }
+  
   grid.points(state$data$x,
               state$data$y,
               pch = .match.scale(shape, state$data$shape, state$scales, type="shape"),
               size = unit(0.5 * .match.scale(size, state$data$size, state$scales, type="size"), "char"),
               gp = gpar(alpha = alpha,
-                col = .match.scale(color, state$data$color, state$scales)))
-##                fill = .match.scale(border, state$data$border, state$scales, type="border")))
+                col = colors, fill = fills))
 }
 
 jjplot.geom.abline <- function(state,
