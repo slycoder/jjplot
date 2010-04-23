@@ -606,7 +606,8 @@ jjplot <- function(f, data = NULL,
                    facet.x = NULL, facet.y = NULL,
                    facet.nrow = NA, facet.ncol = NA,
                    facet.xorder = NULL, facet.yorder = NULL,
-                   labels.x = NULL, labels.y = NULL, squash.unused = FALSE,
+                   labels.x = NULL, labels.y = NULL,
+                   squash.unused = FALSE,
                    expand = c(0.04, 0.04)) {
   eval.facet.x <- eval(match.call()$facet.x, data)
   eval.facet.y <- eval(match.call()$facet.y, data)  
