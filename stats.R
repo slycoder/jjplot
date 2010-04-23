@@ -98,10 +98,10 @@ jjplot.stat.hist <- function(state,
 jjplot.stat.jitter <- function(state,
                                xfactor = 0, yfactor = 0) {
   state$data <- transform(state$data,
-                    x = jitter(as.numeric(state$data$x), xfactor))
+                          x = jitter(as.numeric(state$data$x), xfactor))
   if (!is.null(state$data$y)) {
     state$data <- transform(state$data,
-                      y = jitter(as.numeric(state$data$y), yfactor))    
+                            y = jitter(as.numeric(state$data$y), yfactor))    
   }
   if (xfactor != 0) {
     state$x.expr <- substitute(jitter(x), list(x=state$x.expr))
