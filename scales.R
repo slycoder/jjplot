@@ -71,10 +71,10 @@
   } else {
     min.size <- 0.8
     max.size <- 3.3
-    num.sizes <- 10
+    num.sizes <- 20
     size.levels <- seq(sqrt(min.size), sqrt(max.size), length.out = num.sizes)^2
     rr <- range(ss)
-    function(z) { size.levels[round(num.sizes * (z - rr[1]) / (rr[2] - rr[1]))] }
+    function(z) { size.levels[round((num.sizes - 1) * (z - rr[1]) / (rr[2] - rr[1])) + 1] }
   }          
 }
 
@@ -85,6 +85,6 @@
     num.alphas <- 10
     size.levels <- sqrt(seq(0, 1, length.out = num.alphas))
     rr <- range(ss)
-    function(z) { size.levels[round(num.alphas * (z - rr[1]) / (rr[2] - rr[1]))] }
+    function(z) { size.levels[round((num.alphas - 1) * (z - rr[1]) / (rr[2] - rr[1])) + 1] }
   }          
 }

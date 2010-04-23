@@ -87,12 +87,13 @@ jjplot.geom.point <- function(state,
     colors <- .match.scale(color, state$data$color, state$scales)
     fills <- NA
   }
-  
+
   grid.points(state$data$x,
               state$data$y,
               pch = .match.scale(shape, state$data$shape, state$scales, type="shape"),
               size = unit(0.5 * .match.scale(size, state$data$size, state$scales, type="size"), "char"),
               gp = gpar(alpha = alpha,
+##                cex = 0.33*.match.scale(size, state$data$size, state$scales, type="size"),
                 col = colors, fill = fills))
 }
 
