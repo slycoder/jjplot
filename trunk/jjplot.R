@@ -283,10 +283,12 @@ df    }
                        simplify=FALSE)
     labels.y <- do.call(expression, labels.y)
   }
-  
-  label.y.width <- convertWidth(unit(1, "strwidth",
-                                     labels.y[which.max(nchar(labels.y))]),
-                                "lines", valueOnly = TRUE) + 2
+
+
+  max.width <- do.call(max, lapply(labels.y, function(x)
+                                   unit(1, "strwidth", x)))
+  label.y.width <- convertWidth(max.width,
+                                "lines", valueOnly = TRUE) + 2.5
 
 #  xrange <- range(c(xrange, pretty.x))    
 #  yrange <- range(c(yrange, pretty.y))
