@@ -6,25 +6,32 @@
 jjplot.geom.line <- function(state,
                              lty = "solid",
                              color = NULL,
-                             lwd = 1.5, ordered = TRUE) {
+                             lwd = 1.5,
+                             size = NULL,
+                             ordered = TRUE) {
   if (ordered) {
     oo <- order(state$data$x)
   } else {
     oo <- 1:nrow(state$data)
   }
+  
   if (!is.null(state$data$color) && is.null(color))  {
     by(state$data[oo,], state$data$color[oo],
-       function(zz)
-       grid.lines(x = zz$x, y = zz$y,
-                  default.units = "native",
-                  gp = gpar(col = .match.scale(color, zz$color, state$scales),
-                    lwd = lwd,
-                    lty = lty)))
+       function(zz) {
+         grid.segments(zz$x[-length(zz$x)], zz$y[-length(zz$y)],
+                       zz$x[-1], zz$y[-1],
+                       default.units = "native",
+                       gp = gpar(col = .match.scale(color, zz$color, state$scales),
+                         lwd = lwd,
+                         lex = .match.scale(size, zz$size, state$scales, type="size"),
+                         lty = lty))
+       })
   } else {
     grid.lines(x = state$data$x[oo], y = state$data$y[oo],
                default.units = "native",
                gp = gpar(col = .match.scale(color, state$data$color[oo], state$scales),
                  lwd = lwd,
+                 lex = .match.scale(size, state$data$size[oo], state$scales, type="size"),
                  lty = lty))
   }
 }
