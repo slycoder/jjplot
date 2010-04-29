@@ -334,8 +334,8 @@ jjplot.scale.numeric <- function(data, label) {
                      allocate.x.axis.space = TRUE,
                      allocate.y.axis.space = TRUE,
                      squash.unused = FALSE,
-                     xlab.rot = NULL,
-                     ylab.rot = NULL) {
+                     xlab.rot = 0,
+                     ylab.rot = 0) {
 
   if (draw.x.axis && allocate.x.axis.space) {
     xmargin <- plot.params$label.x.height
@@ -420,12 +420,13 @@ jjplot.scale.numeric <- function(data, label) {
 
   ## Axes and labels.
   if (draw.x.axis) {
-    xa.grob <- grid.xaxis(at = plot.params$pretty.x,
-                          label = plot.params$labels.x,
-                          gp = gpar(col = "grey50", cex = 0.8))
-    if (!is.null(xlab.rot)) {
-      grid.edit(gPath(xa.grob$name, "labels"), rot = xlab.rot, just="right")
+    xa.grob <- xaxisGrob(at = plot.params$pretty.x,
+                         label = plot.params$labels.x,
+                         gp = gpar(col = "grey50", cex = 0.8))
+    if (xlab.rot != 0) {
+      xa.grob <- editGrob(xa.grob, "labels", rot = xlab.rot, just="right")
     }
+    grid.draw(xa.grob)
     
     grid.text(plot.params$xlab,
               y = unit(-plot.params$label.x.height + 0.5, "lines"),
@@ -628,7 +629,7 @@ jjplot <- function(f, data = NULL,
                    facet.xorder = NULL, facet.yorder = NULL,
                    labels.x = NULL, labels.y = NULL,
                    squash.unused = FALSE,
-                   xlab.rot = NULL, ylab.rot = NULL,
+                   xlab.rot = 0, ylab.rot = 0,
                    expand = c(0.04, 0.04)) {
   eval.facet.x <- eval(match.call()$facet.x, data)
   eval.facet.y <- eval(match.call()$facet.y, data)  
@@ -646,10 +647,11 @@ jjplot <- function(f, data = NULL,
     plot.params <- .get.plot.params(f, stats, log.x, log.y, expand,
                                     xlab = xlab, ylab = ylab,
                                     labels.x = labels.x,
-                                    labels.y = labels.y)
+                                    labels.y = labels.y,
+                                    xlab.rot = xlab.rot)
     
     ## Do the plot.
-    .subplot(f, stats, plot.params, scales)
+    .subplot(f, stats, plot.params, scales, xlab.rot = xlab.rot)
   } else {
     .faceted.plot(f, stats,
                   eval.facet.x, eval.facet.y,
