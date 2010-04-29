@@ -87,7 +87,7 @@ jjplot.geom.point <- function(state,
                               color = NULL,
                               border = NULL,
                               size = NULL) {
-  if (!is.null(shape) && shape == 22) {
+  if (!is.null(shape) && shape %in% c(21, 22)) {
     colors <- .match.scale(border, state$data$border, state$scales, type="border")
     fills <- .match.scale(color, state$data$color, state$scales)
   } else {
