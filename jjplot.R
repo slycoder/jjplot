@@ -196,7 +196,7 @@ source("geoms.R")
     }
     if (is.null(ylab)) {
       ylab <<- state$y.expr
-df    }
+    }
     
     if (is.null(x.is.factor)) {
       if (is.factor(state$data$x)) {        
@@ -252,7 +252,7 @@ df    }
                                     "lines", valueOnly = TRUE)
 
     label.x.height <- cos(xlab.rot * pi / 180) * label.x.height + sin(xlab.rot * pi / 180) * label.x.width + 2.1
-  } else if (class(stats[[1]]$data$x)=="Date") {  # FIXME: grab first OK?
+  } else if ("Date" %in% class(stats[[1]]$data$x)) {
     x <- stats[[1]]$data$x
     # FIXME: Follow example of axis.Date() and nicely handle various
     # xrange's (ie. only showing months, years if appropriately long)
@@ -260,6 +260,15 @@ df    }
     format <- "%Y/%m/%d"  # FIXME: Allow for user-specified formats
     z <- as.Date(pretty.x, origin="1970/01/01")
     labels.x <- format.Date(z, format = format)
+    label.x.height <- convertHeight(unit(1, "strheight",
+                                         labels.x[which.max(nchar(labels.x))]),
+                                    "lines", valueOnly = TRUE) + 2.1
+  } else if ("POSIXct" %in% class(stats[[1]]$data$x)) {
+    x <- stats[[1]]$data$x
+    # FIXME: Follow example of axis.Date() and nicely handle various
+    # xrange's (ie. only showing months, years if appropriately long)
+    pretty.x <- pretty(x)
+    labels.x <- format.POSIXct(as.POSIXct(pretty.x, origin="1970-01-01"))
     label.x.height <- convertHeight(unit(1, "strheight",
                                          labels.x[which.max(nchar(labels.x))]),
                                     "lines", valueOnly = TRUE) + 2.1
