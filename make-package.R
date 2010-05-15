@@ -51,7 +51,12 @@ source("jjplot.R")
            "jjplot/man/jjplot.scale.Date.Rd",
            "jjplot/man/jjplot.scale.default.Rd",
            "jjplot/man/jjplot.scale.POSIXct.Rd",
-           "jjplot/man/jjplot.scale.factor.Rd"))
+           "jjplot/man/jjplot.scale.factor.Rd",
+           "jjplot/man/jjplot.theme.Rd",
+           "jjplot/man/jjplot.theme.facet.x.Rd",
+           "jjplot/man/jjplot.theme.facet.y.Rd",
+           "jjplot/man/jjplot.theme.top.strip.Rd",
+           "jjplot/man/jjplot.theme.right.strip.Rd"))
 }
 
 .make.package()
