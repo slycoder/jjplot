@@ -153,38 +153,6 @@ source("geoms.R")
   return(df)
 }
 
-jjplot.scale <- function(data, scale.params) {
-  UseMethod("jjplot.scale")
-}
-
-jjplot.scale.default <- function(data, scale.params) {
-  pp <- pretty(range(data))
-  list(pretty = pp,
-       labels = prettyNum(pp))
-}
-
-jjplot.scale.factor <- function(data, scale.params) {
-  list(pretty = 1:nlevels(data),
-       labels = levels(data))
-}
-
-jjplot.scale.Date <- function(data, scale.params) {
-  ## FIXME:
-  ## * Allow for user-specified formats
-  ## * Allow for better pretty (eg, even dates)
-  pp <- pretty(range(data))
-  z <- as.Date(pp, origin="1970/01/01")
-  list(pretty = pp,
-       labels = format(z, format = "%Y/%m/%d"))
-}
-
-jjplot.scale.POSIXct <- function(data, scale.params) {
-  ## See FIXME for jjplot.scale.Date.
-  pp <- pretty(range(data))
-  list(pretty = pp,
-       labels = format(as.POSIXct(pp, origin="1970-01-01")))
-}
-
 .jjplot.scale.params <- function(data, rotation,
                                  scale.params = NULL) {
   ll <- jjplot.scale(data, scale.params)
@@ -207,7 +175,7 @@ jjplot.scale.POSIXct <- function(data, scale.params) {
 
 .get.plot.params <- function(f, stats, log.x, log.y, expand,
                              xlab = NULL, ylab = NULL,
-                             xlab.rot = 0, ylab.rot = 0,
+                             theme,
                              labels.x = NULL, labels.y = NULL,
                              .subset = NULL, squash.unused = FALSE) {
 
@@ -289,6 +257,10 @@ jjplot.scale.POSIXct <- function(data, scale.params) {
   ## FIXME!
   stopifnot(is.null(x.factor.order))
   stopifnot(is.null(y.factor.order))
+
+  theme <- theme(.subset)
+  xlab.rot <- theme$x.axis.angle
+  ylab.rot <- theme$y.axis.angle  
   
   label.x.info <- .jjplot.scale.params(scale.data.x, xlab.rot)
   label.y.info <- .jjplot.scale.params(scale.data.y, ylab.rot)
@@ -331,34 +303,6 @@ jjplot.scale.POSIXct <- function(data, scale.params) {
        label.x.height = label.x.height, label.y.width = label.y.width)
 }
 
-
-jjplot.theme <- function(theme = c("grey", "bw"),
-                         ...) {
-  themes <-
-    list(grey = list(grid.color = "white",
-           plot.background = "grey90",
-           plot.border = "white",
-           x.axis.color = "grey50",
-           y.axis.color = "grey50",
-           x.axis.title.color = "grey20",
-           y.axis.title.color = "grey20",
-           x.axis.angle = 0,
-           y.axis.angle = 0),
-         bw = list(grid.color = "grey90",
-           plot.background = "white",
-           plot.border = "black",
-           x.axis.color = "black",
-           y.axis.color = "black",
-           x.axis.title.color = "black",
-           y.axis.title.color = "black",
-           x.axis.angle = 0,
-           y.axis.angle = 0))
-  theme <- match.arg(theme)
-  theme <- themes[[theme]]
-  theme[names(list(...))] <- list(...)
-  theme
-}
-
 ## Goes through the formula tree ONCE.
 ## Data can be subsetted by .subset.
 .subplot <- function(f, stats, plot.params,
@@ -372,6 +316,8 @@ jjplot.theme <- function(theme = c("grey", "bw"),
                      squash.unused = FALSE,
                      theme) {
 
+  theme <- theme(.subset)
+  
   if (draw.x.axis && allocate.x.axis.space) {
     xmargin <- plot.params$label.x.height
   } else {
@@ -399,6 +345,7 @@ jjplot.theme <- function(theme = c("grey", "bw"),
                             yscale = plot.params$yrange))
   grid.rect(gp = gpar(fill = theme$plot.background,
               col = theme$plot.border))
+
   grid.grill(plot.params$pretty.y, plot.params$pretty.x,
              gp = gpar(col = theme$grid.color, lwd = 1.5),
              default.units = "native")
@@ -410,6 +357,10 @@ jjplot.theme <- function(theme = c("grey", "bw"),
   grid.grill(midpoints(plot.params$pretty.y), midpoints(plot.params$pretty.x),
              gp = gpar(col = theme$grid.color, lwd = 0.5),
              default.units = "native")
+
+  grid.rect(gp = gpar(fill = NA,
+              col = theme$plot.border))
+
 
   ## Do the actual plotting!
   .formula.apply(f, function(...) NULL,
@@ -488,14 +439,14 @@ jjplot.theme <- function(theme = c("grey", "bw"),
               unit(.9, "lines"), y.lim[2] - y.lim[1],
               hjust = 0,
               default.units = "native",
-              gp = gpar(fill = "grey70"))
+              gp = gpar(fill = theme$right.strip.color))
     
     grid.text(x = x.left, y = (y.lim[2] + y.lim[1]) / 2,
               vjust = -0.5,
               label = draw.right.strip, rot = 270,
               default.units = "native", gp = gpar(cex = 0.8))
   }
-
+  
   if (!is.null(draw.top.strip)) {
     y.bottom <- convertY(unit(1.0, "npc"), "native", valueOnly=TRUE)
     x.lim <- convertX(unit(c(0, 1), "npc"), "native", valueOnly=TRUE)
@@ -504,7 +455,7 @@ jjplot.theme <- function(theme = c("grey", "bw"),
               x.lim[2] - x.lim[1], unit(.9, "lines"), 
               vjust = 0,
               default.units = "native",
-              gp = gpar(fill = "grey70"))
+              gp = gpar(fill = theme$top.strip.color))
     
     grid.text(x = (x.lim[2] + x.lim[1]) / 2,
               y = y.bottom,
@@ -591,8 +542,7 @@ jjplot.theme <- function(theme = c("grey", "bw"),
   plot.params <- lapply(1:num.facets,
                         function(ll) {
                           .get.plot.params(f, stats, ...,
-                                           xlab.rot = theme$x.axis.angle,
-                                           ylab.rot = theme$y.axis.angle, 
+                                           theme = theme,
                                            squash.unused = squash.unused,
                                            .subset = get.facet.info(ll))
                         })
@@ -679,10 +629,9 @@ jjplot <- function(f, data = NULL,
                                     xlab = xlab, ylab = ylab,
                                     labels.x = labels.x,
                                     labels.y = labels.y,
-                                    xlab.rot = theme$x.axis.angle,
-                                    ylab.rot = theme$y.axis.angle)
+                                    theme = theme)
     ## Do the plot.
-    .subplot(f, stats, plot.params, theme)
+    .subplot(f, stats, plot.params, theme = theme)
   } else {
     .faceted.plot(f, stats,
                   eval.facet.x, eval.facet.y,

@@ -1,7 +1,6 @@
 png("stacked_stats.png", width=640, height=480)
 
 source("jjplot.R")
-
 jjplot( ~ line(lty="dashed", col = "red") : hist() + 
               bar(width = 0.1) : hist() : jitter(xfactor = 1) + 
               Sepal.Length, data = iris)
@@ -32,14 +31,6 @@ png('density.png', width=480, height=900)
 
 quartz()
 
-
-jjplot(~ area() : group(density(), by = Species) +
-       area() : density() + Sepal.Length,
-       data = iris, fill = Species, alpha = 0.5,
-       facet.y = Species, facet.nrow = 3)
-
-quartz()
-
 ## Extra stats
 jjplot.stat.kmeans <- function(state, K, use.y = FALSE) {
   if (use.y) {
@@ -62,7 +53,8 @@ point(alpha = 0.5)) : color(day) +
 abline(lty = "dashed") : color(a): fit() + total_bill,
 data = tips,
 facet.y = day, facet.x = sex,
-theme = jjplot.theme("bw"))
+theme = jjplot.theme.top.strip(jjplot.theme("bw"),
+                               c("Female", "Male")))
 
 jjplot(~ area() : group(density(), by = day:sex) : color(day, alpha = 0.5) + 
        area() : group(density(), by = day) +

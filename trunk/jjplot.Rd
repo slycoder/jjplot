@@ -10,12 +10,16 @@
     along with a tree of statistic and geometry commands.
 }
 \usage{
-jjplot(f, data = NULL, color = NULL,
-       fill = NULL, size = NULL, alpha = 1.0,
-       log.x = FALSE, log.y = FALSE,
-       xlab = NULL, ylab = NULL,
-       expand = c(0.04, 0.04),
-       color.scale = NULL)
+jjplot(f, data = NULL, 
+                   log.x = FALSE, log.y = FALSE,
+                   xlab = NULL, ylab = NULL,
+                   facet.x = NULL, facet.y = NULL,
+                   facet.nrow = NA, facet.ncol = NA,
+                   facet.xorder = NULL, facet.yorder = NULL,
+                   labels.x = NULL, labels.y = NULL,
+                   squash.unused = FALSE,
+                   theme = jjplot.theme(),
+                   expand = c(0.04, 0.04))
 }
 \arguments{
   \item{f}{
@@ -25,19 +29,6 @@ jjplot(f, data = NULL, color = NULL,
   \item{data}{
     A data frame in whose scope the data expressions (i.e., \code{f})
     should be evaluated. 
-  }
-  \item{color}{
-    The expression to map to the color aesthetic.
-  }
-  \item{fill}{
-    The expression to map to the fill aesthetic.
-  }
-  \item{size}{
-    The expression to map to the size aesthetic.
-  }
-  \item{alpha}{
-    A constant numeric value with which to specify the alpha blending
-used on color and fill scales.
   }
   \item{log.x}{
     Use a logarithmic x scale.
@@ -55,11 +46,6 @@ used on color and fill scales.
     contain the range of the data plus a fraction of the data range
     specified by this parameter.  The default simulates the default
     behavior of R's base plotting functions.  }
-  \item{color.scale}{
-    A function which maps values between 0 and 1 to colors.  If
-specified this color scale will override the default automatically
-generated color scale.
-  }
 }
 \details{
   The formula is specified by placing the optional y aesthetic to the
