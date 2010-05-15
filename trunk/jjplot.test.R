@@ -51,18 +51,18 @@ jjplot.stat.kmeans <- function(state, K, use.y = FALSE) {
   state
 }
 
-source("jjplot.R")
-
 jjplot(Petal.Length ~ point(alpha=0.5) : 
        color(cluster):kmeans(5, use.y = T) : shape(Species) : size(Petal.Width) + Sepal.Length,
        data = iris)
 
 
+source("jjplot.R")
 jjplot(tip ~ (abline() : group(fit(), by = day: sex) +
 point(alpha = 0.5)) : color(day) +
 abline(lty = "dashed") : color(a): fit() + total_bill,
 data = tips,
-facet.y = day, facet.x = sex)
+facet.y = day, facet.x = sex,
+theme = jjplot.theme("bw"))
 
 jjplot(~ area() : group(density(), by = day:sex) : color(day, alpha = 0.5) + 
        area() : group(density(), by = day) +

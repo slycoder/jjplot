@@ -332,6 +332,32 @@ jjplot.scale.POSIXct <- function(data, scale.params) {
 }
 
 
+jjplot.theme <- function(theme = c("grey", "bw"),
+                         ...) {
+  themes <-
+    list(grey = list(grid.color = "white",
+           plot.background = "grey90",
+           plot.border = "white",
+           x.axis.color = "grey50",
+           y.axis.color = "grey50",
+           x.axis.title.color = "grey20",
+           y.axis.title.color = "grey20",
+           x.axis.angle = 0,
+           y.axis.angle = 0),
+         bw = list(grid.color = "grey90",
+           plot.background = "white",
+           plot.border = "black",
+           x.axis.color = "black",
+           y.axis.color = "black",
+           x.axis.title.color = "black",
+           y.axis.title.color = "black",
+           x.axis.angle = 0,
+           y.axis.angle = 0))
+  theme <- match.arg(theme)
+  theme <- themes[[theme]]
+  theme[names(list(...))] <- list(...)
+  theme
+}
 
 ## Goes through the formula tree ONCE.
 ## Data can be subsetted by .subset.
@@ -344,8 +370,7 @@ jjplot.scale.POSIXct <- function(data, scale.params) {
                      allocate.x.axis.space = TRUE,
                      allocate.y.axis.space = TRUE,
                      squash.unused = FALSE,
-                     xlab.rot = 0,
-                     ylab.rot = 0) {
+                     theme) {
 
   if (draw.x.axis && allocate.x.axis.space) {
     xmargin <- plot.params$label.x.height
@@ -365,24 +390,25 @@ jjplot.scale.POSIXct <- function(data, scale.params) {
   } else {
     titlemargin <- 0.0
   }
-  
+
   ## Set up viewport and draw grill.
   pushViewport(plotViewport(c(xmargin,
                               ymargin,
                               titlemargin + 1.1, 1.1)))
   pushViewport(dataViewport(xscale = plot.params$xrange,
                             yscale = plot.params$yrange))
-  grid.rect(gp = gpar(fill = "grey90", col = "white"))
+  grid.rect(gp = gpar(fill = theme$plot.background,
+              col = theme$plot.border))
   grid.grill(plot.params$pretty.y, plot.params$pretty.x,
-             gp = gpar(col = "white", lwd = 1.5),
+             gp = gpar(col = theme$grid.color, lwd = 1.5),
              default.units = "native")
   
   midpoints <- function(v) {
     (v[-1] + v[-length(v)]) / 2
   }
-      
+
   grid.grill(midpoints(plot.params$pretty.y), midpoints(plot.params$pretty.x),
-             gp = gpar(col = "white", lwd = 0.5),
+             gp = gpar(col = theme$grid.color, lwd = 0.5),
              default.units = "native")
 
   ## Do the actual plotting!
@@ -432,23 +458,23 @@ jjplot.scale.POSIXct <- function(data, scale.params) {
   if (draw.x.axis) {
     xa.grob <- xaxisGrob(at = plot.params$pretty.x,
                          label = plot.params$labels.x,
-                         gp = gpar(col = "grey50", cex = 0.8))
-    if (xlab.rot != 0) {
-      xa.grob <- editGrob(xa.grob, "labels", rot = xlab.rot, just="right")
+                         gp = gpar(col = theme$x.axis.color, cex = 0.8))
+    if (theme$x.axis.angle != 0) {
+      xa.grob <- editGrob(xa.grob, "labels", rot = theme$x.axis.angle, just="right")
     }
     grid.draw(xa.grob)
     
     grid.text(plot.params$xlab,
               y = unit(-plot.params$label.x.height + 0.5, "lines"),
-              gp = gpar(col = "grey20", cex= 0.9))
+              gp = gpar(col = theme$x.axis.title.color, cex= 0.9))
   }
   if (draw.y.axis) {
     grid.yaxis(at = plot.params$pretty.y,
                label = plot.params$labels.y,
-               gp = gpar(col = "grey50", cex = 0.8))
+               gp = gpar(col = theme$y.axis.color, cex = 0.8))
     grid.text(plot.params$ylab,
               x = unit(-plot.params$label.y.width + .25, "lines"), rot = 90,
-              gp = gpar(col = "grey20", cex= 0.9))
+              gp = gpar(col = theme$y.axis.title.color, cex= 0.9))
   }
 
   grid.text(plot.params$title, y = unit(2, "lines"))
@@ -493,8 +519,7 @@ jjplot.scale.POSIXct <- function(data, scale.params) {
 .faceted.plot <- function(f, stats, facet.x, facet.y,
                           facet.nrow, facet.ncol,
                           facet.xorder, facet.yorder,
-                          xlab.rot, ylab.rot,
-                          squash.unused, ...) {
+                          squash.unused, theme, ...) {
   revlevel <- function(f) {  # return factor with level order reversed
     o <- match(as.character(f),rev(levels(f)))
     reorder(f,o)
@@ -566,8 +591,8 @@ jjplot.scale.POSIXct <- function(data, scale.params) {
   plot.params <- lapply(1:num.facets,
                         function(ll) {
                           .get.plot.params(f, stats, ...,
-                                           xlab.rot = xlab.rot,
-                                           ylab.rot = ylab.rot, 
+                                           xlab.rot = theme$x.axis.angle,
+                                           ylab.rot = theme$y.axis.angle, 
                                            squash.unused = squash.unused,
                                            .subset = get.facet.info(ll))
                         })
@@ -623,8 +648,7 @@ jjplot.scale.POSIXct <- function(data, scale.params) {
              allocate.y.axis.space = FALSE,
              allocate.x.axis.space = FALSE,
              squash.unused = squash.unused,
-             xlab.rot = xlab.rot,
-             ylab.rot = ylab.rot)
+             theme = theme)
   }
   popViewport()
 }
@@ -638,7 +662,7 @@ jjplot <- function(f, data = NULL,
                    facet.xorder = NULL, facet.yorder = NULL,
                    labels.x = NULL, labels.y = NULL,
                    squash.unused = FALSE,
-                   xlab.rot = 0, ylab.rot = 0,
+                   theme = jjplot.theme(),
                    expand = c(0.04, 0.04)) {
   eval.facet.x <- eval(match.call()$facet.x, data)
   eval.facet.y <- eval(match.call()$facet.y, data)  
@@ -655,10 +679,10 @@ jjplot <- function(f, data = NULL,
                                     xlab = xlab, ylab = ylab,
                                     labels.x = labels.x,
                                     labels.y = labels.y,
-                                    xlab.rot = xlab.rot)
-    
+                                    xlab.rot = theme$x.axis.angle,
+                                    ylab.rot = theme$y.axis.angle)
     ## Do the plot.
-    .subplot(f, stats, plot.params, xlab.rot = xlab.rot)
+    .subplot(f, stats, plot.params, theme)
   } else {
     .faceted.plot(f, stats,
                   eval.facet.x, eval.facet.y,
@@ -668,7 +692,7 @@ jjplot <- function(f, data = NULL,
                   xlab = xlab, ylab = ylab,
                   labels.x = labels.x, labels.y = labels.y,
                   squash.unused = squash.unused,
-                  xlab.rot = xlab.rot, ylab.rot = ylab.rot)
+                  theme = theme)
   }
 }
 debug
