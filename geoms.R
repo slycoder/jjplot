@@ -69,8 +69,8 @@ jjplot.geom.area <- function(state,
     grid.polygon(c(state$data$x[1], state$data$x, state$data$x[length(state$data$x)]),
                  c(0, state$data$y, 0),
                  default.units = "native",
-                 gp = gpar(fill = .match.scale(color, state$data$color, scales), 
-                   col = .match.scale(border, state$data$border, scales, type = "border")))
+                 gp = gpar(fill = .match.scale(color, state$data$color, state$scales), 
+                   col = .match.scale(border, state$data$border, state$scales, type = "border")))
   } else {
     by(state$data, state$data$color, function(xx)
        grid.polygon(c(xx$x[1], xx$x, xx$x[length(xx$x)]),

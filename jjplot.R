@@ -82,9 +82,7 @@ source("geoms.R")
                            data,
                            memoization = NULL,
                            facet.x = NULL,
-                           facet.y = NULL,
-                           fill = NULL,
-                           size = NULL) {
+                           facet.y = NULL) {
   if (length(f) == 3) {
     y.expr <- f[[2]]
     rhs <- f[[3]]
@@ -154,32 +152,82 @@ source("geoms.R")
   warning("It looks like sorting was grouped, but none of the groups correspond to a facet!")
   return(df)
 }
-                   
+
+jjplot.scale <- function(data, scale.params) {
+  UseMethod("jjplot.scale")
+}
+
+jjplot.scale.default <- function(data, scale.params) {
+  pp <- pretty(range(data))
+  list(pretty = pp,
+       labels = prettyNum(pp))
+}
+
+jjplot.scale.factor <- function(data, scale.params) {
+  list(pretty = 1:nlevels(data),
+       labels = levels(data))
+}
+
+jjplot.scale.Date <- function(data, scale.params) {
+  ## FIXME:
+  ## * Allow for user-specified formats
+  ## * Allow for better pretty (eg, even dates)
+  pp <- pretty(range(data))
+  z <- as.Date(pp, origin="1970/01/01")
+  list(pretty = pp,
+       labels = format(z, format = "%Y/%m/%d"))
+}
+
+jjplot.scale.POSIXct <- function(data, scale.params) {
+  ## See FIXME for jjplot.scale.Date.
+  pp <- pretty(range(data))
+  list(pretty = pp,
+       labels = format(as.POSIXct(pp, origin="1970-01-01")))
+}
+
+.jjplot.scale.params <- function(data, rotation,
+                                 scale.params = NULL) {
+  ll <- jjplot.scale(data, scale.params)
+  
+  cr <- cos(rotation * pi / 180)
+  sr <- sin(rotation * pi / 180)    
+  
+  widths <- lapply(ll$labels, function(x)
+                   cr * unit(1, "strwidth", x) + sr * unit(1, "strheight", x))
+  heights <- lapply(ll$labels, function(x)
+                    sr * unit(1, "strwidth", x) + cr * unit(1, "strheight", x))
+  
+  max.width <- do.call(max, widths)
+  max.height <- do.call(max, heights)
+
+  c(ll,
+    list(height = convertHeight(max.height, "lines", valueOnly = TRUE),
+         width = convertWidth(max.width, "lines", valueOnly = TRUE)))
+}
 
 .get.plot.params <- function(f, stats, log.x, log.y, expand,
                              xlab = NULL, ylab = NULL,
                              xlab.rot = 0, ylab.rot = 0,
                              labels.x = NULL, labels.y = NULL,
                              .subset = NULL, squash.unused = FALSE) {
-  ## Length-2 numerics.
-  xrange <- NULL
-  yrange <- NULL
 
-  ## Either a character vector of levels, or FALSE.
-  x.is.factor <- NULL
-  y.is.factor <- NULL
+  scale.data.x <- NULL
+  scale.data.y <- NULL  
 
+  x.factor.order <- NULL
+  y.factor.order <- NULL  
+  
   ## Expands a range to incorporate new.data.
-  expand.range <- function(old.range, new.data) {
-    if (is.null(old.range) && is.null(new.data)) {
-      return(NULL)
-    }
-    if (is.factor(new.data)) {
-      range(c(0.5, nlevels(new.data) + 0.5, old.range))
-    } else {
-      range(c(old.range, new.data))
-    }
-  }
+##   expand.range <- function(old.range, new.data) {
+##     if (is.null(old.range) && is.null(new.data)) {
+##       return(NULL)
+##     }
+##     if (is.factor(new.data)) {
+##       range(c(0.5, nlevels(new.data) + 0.5, old.range))
+##     } else {
+##       range(c(old.range, new.data))
+##     }
+##   }
 
   update.range <- function(expr, state) {
     if (exists(paste(".jjplot.expand", as.character(expr[[1]]), sep="."))) {
@@ -188,8 +236,10 @@ source("geoms.R")
       expansion <- NULL
     }
     
-    xrange <<- expand.range(xrange, c(state$data$x, expansion$x))
-    yrange <<- expand.range(yrange, c(state$data$y, expansion$y))
+##     xrange <<- expand.range(xrange, c(state$data$x, expansion$x))
+##     yrange <<- expand.range(yrange, c(state$data$y, expansion$y))
+     scale.data.x <<- c(scale.data.x, state$data$x, expansion$x)
+     scale.data.y <<- c(scale.data.y, state$data$y, expansion$y)
 
     if (is.null(xlab)) {
       xlab <<- state$x.expr
@@ -198,39 +248,35 @@ source("geoms.R")
       ylab <<- state$y.expr
     }
     
-    if (is.null(x.is.factor)) {
+    if (is.null(x.factor.order)) {
       if (is.factor(state$data$x)) {        
         sort.x <- state$data$sort.x
         sort.x <- .try.subset(sort.x, .subset$facet.x)
         sort.x <- .try.subset(sort.x, .subset$facet.y)
         
         if (!is.null(sort.x)) {
-          x.is.factor <<- as.character(sort.x[,1])
+          x.factor.order <<- as.character(sort.x[,1])
         } else {
-          x.is.factor <<- levels(state$data$x)
+          x.factor.order <<- levels(state$data$x)
         }
-      } else {
-        x.is.factor <<- FALSE
-      }
+      } 
     }
-    if (is.null(y.is.factor)) {
+    if (is.null(y.factor.order)) {
       if (is.factor(state$data$y)) {
         sort.y <- state$data$sort.y
         sort.y <- .try.subset(sort.y, .subset$facet.x)
         sort.y <- .try.subset(sort.y, .subset$facet.y)
         
         if (!is.null(sort.y)) {
-          y.is.factor <<- as.character(sort.y[,1])
+          y.factor.order <<- as.character(sort.y[,1])
         } else {
           if (squash.unused) {
-            y.is.factor <<- levels(factor(.facet.subset(state$data, .subset$facet.y)$y))
+            y.factor.order <<- levels(factor(.facet.subset(state$data, .subset$facet.y)$y))
           } else {
-            y.is.factor <<- levels(state$data$y)            
+            y.factor.order <<- levels(state$data$y)            
           }
         }
-      } else {
-        y.is.factor <<- FALSE
-      }
+      } 
     }
   }
   
@@ -238,61 +284,26 @@ source("geoms.R")
                  update.range,
                  data, stats)
 
-  if (is.character(x.is.factor)) {
-    pretty.x <- 1:length(x.is.factor)
-    if (is.null(labels.x)) {
-      labels.x <- x.is.factor
-    }
-    label.x.height <- convertHeight(unit(1, "strheight",
-                                         labels.x[which.max(nchar(labels.x))]),
-                                    "lines", valueOnly = TRUE)
+  stopifnot(is.null(labels.x))
+  stopifnot(is.null(labels.y))
+  ## FIXME!
+  stopifnot(is.null(x.factor.order))
+  stopifnot(is.null(y.factor.order))
+  
+  label.x.info <- .jjplot.scale.params(scale.data.x, xlab.rot)
+  label.y.info <- .jjplot.scale.params(scale.data.y, ylab.rot)
 
-    label.x.width <- convertHeight(unit(1, "strwidth",
-                                         labels.x[which.max(nchar(labels.x))]),
-                                    "lines", valueOnly = TRUE)
-
-    label.x.height <- cos(xlab.rot * pi / 180) * label.x.height + sin(xlab.rot * pi / 180) * label.x.width + 2.1
-  } else if ("Date" %in% class(stats[[1]]$data$x)) {
-    x <- stats[[1]]$data$x
-    # FIXME: Follow example of axis.Date() and nicely handle various
-    # xrange's (ie. only showing months, years if appropriately long)
-    pretty.x <- pretty(x)
-    format <- "%Y/%m/%d"  # FIXME: Allow for user-specified formats
-    z <- as.Date(pretty.x, origin="1970/01/01")
-    labels.x <- format.Date(z, format = format)
-    label.x.height <- convertHeight(unit(1, "strheight",
-                                         labels.x[which.max(nchar(labels.x))]),
-                                    "lines", valueOnly = TRUE) + 2.1
-  } else if ("POSIXct" %in% class(stats[[1]]$data$x)) {
-    x <- stats[[1]]$data$x
-    # FIXME: Follow example of axis.Date() and nicely handle various
-    # xrange's (ie. only showing months, years if appropriately long)
-    pretty.x <- pretty(x)
-    labels.x <- format.POSIXct(as.POSIXct(pretty.x, origin="1970-01-01"))
-    label.x.height <- convertHeight(unit(1, "strheight",
-                                         labels.x[which.max(nchar(labels.x))]),
-                                    "lines", valueOnly = TRUE) + 2.1
-  } else {
-    pretty.x <- pretty(xrange)
-    labels.x <- TRUE
-    label.x.height <- 3.1
-  }
-
+  labels.x <- label.x.info$labels
+  labels.y <- label.y.info$labels
+  pretty.x <- label.x.info$pretty
+  pretty.y <- label.y.info$pretty
+  
   if (log.x) {
     labels.x <- sapply(pretty.x, function(x)
                        substitute(10^x, list(x = x)),
                        simplify=FALSE)
     labels.x <- do.call(expression, labels.x)
   }
-  
-  if (is.character(y.is.factor)) {
-    ## Figure how wide the text is going to be:
-    pretty.y <- 1:length(y.is.factor)
-    labels.y <- y.is.factor
-  } else {
-    pretty.y <- pretty(yrange)
-    labels.y <- prettyNum(pretty.y)
-  }  
   if (log.y) {
     labels.y <- sapply(pretty.y, function(x)
                        substitute(10^x, list(x = x)),
@@ -300,14 +311,10 @@ source("geoms.R")
     labels.y <- do.call(expression, labels.y)
   }
 
+  label.x.height <- label.x.info$height + 2.1
+  label.y.width <- label.y.info$width + 2.5
 
-  max.width <- do.call(max, lapply(labels.y, function(x)
-                                   unit(1, "strwidth", x)))
-  label.y.width <- convertWidth(max.width,
-                                "lines", valueOnly = TRUE) + 2.5
-
-#  xrange <- range(c(xrange, pretty.x))    
-#  yrange <- range(c(yrange, pretty.y))
+  ## Explain why we need this?
   xrange <- range(pretty.x)
   yrange <- range(pretty.y)
   
@@ -325,16 +332,10 @@ source("geoms.R")
 }
 
 
-jjplot.scale.numeric <- function(data, label) {
-  pretty.y <- pretty(yrange)
-  labels.y <- prettyNum(pretty.y)  
-}
-
 
 ## Goes through the formula tree ONCE.
 ## Data can be subsetted by .subset.
 .subplot <- function(f, stats, plot.params,
-                     scales,
                      .subset = NULL,
                      draw.x.axis = TRUE,
                      draw.y.axis = TRUE,
@@ -493,7 +494,7 @@ jjplot.scale.numeric <- function(data, label) {
                           facet.nrow, facet.ncol,
                           facet.xorder, facet.yorder,
                           xlab.rot, ylab.rot,
-                          scales, squash.unused, ...) {
+                          squash.unused, ...) {
   revlevel <- function(f) {  # return factor with level order reversed
     o <- match(as.character(f),rev(levels(f)))
     reorder(f,o)
@@ -614,7 +615,6 @@ jjplot.scale.numeric <- function(data, label) {
     facet.info <- get.facet.info(ll)
     .subplot(f, stats,
              plot.params = plot.params[[ll]],
-             scales = scales,
              .subset = facet.info,
              draw.top.strip = facet.info$top.strip,
              draw.right.strip = facet.info$right.strip,
@@ -646,9 +646,7 @@ jjplot <- function(f, data = NULL,
   ## Compute stats.
   stats <- .formula.apply(f, .call.with.data, function(...) NULL, data,
                           facet.x = eval.facet.x,
-                          facet.y = eval.facet.y,
-                          fill = eval.fill,
-                          size = eval.size)
+                          facet.y = eval.facet.y)
   
   grid.newpage()
   if (is.null(eval.facet.x) && is.null(eval.facet.y)) {
@@ -660,13 +658,12 @@ jjplot <- function(f, data = NULL,
                                     xlab.rot = xlab.rot)
     
     ## Do the plot.
-    .subplot(f, stats, plot.params, scales, xlab.rot = xlab.rot)
+    .subplot(f, stats, plot.params, xlab.rot = xlab.rot)
   } else {
     .faceted.plot(f, stats,
                   eval.facet.x, eval.facet.y,
                   facet.nrow, facet.ncol,
                   facet.xorder, facet.yorder,
-                  scales,
                   log.x, log.y, expand,
                   xlab = xlab, ylab = ylab,
                   labels.x = labels.x, labels.y = labels.y,
