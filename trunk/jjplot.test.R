@@ -1,5 +1,16 @@
 png("stacked_stats.png", width=640, height=480)
 
+date.data <-
+  data.frame(t = as.Date(sample(10000, 10), origin = "1970-01-01"),
+             v = rnorm(10))
+
+source("jjplot.R")
+jjplot(v ~ point() + t, date.data,
+       theme = jjplot.theme("bw"))
+
+
+quartz()
+
 source("jjplot.R")
 jjplot( ~ line(lty="dashed", col = "red") : hist() + 
               bar(width = 0.1) : hist() : jitter(xfactor = 1) + 
