@@ -20,6 +20,32 @@
   }
 }
 
+## Expands a range to incorporate new.data.
+.jjplot.expand.range <- function(new.data, old.data) {
+  UseMethod(".jjplot.expand.range")
+}
+
+.jjplot.expand.range.default <- function(new.data, old.data) {
+  if (is.null(old.data) && is.null(new.data)) {
+    return(NULL)
+  } else {
+    range(c(old.data, new.data))
+  }
+}
+
+.jjplot.expand.range.factor <- function(new.data, old.data) {
+  if (is.null(old.data)) {
+    factor(levels(new.data))
+  } else {
+    stopifnot(levels(new.data) == levels(old.data))
+    old.data
+  }
+}
+
+.jjplot.expand.range.Date <- function(new.data, old.data) {
+  range(c(new.data, old.data))
+}
+
 jjplot.scale <- function(data, scale.params) {
   UseMethod("jjplot.scale")
 }
@@ -38,11 +64,74 @@ jjplot.scale.factor <- function(data, scale.params) {
 jjplot.scale.Date <- function(data, scale.params) {
   ## FIXME:
   ## * Allow for user-specified formats
-  ## * Allow for better pretty (eg, even dates)
-  pp <- pretty(range(data))
-  z <- as.Date(pp, origin="1970/01/01")
-  list(pretty = pp,
-       labels = format(z, format = "%Y/%m/%d"))
+  pp <- .pretty.POSIXlt(data)
+  list(pretty = as.numeric(pp),
+       labels = format(pp, format = "%Y/%m/%d"))
+}
+
+## print(foo <- .pretty.POSIXlt(as.Date(c("2007-01-05", "2010-05-12"))))
+## print(foo <- .pretty.POSIXlt(as.Date(c("2007-01-05", "2007-05-12"))))
+
+.diffdate <- function(a, b, units = c("days", "weeks", "hours", "mins", "secs",
+                              "years", "months")) {
+  units <- match.arg(units)
+  if (units == "years") {
+    structure((as.POSIXlt(a)$year - as.POSIXlt(b)$year) + 
+              (as.POSIXlt(a)$mon - as.POSIXlt(b)$mon) / 12,
+              units = "years")
+  } else if (units == "months") {
+    structure((as.POSIXlt(a)$year - as.POSIXlt(b)$year) * 12 +
+              (as.POSIXlt(a)$mon - as.POSIXlt(b)$mon),
+              units = "months")
+  } else {
+    difftime(a, b, units = units)
+  }  
+}
+
+.seq.date <- function(from, to, by = 1,
+                      units = c("weeks", "days", "hours",
+                        "mins", "secs", "years", "months")) {
+  units <- match.arg(units)
+  if (units == "months") {
+    from.mon <- as.POSIXlt(from)$mon
+    from.year <- as.POSIXlt(from)$year
+    to.mon <- as.POSIXlt(to)$mon
+    to.year <- as.POSIXlt(to)$year
+    from.mon <- from.mon + from.year * 12
+    to.mon <- to.mon + to.year * 12
+    if (as.POSIXlt(to)$mday > 1) {
+      to.mon <- to.mon + 1
+    }
+    months <- seq(from.mon, to.mon, by = by)    
+    as.Date(paste(months %/% 12 + 1900, (months %% 12) + 1, "01", sep = "-"))                  
+  } else if (units == "years") {
+    from.year <- as.POSIXlt(from)$year
+    to.year <- as.POSIXlt(to)$year
+    if (as.POSIXlt(to)$mday > 1 || as.POSIXlt(to)$mon > 0) {
+      to.year <- to.year + 1
+    }
+    years <- seq(from.year, to.year, by = by)
+    as.Date(paste(years + 1900, "01-01", sep = "-"))
+  } else {
+    stop("unsupported unit")
+  }
+}
+
+.pretty.POSIXlt <- function(dates,
+                            ideal.num.breaks = 5,
+                            upper.bound = 1.75,
+                            lower.bount = 0.75) {
+  all.units <- c("weeks", "days", "hours", "mins", "secs", "years", "months")
+  date.range <- range(dates)
+  diffs <- lapply(all.units,
+                  function(x) .diffdate(date.range[2], date.range[1], units = x))
+  jumps <- lapply(diffs, function(x) round(x / ideal.num.breaks))
+
+  jumps <- structure(unlist(jumps), names = all.units)
+
+  best.unit <- names(which.min(jumps[jumps > 0]))[1]
+
+  .seq.date(date.range[1], date.range[2], units = best.unit)
 }
 
 jjplot.scale.POSIXct <- function(data, scale.params) {

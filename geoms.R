@@ -105,20 +105,28 @@ jjplot.geom.point <- function(state,
 }
 
 jjplot.geom.abline <- function(state,
+                               a = NULL, b = NULL,
                                lwd = 1.5, col = NULL, lty = "solid") {
   ## Find limits
   xlim <- convertX(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)
   ylim <- convertY(unit(c(0, 1), "npc"), "native", valueOnly = TRUE)      
+
+  if (is.null(a)) {
+    a <- state$data$a
+  }
+  if (is.null(b)) {
+    b <- state$data$b
+  }
   
-  ystart <- xlim[1] * state$data$a + state$data$b
-  yend <- xlim[2] * state$data$a + state$data$b
+  ystart <- xlim[1] * a + b
+  yend <- xlim[2] * a + b
   
-  xstart <- ifelse(state$data$a < 0,
-                   (ylim[2] - state$data$b) / state$data$a,
-                   (ylim[1] - state$data$b) / state$data$a)
-  xend <- ifelse(state$data$a < 0,
-                 (ylim[1] - state$data$b) / state$data$a,
-                 (ylim[2] - state$data$b) / state$data$a)
+  xstart <- ifelse(a < 0,
+                   (ylim[2] - b) / a,
+                   (ylim[1] - b) / a)
+  xend <- ifelse(a < 0,
+                 (ylim[1] - b) / a,
+                 (ylim[2] - b) / a)
   
   ## Invariant: xstart <= xend,
   ## So that left hand coordinate should be xtart or xlim[1]
@@ -126,13 +134,13 @@ jjplot.geom.abline <- function(state,
   
   ystart <- ifelse(xstart < xlim[1],
                    ystart,
-                   ifelse(state$data$a < 0,
+                   ifelse(a < 0,
                           ylim[2],
                           ylim[1]))
   
   yend <- ifelse(xend > xlim[2],
                  yend,
-                 ifelse(state$data$a < 0,
+                 ifelse(a < 0,
                         ylim[1],
                         ylim[2]))
   

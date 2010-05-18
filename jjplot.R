@@ -184,19 +184,7 @@ source("geoms.R")
 
   x.factor.order <- NULL
   y.factor.order <- NULL  
-  
-  ## Expands a range to incorporate new.data.
-##   expand.range <- function(old.range, new.data) {
-##     if (is.null(old.range) && is.null(new.data)) {
-##       return(NULL)
-##     }
-##     if (is.factor(new.data)) {
-##       range(c(0.5, nlevels(new.data) + 0.5, old.range))
-##     } else {
-##       range(c(old.range, new.data))
-##     }
-##   }
-
+ 
   update.range <- function(expr, state) {
     if (exists(paste(".jjplot.expand", as.character(expr[[1]]), sep="."))) {
       expansion <- .call.with.data(expr, state, prefix = ".jjplot.expand")
@@ -206,8 +194,8 @@ source("geoms.R")
     
 ##     xrange <<- expand.range(xrange, c(state$data$x, expansion$x))
 ##     yrange <<- expand.range(yrange, c(state$data$y, expansion$y))
-     scale.data.x <<- c(scale.data.x, state$data$x, expansion$x)
-     scale.data.y <<- c(scale.data.y, state$data$y, expansion$y)
+    scale.data.x <<- c(state$data$x, expansion$x, scale.data.x)
+    scale.data.y <<- c(state$data$y, expansion$y, scale.data.y)
 
     if (is.null(xlab)) {
       xlab <<- state$x.expr
