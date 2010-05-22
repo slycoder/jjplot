@@ -59,6 +59,9 @@ jjplot(Petal.Length ~ point(alpha=0.5) :
 
 
 source("jjplot.R")
+jjplot(sex ~ tile() : color(tip)  + day, data = tips)
+
+
 jjplot(tip ~ (abline() : group(fit(), by = day: sex) +
 point(alpha = 0.5)) : color(day) +
 abline(lty = "dashed") : color(a): fit() + total_bill,

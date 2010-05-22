@@ -58,7 +58,7 @@ jjplot.scale.default <- function(data, scale.params) {
 
 jjplot.scale.factor <- function(data, scale.params) {
   list(pretty = 1:nlevels(data),
-       labels = levels(data))
+       labels = scale.params$factor.order)
 }
 
 jjplot.scale.Date <- function(data, scale.params) {
