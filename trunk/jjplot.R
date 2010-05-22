@@ -179,24 +179,28 @@ source("geoms.R")
                              labels.x = NULL, labels.y = NULL,
                              .subset = NULL, squash.unused = FALSE) {
 
-  scale.data.x <- NULL
-  scale.data.y <- NULL  
-
+  xrange <- NULL
+  yrange <- NULL
+  
   x.factor.order <- NULL
   y.factor.order <- NULL  
- 
+
+  padding.x <- NULL
+  padding.y <- NULL  
+  
   update.range <- function(expr, state) {
     if (exists(paste(".jjplot.expand", as.character(expr[[1]]), sep="."))) {
       expansion <- .call.with.data(expr, state, prefix = ".jjplot.expand")
     } else {
       expansion <- NULL
     }
-    
-##     xrange <<- expand.range(xrange, c(state$data$x, expansion$x))
-##     yrange <<- expand.range(yrange, c(state$data$y, expansion$y))
-    scale.data.x <<- c(state$data$x, expansion$x, scale.data.x)
-    scale.data.y <<- c(state$data$y, expansion$y, scale.data.y)
 
+    padding.x <<- c(expansion$x, padding.x)
+    padding.y <<- c(expansion$y, padding.y)
+    
+    xrange <<- .jjplot.expand.range(state$data$x, xrange)
+    yrange <<- .jjplot.expand.range(state$data$y, yrange)
+    
     if (is.null(xlab)) {
       xlab <<- state$x.expr
     }
@@ -242,16 +246,15 @@ source("geoms.R")
 
   stopifnot(is.null(labels.x))
   stopifnot(is.null(labels.y))
-  ## FIXME!
-  stopifnot(is.null(x.factor.order))
-  stopifnot(is.null(y.factor.order))
 
   theme <- theme(.subset)
   xlab.rot <- theme$x.axis.angle
   ylab.rot <- theme$y.axis.angle  
   
-  label.x.info <- .jjplot.scale.params(scale.data.x, xlab.rot)
-  label.y.info <- .jjplot.scale.params(scale.data.y, ylab.rot)
+  label.x.info <- .jjplot.scale.params(xrange, xlab.rot,
+                                       list(factor.order = x.factor.order))
+  label.y.info <- .jjplot.scale.params(yrange, ylab.rot,
+                                       list(factor.order = y.factor.order))
 
   labels.x <- label.x.info$labels
   labels.y <- label.y.info$labels
@@ -274,17 +277,19 @@ source("geoms.R")
   label.x.height <- label.x.info$height + 2.1
   label.y.width <- label.y.info$width + 2.5
 
-  ## Explain why we need this?
-  xrange <- range(pretty.x)
-  yrange <- range(pretty.y)
+  xrange <- range(c(pretty.x, padding.x))
+  yrange <- range(c(pretty.y, padding.y))
+
+  xrange.new <- xrange
+  yrange.new <- yrange
   
-  xrange[1] <- xrange[1] - (xrange[2] - xrange[1]) * expand[1]
-  xrange[2] <- xrange[2] + (xrange[2] - xrange[1]) * expand[1]
+  xrange.new[1] <- xrange[1] - (xrange[2] - xrange[1]) * expand[1]
+  xrange.new[2] <- xrange[2] + (xrange[2] - xrange[1]) * expand[1]
   
-  yrange[1] <- yrange[1] - (yrange[2] - yrange[1]) * expand[2]
-  yrange[2] <- yrange[2] + (yrange[2] - yrange[1]) * expand[2]
+  yrange.new[1] <- yrange[1] - (yrange[2] - yrange[1]) * expand[2]
+  yrange.new[2] <- yrange[2] + (yrange[2] - yrange[1]) * expand[2]
   
-  list(xrange = xrange, yrange = yrange,
+  list(xrange = xrange.new, yrange = yrange.new,
        pretty.x = pretty.x, pretty.y = pretty.y,
        labels.x = labels.x, labels.y  = labels.y,
        xlab = xlab, ylab = ylab,
