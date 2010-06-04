@@ -11,10 +11,24 @@ jjplot(v ~ point() + t, date.data,
 
 quartz()
 
+require(reshape)
+
 source("jjplot.R")
+jjplot(day ~ point() : log(x) + tip,
+       facet.y = sex,
+       data = subset(tips, tip > 4.5),
+       squash.unused = T)
+
+
 jjplot( ~ line(lty="dashed", col = "red") : hist() + 
               bar(width = 0.1) : hist() : jitter(xfactor = 1) + 
               Sepal.Length, data = iris)
+
+jjplot( ~ bar(width = 0.005) : hist() : log(x) +
+       Sepal.Length, data = iris,
+       theme = jjplot.theme("bw"),
+       log.x = T)
+
 
 dev.off()
 
@@ -59,7 +73,7 @@ jjplot(Petal.Length ~ point(alpha=0.5) :
 
 
 source("jjplot.R")
-jjplot(sex ~ tile() : color(tip)  + day, data = tips)
+jjplot(tip ~ point() : color(tip)  + day, data = tips)
 
 
 jjplot(tip ~ (abline() : group(fit(), by = day: sex) +

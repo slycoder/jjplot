@@ -42,13 +42,25 @@
   result
 }
 
-jjplot.stat.table <- function(state, log.y = FALSE) {
-  ## FIXME: log.y?
+jjplot.stat.log <- function(state,
+                            ...) {
+  sapply(match.call()[-(1:2)],
+         function(colname) {
+           colname <- as.character(colname)
+           state$data[,colname] <<- log10(state$data[,colname])
+           if (colname == "x") {
+             state$x.expr <<- substitute(log[10](x), list(x = state$x.expr))
+           } else if (colname == "y") {
+             state$y.expr <<- substitute(log[10](x), list(x = state$y.expr))
+           }
+           0
+         })
+  state
+}
+
+jjplot.stat.table <- function(state) {
   tt <- table(state$data$x)
   df <- data.frame(x = names(tt), y = as.numeric(tt))
-  if (log.y) {
-    df$y <- log10(df$y)
-  }
   state$data <- .bind.attr.columns(df, state$data)
   state$y.expr <- substitute(Count(x), list(x=state$x.expr))
   state
