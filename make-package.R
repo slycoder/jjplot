@@ -42,6 +42,7 @@ source("jjplot.R")
            "jjplot/man/jjplot.stat.group.Rd",
            "jjplot/man/jjplot.stat.hist.Rd",
            "jjplot/man/jjplot.stat.jitter.Rd",
+           "jjplot/man/jjplot.stat.log.Rd",
            "jjplot/man/jjplot.stat.quantile.Rd",
            "jjplot/man/jjplot.stat.shape.Rd",
            "jjplot/man/jjplot.stat.size.Rd",
