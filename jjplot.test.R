@@ -42,6 +42,9 @@ jjplot(Sepal.Length ~ (abline() : group(fit(), by = Species) +
                        point()) : color(Species) + Petal.Length,
        data = iris)
 
+jjplot(Sepal.Length ~ point() : shape(Species) + Petal.Length,
+       data = iris, theme=jjplot.theme("bw"))
+
 png("stacked_geoms.png", width=640, height=480)
 
 jjplot(Sepal.Length ~ (point(col = "blue", size=3) +
@@ -73,7 +76,7 @@ jjplot.stat.kmeans <- function(state, K, use.y = FALSE) {
   state
 }
 
-jjplot(Petal.Length ~ point(alpha=0.5) : 
+jjplot(Petal.Length ~ point(alpha=1) : 
        color(cluster):kmeans(5, use.y = T) : shape(Species) : size(Petal.Width) + Sepal.Length,
        data = iris)
 
@@ -245,7 +248,9 @@ df <- data.frame(y=rnorm(20),
                    origin="1970/01/01"))
 
 jjplot(y ~ point():color(label) + x,
-       data=df, facet.y=factor(label))
+       data=df, facet.y=factor(label), theme=jjplot.theme("bw"))
+
+
 
 # Test simple plot.
 x <- seq(0,1,by=.1)+1

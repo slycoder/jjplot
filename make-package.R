@@ -18,7 +18,8 @@ source("jjplot.R")
             overwrite=TRUE)
 
   ## These are undocumented functions.  Fix them!
-  unlink(c("jjplot/man/jjplot.geom.abline.Rd",
+  unlink(c("jjplot/man/lsos.Rd",
+           "jjplot/man/jjplot.geom.abline.Rd",
            "jjplot/man/jjplot.geom.area.Rd",
            "jjplot/man/jjplot.geom.bar.Rd",
            "jjplot/man/jjplot.geom.box.Rd",
