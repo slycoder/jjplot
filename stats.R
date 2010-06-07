@@ -317,3 +317,28 @@ jjplot.stat.alpha <- function(state,
 }
 
 
+jjplot.stat.fun.df <- function(state, fun) {
+  state$data <- .bind.attr.columns(fun(state$data), state$data)
+  state
+}
+
+jjplot.stat.fun.xy <- function(state,
+                               x = NULL,
+                               y = NULL,
+                               ...) {  
+  if (!is.null(x) && !is.null(y)) {
+    f.x <- x(state$data$x, state$data$y, ...)
+    f.y <- y(state$data$x, state$data$y, ...)
+    state$data <- transform(state$data[1,], x = f.x, y = f.y)
+  } else if (!is.null(x)) {
+    f.x <- x(state$data$x, state$data$y, ...)
+    state$data <- transform(state$data[1,], x = f.x)
+  }
+  else if (!is.null(y)) {
+    f.y <- y(state$data$x, state$data$y, ...)
+    state$data <- transform(state$data[1,], y = f.y)
+  } else {
+  }
+  state
+}
+
