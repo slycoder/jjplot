@@ -4,8 +4,8 @@
 }
 
 jjplot.geom.line <- function(state,
-                             lty = "solid",
                              color = NULL,
+                             lty = "solid",
                              lwd = 1.5,
                              size = NULL,
                              ordered = TRUE) {
@@ -50,14 +50,18 @@ jjplot.geom.bar <- function(state,
 }
 
 jjplot.geom.tile <- function(state,
-                             color = NULL, border = NULL) {
+                             color = NULL,
+                             border = NULL,
+                             lty = "solid",
+                             lwd = 1.0) {
   grid.rect(state$data$x,
             state$data$y,
             1,
             1,
             just = c("center", "center"),
             default.units = "native",
-            gp = gpar(fill = .match.scale(color, state$data$color, state$scales), 
+            gp = gpar(lwd = lwd, lty = lty,
+              fill = .match.scale(color, state$data$color, state$scales), 
               col = .match.scale(border, state$data$border, state$scales, type="border")))         
 }
 
@@ -270,7 +274,8 @@ jjplot.geom.box <- function(state,
   list(y = 0)
 }
 
-.jjplot.expand.tile <- function(state) {
+.jjplot.expand.tile <- function(state,
+                                ...) {
   list(y = c(0.5, nlevels(state$data$y) + 0.5),
        x = c(0.5, nlevels(state$data$x) + 0.5))       
 }

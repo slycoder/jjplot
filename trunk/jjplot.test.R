@@ -14,10 +14,16 @@ quartz()
 require(reshape)
 
 source("jjplot.R")
+
 jjplot(day ~ point() : log(x) + tip,
        facet.y = sex,
        data = subset(tips, tip > 4.5),
        squash.unused = T)
+
+jjplot(day ~ tile(lwd = 3, lty = "dashed") :
+       color(tip) + sex,
+       data = tips)
+
 
 
 jjplot( ~ line(lty="dashed", col = "red") : hist() + 
