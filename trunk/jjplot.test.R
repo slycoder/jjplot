@@ -14,6 +14,9 @@ quartz()
 require(reshape)
 
 source("jjplot.R")
+jjplot(tip ~ box() : group(quantile(), by = sex) : color(day)  + day,
+       data = tips,
+       facet.x = sex)
 
 jjplot(day ~ point() : log(x) + tip,
        facet.y = sex,
