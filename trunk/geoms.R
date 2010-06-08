@@ -282,7 +282,7 @@ jjplot.geom.box <- function(state,
   ##  }
 }
 
-.jjplot.expand.box <- function(state, width = 0.5) {
+.jjplot.expand.box <- function(state, width = 0.5, ...) {
   list(x = c(min(as.numeric(state$data$x)) - width / 2, max(as.numeric(state$data$x)) + width / 2))
 }        
 
