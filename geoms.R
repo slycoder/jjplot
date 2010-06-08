@@ -235,25 +235,37 @@ jjplot.geom.curve <- function(state,
 jjplot.geom.box <- function(state,
                             color = NULL, border = NULL, width = 0.5,
                             lwd = 1.5, lty = "solid") {
-  grid.rect(as.numeric(state$data$x),
-            state$data$quantile.25,
+  temp.data <- data.frame(x = subset(state$data, .quantile == 0)$x,
+                          quantile.0 = subset(state$data, .quantile == 0)$y,
+                          quantile.25 = subset(state$data, .quantile == 25)$y,
+                          quantile.50 = subset(state$data, .quantile == 50)$y,
+                          quantile.75 = subset(state$data, .quantile == 75)$y,
+                          quantile.100 = subset(state$data, .quantile == 100)$y)
+  if (!is.null(state$data$color)) {
+    temp.data$color <- subset(state$data, .quantile == 0)$color
+  }
+  if (!is.null(state$data$border)) {
+    temp.data$border <- subset(state$data, .quantile == 0)$border
+  }
+  grid.rect(as.numeric(temp.data$x),
+            temp.data$quantile.25,
             width,
-            state$data$quantile.75 - state$data$quantile.25,
+            temp.data$quantile.75 - temp.data$quantile.25,
             default.units = "native",
             just = c("center", "bottom"),
             gp = gpar(lwd = lwd,
               lty = lty,
-              fill = .match.scale(color, state$data$color, state$scales),
-              col = .match.scale(border, state$data$border, state$scales, type = "border")))
+              fill = .match.scale(color, temp.data$color, state$scales),
+              col = .match.scale(border, temp.data$border, state$scales, type = "border")))
   
-  grid.segments(c(state$data$x, state$data$x, as.numeric(state$data$x) - width / 2),
-                c(state$data$quantile.0, state$data$quantile.100, state$data$quantile.50),
-                c(state$data$x, state$data$x, as.numeric(state$data$x) + width / 2),
-                c(state$data$quantile.25, state$data$quantile.75, state$data$quantile.50),
+  grid.segments(c(temp.data$x, temp.data$x, as.numeric(temp.data$x) - width / 2),
+                c(temp.data$quantile.0, temp.data$quantile.100, temp.data$quantile.50),
+                c(temp.data$x, temp.data$x, as.numeric(temp.data$x) + width / 2),
+                c(temp.data$quantile.25, temp.data$quantile.75, temp.data$quantile.50),
                 default.units = "native",
                 gp = gpar(lwd = lwd,
                       lty = lty,
-                  col = .match.scale(border, state$data$border, state$scales, type = "border")))
+                  col = .match.scale(border, temp.data$border, state$scales, type = "border")))
 }
 
 .jjplot.expand.bar <- function(state,
@@ -271,8 +283,7 @@ jjplot.geom.box <- function(state,
 }
 
 .jjplot.expand.box <- function(state, width = 0.5) {
-  list(x = c(min(as.numeric(state$data$x)) - width / 2, max(as.numeric(state$data$x)) + width / 2),
-       y = c(state$data$quantile.0, state$data$quantile.100))
+  list(x = c(min(as.numeric(state$data$x)) - width / 2, max(as.numeric(state$data$x)) + width / 2))
 }        
 
 .jjplot.expand.area <- function(state) {

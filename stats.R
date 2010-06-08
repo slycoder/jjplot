@@ -143,12 +143,13 @@ jjplot.stat.fun.y <- function(state, fun) {
 }
 
 jjplot.stat.quantile <- function(state) {
-  stopifnot(all(state$data$x == state$data$x[1]))
-  result <- data.frame(state$data$x[1], t(quantile(state$data$y)))
-  colnames(result) <- c("x", "quantile.0", "quantile.25", "quantile.50", "quantile.75", "quantile.100")
-  rownames(result) <- NULL
-
-  state$data <- .bind.attr.columns(result, state$data)
+  state$data <-
+    do.call(rbind,
+            by(state$data, state$data$x, function(yy) {
+              transform(cbind(yy[1,], .quantile = c(0, 25, 50, 75, 100),
+                              row.names = NULL),
+                        y = quantile(yy$y))
+            }))
   state
 }
 
