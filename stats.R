@@ -343,3 +343,14 @@ jjplot.stat.fun.xy <- function(state,
   state
 }
 
+jjplot.stat.transform <- function(state,
+                                  ...) {  
+  state$data <- transform(state$data, ...)
+  state
+}
+
+jjplot.stat.normalize <- function(state) {
+  state$data$y <- state$data$y / sum(state$data$y)
+  state
+}
+
