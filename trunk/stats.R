@@ -349,8 +349,10 @@ jjplot.stat.transform <- function(state,
   state
 }
 
-jjplot.stat.normalize <- function(state) {
-  state$data$y <- state$data$y / sum(state$data$y)
+
+jjplot.stat.normalize <- function(state, col = 'y', ignore.zeros = T) {
+  if (sum(state$data[,col]) != 0 || !ignore.zeros) {
+    state$data[,col] <- state$data[,col] / sum(state$data[,col])
+  }
   state
 }
-

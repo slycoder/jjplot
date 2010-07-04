@@ -190,8 +190,11 @@ jjplot.geom.vline <- function(state,
 }
 
 jjplot.geom.text <- function(state,
-                             color = NULL, label = NULL,
-                             x = NULL, y = NULL, hjust = 0.5,
+                             label = NULL, color = NULL,
+                             size = NULL,
+                             x = NULL, y = NULL,
+                             cex.multiplier = 1.0,
+                             hjust = 0.5,
                              vjust = 0.5) {
   if (is.null(x)) {
     x <- state$data$x
@@ -199,13 +202,16 @@ jjplot.geom.text <- function(state,
   if (is.null(y)) {
     y <- state$data$y
   }
+  label <- eval(match.call()$label, state$data)
   if (is.null(label)) {
     label <- state$data$label
   }
-  grid.text(label = label, x = x, y = y, 
+  grid.text(label = label,
+            x = x, y = y, 
             hjust = hjust, vjust = vjust,
                 default.unit = "native",
-            gp = gpar(col = .match.scale(color, state$data$color, state$scales)))
+            gp = gpar(col = .match.scale(color, state$data$color, state$scales),
+              cex = cex.multiplier * .match.scale(size, state$data$size, state$scales, type="size")))
 }
 
 jjplot.geom.curve <- function(state,
