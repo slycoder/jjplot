@@ -25,6 +25,7 @@ source("jjplot.R")
            "jjplot/man/jjplot.geom.box.Rd",
            "jjplot/man/jjplot.geom.curve.Rd",
            "jjplot/man/jjplot.geom.hline.Rd",
+           "jjplot/man/jjplot.geom.legend.Rd",
            "jjplot/man/jjplot.geom.line.Rd",
            "jjplot/man/jjplot.geom.point.Rd",
            "jjplot/man/jjplot.geom.text.Rd",
