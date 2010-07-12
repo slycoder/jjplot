@@ -5,6 +5,7 @@ date.data <-
              v = rnorm(10))
 
 source("jjplot.R")
+
 jjplot(v ~ point() + t, date.data,
        theme = jjplot.theme("bw"))
 
@@ -14,7 +15,8 @@ quartz()
 require(reshape)
 
 source("jjplot.R")
-jjplot(tip ~ box() : group(quantile(), by = sex) : color(day)  + day,
+jjplot(tip ~ (legend(3, 8) + box()) : group(quantile(), by = sex) :
+       color(day)  + day,
        data = tips,
        facet.x = sex)
 
@@ -41,7 +43,8 @@ jjplot( ~ bar(width = 0.005) : hist() : log(x) +
 
 dev.off()
 
-jjplot(Sepal.Length ~ (abline() : group(fit(), by = Species) +
+jjplot(Sepal.Length ~ (legend(6.5, 5) +
+                       abline() : group(fit(), by = Species) +
                        point()) : color(Species) + Petal.Length,
        data = iris)
 
@@ -84,8 +87,16 @@ jjplot(Petal.Length ~ point(alpha=1) :
        data = iris)
 
 
+jjplot(Petal.Length ~ (legend(7.5, 3) + point(alpha=1)) : 
+       color(cluster):kmeans(5, use.y = T) : shape(Species) : size(Petal.Width) + Sepal.Length,
+       data = iris)
+
+
 source("jjplot.R")
+
 jjplot(tip ~ point() : color(tip)  + day, data = tips)
+
+
 
 
 jjplot(tip ~ (abline() : group(fit(), by = day: sex) +

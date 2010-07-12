@@ -214,6 +214,53 @@ jjplot.geom.text <- function(state,
               cex = cex.multiplier * .match.scale(size, state$data$size, state$scales, type="size")))
 }
 
+jjplot.geom.legend <- function(state,
+                               x, y,
+                               cex.multiplier = 1.0,
+                               interline.spacing = 1.5,
+                               hjust = 0.5,
+                               vjust = 0.5,
+                               lwd = 1, lty = "solid") {
+
+  colors <- unique(state$data$color)
+  x <- rep(x, length(colors))
+
+  ## Compute the width of the colors.
+  text.width <- sapply(as.character(colors),
+                       function(z) convertWidth(unit(1, "strwidth", z), "native"))
+  text.width <- max(text.width)
+
+  text.height <- sapply(as.character(colors),
+                        function(z) convertHeight(unit(1, "strheight", z), "native"))
+
+  text.height <- cumsum(text.height * interline.spacing)
+  total.height <- text.height[length(text.height)]
+
+  print(text.height)
+  
+  y <- y + c(0, text.height[-length(text.height)])
+
+  expand <- 1.2
+  
+  grid.rect(x[1],
+            (y[1] + y[length(y)]) / 2,
+            text.width * expand,
+            total.height * expand,
+            hjust = hjust, 
+            vjust = vjust,
+            default.units = "native",
+            gp = gpar(lwd = lwd, lty = lty,
+              fill = "white",
+              col = "black"))
+  
+  grid.text(label = as.character(colors),
+            x = x, y = y, 
+            hjust = hjust, vjust = vjust,
+                default.unit = "native",
+            gp = gpar(col = .match.scale(colors, state$data$color, state$scales),
+              cex = cex.multiplier))
+}
+
 jjplot.geom.curve <- function(state,
                               xend, yend,
                               alpha = NULL,
