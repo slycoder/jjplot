@@ -236,8 +236,6 @@ jjplot.geom.legend <- function(state,
   text.height <- cumsum(text.height * interline.spacing)
   total.height <- text.height[length(text.height)]
 
-  print(text.height)
-  
   y <- y + c(0, text.height[-length(text.height)])
 
   expand <- 1.2
