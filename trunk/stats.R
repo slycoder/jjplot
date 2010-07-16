@@ -108,7 +108,7 @@ jjplot.stat.hist <- function(state,
 }
 
 jjplot.stat.jitter <- function(state,
-                               xfactor = 0, yfactor = 0) {
+                               xfactor = 1, yfactor = 1) {
   state$data <- transform(state$data,
                           x = jitter(as.numeric(state$data$x), xfactor))
   if (!is.null(state$data$y)) {

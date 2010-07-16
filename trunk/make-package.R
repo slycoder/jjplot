@@ -27,6 +27,7 @@ source("jjplot.R")
            "jjplot/man/jjplot.geom.hline.Rd",
            "jjplot/man/jjplot.geom.legend.Rd",
            "jjplot/man/jjplot.geom.line.Rd",
+           "jjplot/man/jjplot.geom.map.Rd",           
            "jjplot/man/jjplot.geom.point.Rd",
            "jjplot/man/jjplot.geom.text.Rd",
            "jjplot/man/jjplot.geom.tile.Rd",
