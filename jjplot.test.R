@@ -35,7 +35,7 @@ jjplot( ~ line(lty="dashed", col = "red") : hist() +
               bar(width = 0.1) : hist() : jitter(xfactor = 1) + 
               Sepal.Length, data = iris)
 
-jjplot( ~ bar(width = 0.005) : hist() : log(x) +
+jjplot( ~ bar(width = 0.005) : alpha(y) :hist() : log(x) +
        Sepal.Length, data = iris,
        theme = jjplot.theme("bw"),
        log.x = T)
@@ -45,7 +45,7 @@ dev.off()
 
 jjplot(Sepal.Length ~ (legend(6.5, 5) +
                        abline() : group(fit(), by = Species) +
-                       point()) : color(Species) + Petal.Length,
+                       point() : jitter(xfactor = 1) : alpha(Sepal.Length^0.5)) : color(Species) + Petal.Length,
        data = iris)
 
 jjplot(Sepal.Length ~ point() : shape(Species) + Petal.Length,

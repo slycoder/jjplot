@@ -37,6 +37,7 @@ jjplot.geom.line <- function(state,
 }
 
 jjplot.geom.bar <- function(state,
+                            alpha = NULL,
                             color = NULL,
                             border = NULL, width = 1) {
   grid.rect(state$data$x,
@@ -45,7 +46,8 @@ jjplot.geom.bar <- function(state,
             state$data$y,
             just = c("center", "bottom"),
             default.units = "native",
-            gp = gpar(fill = .match.scale(color, state$data$color, state$scales), 
+            gp = gpar(fill = .match.scale(color, state$data$color, state$scales),
+              alpha = .match.scale(alpha, state$data$alpha, state$scales, type="alpha"),
               col = .match.scale(border, state$data$border, state$scales, type = "border")))
 }
 
@@ -91,27 +93,44 @@ jjplot.geom.area <- function(state,
 }
   
 jjplot.geom.point <- function(state,
-                              alpha = 1.0,
+                              alpha = NULL,
                               shape = NULL,
                               color = NULL,
                               border = NULL,
                               size = NULL) {
+  alphas <- .match.scale(alpha, state$data$alpha, state$scales, type="alpha")
+
+  dd <- state$data
+  if (!all(alphas == alphas[1])) {
+    dd <- dd[order(alphas),]
+    alphas <- alphas[order(alphas)]
+  }
+
   if (!is.null(shape) && shape %in% c(21, 22)) {
-    colors <- .match.scale(border, state$data$border, state$scales, type="border")
-    fills <- .match.scale(color, state$data$color, state$scales)
+    colors <- .match.scale(border, dd$border, state$scales, type="border")
+    fills <- .match.scale(color, dd$color, state$scales)
   } else {
-    colors <- .match.scale(color, state$data$color, state$scales)
+    colors <- .match.scale(color, dd$color, state$scales)
     fills <- NA
   }
 
-  grid.points(state$data$x,
-              state$data$y,
-              pch = .match.scale(shape, state$data$shape, state$scales, type="shape"),
-              size = unit(0.5 * .match.scale(size, state$data$size, state$scales, type="size"), "char"),
-              gp = gpar(alpha = alpha,
+  grid.points(dd$x,
+              dd$y,
+              pch = .match.scale(shape, dd$shape, state$scales, type="shape"),
+              size = unit(0.5 * .match.scale(size, dd$size, state$scales, type="size"), "char"),
+              gp = gpar(alpha = alphas,
 ##                cex = 0.33*.match.scale(size, state$data$size, state$scales, type="size"),
                 col = colors, fill = fills))
 }
+
+jjplot.geom.map <- function(state, database) {
+  require(maps)
+  regions <- map(database, plot = F)
+  print(head(regions$x))
+  grid.lines(regions$x, regions$y, default.units="native")
+}
+
+
 
 jjplot.geom.abline <- function(state,
                                a = NULL, b = NULL,
