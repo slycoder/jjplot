@@ -1,0 +1,1 @@
+Fast R plotting library inspired by ggplot2.
